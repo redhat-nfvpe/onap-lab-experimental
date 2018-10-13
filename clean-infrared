@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+. "$HERE/env"
+
+rm --recursive --force \
+"$INFRARED_VIRTUALENV" \
+"$INFRARED_SOURCE" \
+"$HERE/ansible.cfg" \
+"$HERE/plugins" \
+"$HERE/.plugins.ini" \
+"$HERE/.workspaces"

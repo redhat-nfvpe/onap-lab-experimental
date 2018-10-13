@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" -ne 0 ]; then
+	echo "Run this script as root"
+	exit 1
+fi
+
+yum install \
+gparted htop \
+git \
+libselinux-python
+
+yum localinstall --nogpgcheck \
+https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm \
+https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-7.noarch.rpm
+
+yum install \
+akmod-nvidia byobu
+
+pip install virtualenv

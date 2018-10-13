@@ -1,0 +1,43 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+# Requirements
+# sudo yum install git libselinux-python
+# sudo pip install virtualenv
+
+HERE=$(dirname "$(readlink -f "$0")")
+. "$HERE/env"
+
+if [ ! -d "$INFRARED_SOURCE" ]; then
+	git clone --single-branch -b stable https://github.com/redhat-openstack/infrared.git "$INFRARED_SOURCE"
+	cd "$INFRARED_SOURCE" 
+	git reset --hard "$INFRARED_COMMIT"
+fi
+
+if [ ! -d "$INFRARED_VIRTUALENV" ]; then
+	virtualenv "$INFRARED_VIRTUALENV"
+	# Allow running on localhost (Orchestrator and Hypervisor are same machine)
+	ln --symbolic /usr/lib64/python2.7/site-packages/selinux "$INFRARED_VIRTUALENV/lib64/python2.7/site-packages/selinux"
+fi
+
+. "$HERE/infrared-activate"
+
+pip install --upgrade pip
+pip install --upgrade setuptools
+pip install "$INFRARED_SOURCE"
+
+# Patches
+# See: https://github.com/redhat-openstack/infrared/issues/337
+sed --in-place 's/name: virtualbmc$/name: virtualbmc==1.3.0/' "$INFRARED_VIRTUALENV/lib/python2.7/site-packages/infrared/common/roles/vbmc/tasks/install.yml"
+sed --in-place 's/name: python-virtualbmc/name: python2-virtualbmc/' "$INFRARED_VIRTUALENV/lib/python2.7/site-packages/infrared/common/roles/vbmc/tasks/install.yml"
+
+set +e
+infrared plugin add "$INFRARED_SOURCE/plugins/virsh"
+infrared plugin add "$INFRARED_SOURCE/plugins/tripleo-undercloud"
+infrared plugin add "$INFRARED_SOURCE/plugins/tripleo-overcloud"
+infrared workspace create onap-lab

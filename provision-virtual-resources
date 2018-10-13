@@ -1,0 +1,17 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+. "$HERE/infrared-activate"
+
+infrared workspace checkout onap-lab
+infrared virsh -vv --from-file "$HERE/all-in-one-virtual-resources.ini" \
+--extra-vars override.compute.cpu=16 \
+--extra-vars override.compute.memory=204800
+
+# memory is in mebibyte

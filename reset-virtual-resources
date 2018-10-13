@@ -1,0 +1,25 @@
+#!/bin/bash
+
+if [ "$EUID" -ne 0 ]; then
+	echo "Run this script as root"
+	exit 1
+fi
+
+ssh-keygen -R undercloud-0
+
+echo 'Deleting all virtual machines...'
+for UUID in $(virsh list --all --uuid); do
+	virsh destroy "$UUID"
+	virsh undefine "$UUID" --managed-save --remove-all-storage --delete-snapshots --snapshots-metadata --nvram  
+done
+
+echo 'Deleting all networks...'
+for UUID in $(virsh net-list --uuid); do
+	virsh net-destroy "$UUID"
+	virsh net-undefine "$UUID"
+done
+
+echo 'Deleting all volumes in "images" pool...'
+for NAME in $(virsh vol-list images | tail --lines=+3 | head --line=-1 | cut --fields=2 --delimiter=' '); do
+	virsh vol-delete "$NAME" --pool images
+done

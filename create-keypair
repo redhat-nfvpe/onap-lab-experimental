@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+if [ ! -f ~/.ssh/id_rsa ]; then
+	ssh-keygen -f ~/.ssh/id_rsa -t rsa -N  ''
+else
+	echo Key already exists
+fi
+
+ssh-copy-id root@localhost
