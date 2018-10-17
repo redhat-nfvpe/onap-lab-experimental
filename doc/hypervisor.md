@@ -34,10 +34,10 @@ virtual machines:
 * Virtual storage is in the default location: `/var/lib/libvirt/images/`
 * A new `stack` user
 
-Also, root user now has a keypair (at `/root/.ssh`) that can be used to login, also as root, to the
-cloud manager virtual machine. So, to login into it we must use `sudo`:
+Also, root user now has a keypair (at `/root/.ssh`) that can be used to login, either as user
+`stack` or as `root` to the cloud manager virtual machine. So, to login into it we must use `sudo`:
 
-	sudo ssh undercloud-0
+	sudo ssh stack@undercloud-0
 
 Currently it's a fresh CentOS virtual machine. The next step will install our cloud manager software
 in it.
@@ -101,7 +101,7 @@ You can connect to the undercloud just like any other OpenStack. Full access det
 `stackrc` file in the `undercloud-0` machine. For example, let's see what hosts are running in it
 (run on Hypervisor):
 
-	sudo ssh undercloud-0
+	sudo ssh stack@undercloud-0
 	. stackrc
 	openstack host list
 
@@ -115,8 +115,8 @@ On `undercloud-0` you'll also find useful logs and access files:
 	/home/stack/undercloud.conf
 
 
-Reset
------
+How to Reset
+------------
 
 If you experienced any failures in the above or later steps, you can start from scratch. Try runnin
 this at the Orchestrator:

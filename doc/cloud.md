@@ -16,12 +16,13 @@ guarantee that they will be identical to the built images. To import:
 
 To see the images, on Hypervisor:
 
-	sudo ssh undercloud-0
+	sudo ssh stack@undercloud-0
 	. stackrc
 	openstack image list
 
 On `undercloud-0` you'll find useful logs for this step:
 
+	/home/stack/overcloud-full.log
 	/home/stack/openstack-build-images.log
 	/home/stack/ironic-python-agent.log
 
@@ -30,15 +31,24 @@ Step 2: Install cloud machines
 ------------------------------
 
 If we're installing an all-in-one setup, then we should already have the cloud virtual machines set
-up for us from the previous step: `controller-0` and `compute-0`. In RDO, each cloud machine is
-assigned a role that defines which OpenStack components run on it:
+up for us from the previous step: `controller-0`, `compute-0`, and `ceph-0`. In RDO, each cloud
+machine is assigned a role that defines which OpenStack components run on it:
 
 * Controller:
-  [Neutron](https://docs.openstack.org/neutron/queens/) +
-  [nova-scheduler](https://docs.openstack.org/nova/queens/cli/nova-scheduler.html)
+  Manages networking ([Neutron](https://docs.openstack.org/neutron/queens/)) as well
+  as virtual machine scheduling
+  ([nova-scheduler](https://docs.openstack.org/nova/queens/cli/nova-scheduler.html)).
+  It requires only minimal compute and disk resources. The defaults should suffice.
 * Compute: [nova-compute](https://docs.openstack.org/nova/queens/cli/nova-compute.html). This is
-  where our cloud virtual machines will run (nested virtualization). So, we want this machine to be
-  alloted a lot of RAM and CPUs.
+  where our cloud virtual machines will be provisioned (in nested virtualization). So, we want this
+  machine to be alloted a lot of RAM and CPU cores.
+* Ceph: [Ceph](https://ceph.com/) is a powerful distributed storage system with good OpenStack
+  integration. This is where our
+  block storage ([Cinder](https://docs.openstack.org/cinder/queens/)),
+  file storage ([Manila](https://docs.openstack.org/manila/queens/)),
+  and object storage ([Swift](https://docs.openstack.org/swift/queens/)) will be provisioned.
+  So, on the lab we want this machine to be alloted a lot of disk space. RAM and CPU defaults
+  should suffice.
 
 > One interesting implementation detail: if you remember, our cloud manager uses OpenStack's
 [Ironic](https://wiki.openstack.org/wiki/Ironic) component to manage the cloud machines. You might
@@ -54,18 +64,41 @@ Let's install them:
 
 	./install-overcloud
 
-Within each cloud machine we will be running the OpenStack components as Docker containers. This
-allows for better isolation, stability, and an easier upgrade path.
-
-TODO: log in to them and see the Docker containers
-
-On `undercloud-0` you'll find useful logs:
+On `undercloud-0` you'll find useful logs and topology files for this step:
 
 	/home/stack/overcloud_install.log
-	/home/stack/overcloud-full.log
 	/home/stack/overcloud_deployment_44.log
 	/home/stack/openstack_failures_long.log
 	/home/stack/instackenv.json
+
+The root user at `undercloud-0` now has a keypair (at `/root/.ssh`) that can be used to login as
+user `heat-admin` to the cloud machines. The user has sudo access. But first, you need to find their
+addresses, which you can see with the `openstack server list` command. An example, starting at the
+Hypervisor:  
+
+	sudo ssh stack@undercloud-0
+	. stackrc
+	openstack server list -c Name -c Networks
+    ssh heat-admin@192.168.24.13
+
+Within each cloud machine we will be running the OpenStack components as Docker containers. This
+allows for better isolation, stability, and an easier upgrade path. Internally,
+[Kolla](https://docs.openstack.org/kolla/queens/) is used to deploy the container images. To see the
+containers, from within a cloud machine:
+
+	sudo docker container list
+
+
+How to Reset
+------------
+
+	sudo ssh stack@undercloud-0
+	. stackrc
+	openstack overcloud delete overcloud
+
+
+
+
 
 https://rdo-container-registry.readthedocs.io/en/latest/using.html
 https://docs.openstack.org/tripleo-docs/latest/contributor/dlrn-promoter-overview.html

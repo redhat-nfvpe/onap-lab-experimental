@@ -5,8 +5,6 @@ This documentation is lengthy. Our goal here is not only to guide you towards a 
 based on supported products, but also to help you understand and debug each step so that you can own
 and administer it.
 
-Many thanks to Andrew Bays, Leif Madsen, and Frank Zdarsky.
-
 
 Supported Starting Points
 -------------------------
@@ -37,18 +35,23 @@ The full lab comprises 3 platform layers:
 * [RDO](https://www.rdoproject.org/): OpenStack distribution.
   Red Hat provides a supported version of RDO in its
   [OpenStack Platform](https://www.redhat.com/en/technologies/linux-platforms/openstack-platform).
+  We will be doing a comprehensive, full-featured installation of RDO that gives you a
+  straightforward upgrade path to a very large lab environment, with the same tooling you would
+  have in staging and even production environments.  
 
 Note that it is possible to avoid OpenStack and run OKD directly on bare metal. However, we find
-that in a lab environment it is useful to have OKD hosted inside managed virtual machines. This
-allows us to more easily set up and tear down OKD and run multiple OKD clusters (even of different
-versions) simultaneously.
+that in a lab environment it is useful to have OKD hosted inside OpenStack-managed virtual machines.
+Thi allows us to more easily set up and tear down OKD and run multiple OKD clusters (even of
+different versions) simultaneously.
 
 Furthermore, because we need an OpenStack cloud to run ONAP integration tests (ONAP will orchestrate
 VNFs there), we might as well use it to host OKD and ONAP itself.
 
+As OKD bare metal support matures we will provide that installation option here.
+
 
 Physical Machines
-------------------
+-----------------
 
 The lab comprises 3 physical machines roles:
 
@@ -68,6 +71,7 @@ If you are combining the Hypervisor and Cloud roles into one machine, it may mak
 SSD and HDD drives in it. The Hypervisor software has a finite size and its storage can fit on the
 SSD. One or more large HDDs can be reserved for cloud storage.
 
+
 Chapters
 --------
 
@@ -78,8 +82,14 @@ Chapters
 5. [Scheduling ONAP](doc/onap.md)
 
 
+Credits
+-------
 
-
+* Ruslan Usichenko
+* Andrew Bays
+* Yolanda Robla Mota
+* Leif Madsen
+* Frank Zdarsky
 
 
 
@@ -109,5 +119,11 @@ Notes for InfraRed
 * The PyPI packages are not maintained and should be removed: https://pypi.org/project/infrared/
 * The "stable" branch is unversioned and un-tagged
 * We are installing latest versions of Python libraries, a terrible practice
-* https://github.com/redhat-openstack/infrared/issues/337
 * Do *not* use the prefix argument in virsh. It seems to confuse the overcloud installer.
+
+Patches:
+
+* https://github.com/redhat-openstack/infrared/issues/337
+* https://github.com/redhat-openstack/infrared/commit/0508e1623cdc997356584f64850efae584caea7d
+* Nova is doing wrong health check (tripleo)
+* ceph-mgr deploy is broken (tripleo)
