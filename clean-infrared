@@ -10,9 +10,6 @@ HERE=$(dirname "$(readlink -f "$0")")
 . "$HERE/env"
 
 rm --recursive --force \
+"$IR_HOME" \
 "$INFRARED_VIRTUALENV" \
-"$INFRARED_SOURCE" \
-"$HERE/ansible.cfg" \
-"$HERE/plugins" \
-"$HERE/.plugins.ini" \
-"$HERE/.workspaces"
+"$INFRARED_SOURCE" 
