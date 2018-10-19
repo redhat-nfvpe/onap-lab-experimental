@@ -7,24 +7,22 @@ Step 1: Build cloud images
 Our cloud manager ("undercloud") provides operating system images for bootstrapping the cloud
 machines. We need to install them. On Orchestrator:
 
-	./build-cloud-images
+    ./build-cloud-images
 
 Another option, which is a bit faster, is to download ready-made images. However, we cannot
 guarantee that they will be identical to the built images. To import:
 
-	./download-cloud-images
+    ./download-cloud-images
 
-To see the images, on Hypervisor:
+To list the images, on Hypervisor:
 
-	sudo ssh stack@undercloud-0
-	. stackrc
-	openstack image list
+    ./openstack-undercloud image list
 
 On `undercloud-0` you'll find useful logs for this step:
 
-	/home/stack/overcloud-full.log
-	/home/stack/openstack-build-images.log
-	/home/stack/ironic-python-agent.log
+    /home/stack/overcloud-full.log
+    /home/stack/openstack-build-images.log
+    /home/stack/ironic-python-agent.log
 
 
 Step 2: Install cloud machines
@@ -62,39 +60,48 @@ the virtual machines behave more like bare metal. To learn more about this techn
 
 Let's install them:
 
-	./install-overcloud
+    ./install-overcloud
 
 On `undercloud-0` you'll find useful logs and topology files for this step:
 
-	/home/stack/overcloud_install.log
-	/home/stack/overcloud_deployment_44.log
-	/home/stack/openstack_failures_long.log
-	/home/stack/instackenv.json
+    /home/stack/overcloud_install.log
+    /home/stack/overcloud_deployment_44.log
+    /home/stack/openstack_failures_long.log
+    /home/stack/instackenv.json
 
-The root user at `undercloud-0` now has a keypair (at `/root/.ssh`) that can be used to login as
-user `heat-admin` to the cloud machines. The user has sudo access. But first, you need to find their
-addresses, which you can see with the `openstack server list` command. An example, starting at the
-Hypervisor:  
+The root user at the Hypervisor (and also in `undercloud-0) now has a keypair (at `/root/.ssh`) that
+can be used to login as user `heat-admin` to the cloud machines, which has sudo access there. To
+login, you need to find their addresses, which you can see with the `openstack server info` command.
+We provide `ssh-undercloud` as a shortcut script. An example:  
 
-	sudo ssh stack@undercloud-0
-	. stackrc
-	openstack server list -c Name -c Networks
-    ssh heat-admin@192.168.24.13
+    ./ssh-undercloud compute-0
 
 Within each cloud machine we will be running the OpenStack components as Docker containers. This
 allows for better isolation, stability, and an easier upgrade path. Internally,
 [Kolla](https://docs.openstack.org/kolla/queens/) is used to deploy the container images. To see the
-containers, from within a cloud machine:
+containers from within a cloud machine:
 
-	sudo docker container list
+    sudo docker container list
+
+
+Accessing the Cloud
+-------------------
+
+Access details were added to our InfraRed workspace on the Hypervisor. We provide
+`openstack-overcloud` as a shortcut script. Example:
+
+    ./openstack-overcloud network list
 
 
 How to Reset
 ------------
 
-	sudo ssh stack@undercloud-0
-	. stackrc
-	openstack overcloud delete overcloud
+Note that we cannot do this with the `openstack-undercloud` shortcut, because we need elevated
+credentials in order to access the overcloud.
+
+    ./ssh-virtual stack@undercloud-0
+    . stackrc
+    openstack overcloud delete overcloud
 
 
 

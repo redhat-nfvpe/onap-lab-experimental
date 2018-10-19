@@ -1,23 +1,25 @@
 Red Hat ONAP Lab
 ================
 
-This documentation is lengthy. Our goal here is not only to guide you towards a running ONAP Lab
-based on supported products, but also to help you understand and debug each step so that you can own
-and administer it.
+Create a reusable, reproducible lab for running and developing on ONAP on top of a supportable
+stack of Linux, OpenStack, and Kubernetes.
+
+This documentation is lengthy. Our goal here is to help you understand and debug each step so that
+you can own and administer the lab.
 
 
 Supported Starting Points
 -------------------------
 
-* All you have is bare metal: No problem! This guide will take you from zero to ONAP. The entire lab
-  can be installed on a single physical machine. Depending on your requirements, you can also spread
-  it out on several physical machines.  
+* All you have is bare metal: This guide will take you from zero to ONAP. The entire lab can be
+  installed on a single physical machine. Depending on your requirements, you can also spread it out
+  on several physical machines.  
 * You already have a Kubernetes cluster: Start with chapter 5.
 * You already have an OpenStack cloud: Start with chapter 4.
 
 For a single-physical-machine lab you do need hefty server-class or workstation hardware. A great
 budget solution is to buy a used workstation, such as a Dell Precision T7600 or an HP Z820 from
-2012-13.
+2012-13. They come with up to 256GB of RAM, 16 cores, and plenty of space for storage drives.
 
 
 Software Layers
@@ -82,14 +84,16 @@ Chapters
 5. [Scheduling ONAP](doc/onap.md)
 
 
-Credits
--------
+Special Thanks
+--------------
+
+The following people may not show up in the commit history, but helped on the way:
 
 * Ruslan Usichenko
 * Andrew Bays
 * Yolanda Robla Mota
-* Leif Madsen
 * Frank Zdarsky
+* Leif Madsen
 
 
 
@@ -126,4 +130,10 @@ Patches:
 * https://github.com/redhat-openstack/infrared/issues/337
 * https://github.com/redhat-openstack/infrared/commit/0508e1623cdc997356584f64850efae584caea7d
 * Nova is doing wrong health check (tripleo)
+  https://github.com/openstack/tripleo-common/commit/79bb8e736d29457f932951e805e218a32980e970
+  See also:
+  https://github.com/openstack/tripleo-common/commit/7f9606ff47f03162e5d7305aaca2af5d1faecd87
 * ceph-mgr deploy is broken (tripleo)
+  https://bugzilla.redhat.com/show_bug.cgi?id=1640523
+  https://github.com/redhat-openstack/infrared/commit/15b09251c10f5dd218657573add474ffd7c4f2d7
+

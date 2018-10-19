@@ -1,11 +1,13 @@
 Preparing the Hypervisor
 ========================
 
-The installation process makes certain assumptions about the Hypervisor operating system. Be aware
-of some potential conflicts:
+Start with installing [CentOS](https://www.centos.org/). Tested with version 7.5.
+
+The installation process makes certain assumptions about the operating system. Be aware of some
+potential conflicts:
 
 * Do _not_ create a user called `stack`.
-* Do _not_ install the `python-virtualenv` operating system package. Infrared will be installing it
+* Do _not_ install the `python-virtualenv` operating system package. InfraRed will be installing it
   via `pip`, and the two installation methods could conflict.
 
 
@@ -31,20 +33,21 @@ virtual machines:
 
 * Many new virtual network interfaces
 * `/etc/hosts` has domain names for the virtual machines
-* Virtual storage is in the default location: `/var/lib/libvirt/images/`
+* Virtual storage is in: `/home/libvirt/`
 * A new `stack` user
 
 Also, root user now has a keypair (at `/root/.ssh`) that can be used to login, either as user
-`stack` or as `root` to the cloud manager virtual machine. So, to login into it we must use `sudo`:
+`stack` or as `root` to the cloud manager virtual machine. We provide `ssh-virtual` as a shortcut
+script to do this safely. So, to login, on Hypervisor:
 
-	sudo ssh stack@undercloud-0
+    ./ssh-virtual stack@undercloud-0
 
 Currently it's a fresh CentOS virtual machine. The next step will install our cloud manager software
 in it.
 
 The virtual machines run on KVM and can be managed by libvirt and the
 [virsh](https://libvirt.org/virshcmdref.html) tool. Note that because they were created under the
-root user, you must use `sudo` to access them, e.g.:
+root user, you must use `sudo` to access them, e.g. on Hypervisor:
 
     sudo virsh list 
 
@@ -55,6 +58,12 @@ You can also use a virsh client on a remote machine (such as the Orchestrator), 
 
 Step 2: Install the cloud manager
 ---------------------------------
+
+Now let's install our cloud manager:
+
+    ./install-undercloud
+
+This can take up to 30 minutes.
 
 > You might be wondering why the cloud manager virtual machine is called "undercloud". To understand
 this term, first you must understand that the cloud manager software is _itself_ implemented as an
@@ -91,40 +100,37 @@ itself implemented in OpenStack is precisely just an implementation detail. Inde
 and overcloud could each be running on entirely different versions of OpenStack. All you need to
 know is that the virtual machine called "undercloud" is your cloud manager.
 
-OK! So, now let's install our cloud manager ("undercloud"):
+On `undercloud-0` you'll find useful logs and access files for this step:
 
-    ./install-undercloud
+    /home/stack/undercloud_install.log
+    /home/stack/undercloud-passwords.conf
+    /home/stack/undercloud.conf
 
-This can take up to 30 minutes.
 
-You can connect to the undercloud just like any other OpenStack. Full access details are in the
-`stackrc` file in the `undercloud-0` machine. For example, let's see what hosts are running in it
-(run on Hypervisor):
+Accessing the Undercloud
+------------------------
 
-	sudo ssh stack@undercloud-0
-	. stackrc
-	openstack host list
+You can connect to the undercloud just like any other OpenStack deployment. Access details were
+added to our InfraRed workspace on the Hypervisor. We provide `openstack-undercloud` as a shortcut
+script. For example, let's see what servers are running:
 
-(In case you're wondering: yes, these are virtual machines running inside a virtual machines. This
-setup relies on nested virtualization functionality.)
+    ./openstack-undercloud server list
 
-On `undercloud-0` you'll also find useful logs and access files:
-
-	/home/stack/undercloud_install.log
-	/home/stack/undercloud-passwords.conf
-	/home/stack/undercloud.conf
+In case you're wondering: yes, these server are virtual machines running inside a virtual machine.
+This setup relies on nested virtualization technology.
 
 
 How to Reset
 ------------
 
-If you experienced any failures in the above or later steps, you can start from scratch. Try runnin
+If you experienced any failures in the above or later steps, you can start from scratch. Try running
 this at the Orchestrator:
 
     ./delete-virtual-resources
 
-However, if the virtual machines are in a broken state, some resources might not be deleted by this.
-You can makre sure to completely remove _all_ virtual resources by running this script at the
-Hypervisor:
+However, if the virtual machines are in a broken state, some resources might not be deleted. You can
+make sure to completely remove _all_ virtual resources by running this script at the Hypervisor:
 
-	sudo ./reset-virtual-resources
+    sudo ./reset-virtual-resources
+
+Note that this will delete *both* the undercloud *and* the overcloud!
