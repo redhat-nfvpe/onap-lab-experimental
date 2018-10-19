@@ -7,7 +7,7 @@ if [ "$EUID" == 0 ]; then
 fi
 
 HERE=$(dirname "$(readlink -f "$0")")
-. "$HERE/env"
+. "$HERE/infrared-activate"
 
 . "$IR_HOME/.workspaces/onap-lab/stackrc"
 
