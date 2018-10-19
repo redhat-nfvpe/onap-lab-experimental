@@ -5,8 +5,6 @@ if [ "$EUID" -ne 0 ]; then
 	exit 1
 fi
 
-ssh-keygen -R undercloud-0
-
 echo 'Deleting all virtual machines...'
 for UUID in $(virsh list --all --uuid); do
 	virsh destroy "$UUID"

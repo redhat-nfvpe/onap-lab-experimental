@@ -42,13 +42,13 @@ INFRARED_INSTALLED="$INFRARED_VIRTUALENV/lib/python2.7/site-packages/infrared"
 
 # Patch for: https://github.com/redhat-openstack/infrared/issues/337
 sed --in-place '0,/name: virtualbmc$/{s/name: virtualbmc$/name: virtualbmc==1.4.0/}' "$INFRARED_INSTALLED/common/roles/vbmc/tasks/install.yml"
-#sed --in-place 's/name: python-virtualbmc/name: python2-virtualbmc/' "$INFRARED_INSTALLED/common/roles/vbmc/tasks/install.yml"
 
 # Patch for: Nova doing wrong health check (tripleo)
 # TODO
 
 # Patch for ceph-mgr deployment broken (tripleo)
-# TODO
+#wget --output-document="$INFRARED_INSTALLED/common/roles/rdo-release/defaults/main.yml" \
+#https://raw.githubusercontent.com/redhat-openstack/infrared/15b09251c10f5dd218657573add474ffd7c4f2d7/infrared/common/roles/rdo-release/defaults/main.yml
 
 set +e
 
