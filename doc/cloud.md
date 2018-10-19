@@ -69,10 +69,10 @@ On `undercloud-0` you'll find useful logs and topology files for this step:
     /home/stack/openstack_failures_long.log
     /home/stack/instackenv.json
 
-The root user at the Hypervisor (and also in `undercloud-0) now has a keypair (at `/root/.ssh`) that
-can be used to login as user `heat-admin` to the cloud machines, which has sudo access there. To
-login, you need to find their addresses, which you can see with the `openstack server info` command.
-We provide `ssh-undercloud` as a shortcut script. An example:  
+The root user at the Hypervisor (and also in `undercloud-0`) now has a keypair (at `/root/.ssh`)
+that can be used to login as user `heat-admin` to the cloud machines, which has sudo access there.
+To login, you need to find their addresses, which you can see with the `openstack server info`
+command. We provide `ssh-undercloud` as a shortcut script. An example:  
 
     ./ssh-undercloud compute-0
 
