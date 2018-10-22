@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+
+"$HERE/openstack" server create --flavor m1.tiny --image "CentOS 7" hello_world

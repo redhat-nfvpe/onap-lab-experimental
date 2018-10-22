@@ -15,5 +15,5 @@ sudo ./reset-virtual-resources
 ./delete-virtual-resources
 ./provision-virtual-resources
 ./install-undercloud
-./build-cloud-images
+./build-undercloud-images
 ./install-overcloud
