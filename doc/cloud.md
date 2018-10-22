@@ -1,18 +1,18 @@
 Installing the Cloud
 ====================
 
-Step 1: Build cloud images
---------------------------
+Step 1: Install cloud images
+----------------------------
 
 Our cloud manager ("undercloud") provides operating system images for bootstrapping the cloud
 machines. We need to install them. On Orchestrator:
 
-    ./build-cloud-images
+    ./build-undercloud-images
 
 Another option, which is a bit faster, is to download ready-made images. However, we cannot
 guarantee that they will be identical to the built images. To import:
 
-    ./download-cloud-images
+    ./download-undercloud-images
 
 To list the images, on Hypervisor:
 
@@ -50,13 +50,13 @@ machine is assigned a role that defines which OpenStack components run on it:
 
 > One interesting implementation detail: if you remember, our cloud manager uses OpenStack's
 [Ironic](https://wiki.openstack.org/wiki/Ironic) component to manage the cloud machines. You might
-think that it only uses Ironic for bare metal machines, which is what it was designed for. Because
-in the all-in-one setup we are using virtual machines, we shouldn't have to use Ironic, right?
-Surprisingly, we are! We do this in order to maintain a single management path for all machines,
-whether they are bare metal or virtual. This works well, but it does involve some cunning to make
-the virtual machines behave more like bare metal. To learn more about this technology, see
-[VirtualBMC](https://github.com/openstack/virtualbmc), which exposes an
-[IMPI](https://en.wikipedia.org/wiki/Intelligent_Platform_Management_Interface) for Ironic.
+think that it only uses Ironic for bare metal machines, which is what it was designed for. In the
+all-in-one setup we are using virtual machines, we shouldn't have to use Ironic, right?
+In fact, we are using Ironic for all machines, whether bare metal or virtual. We do this in order to
+maintain a single management path for all machines. This works well, but it does involve some
+cunning to make the virtual machines behave more like bare metal. To learn more about this
+technology see [VirtualBMC](https://github.com/openstack/virtualbmc), which exposes an
+[IPMI](https://en.wikipedia.org/wiki/Intelligent_Platform_Management_Interface).
 
 Let's install them:
 
@@ -87,10 +87,10 @@ containers from within a cloud machine:
 Accessing the Cloud
 -------------------
 
-Access details were added to our InfraRed workspace on the Hypervisor. We provide
-`openstack-overcloud` as a shortcut script. Example:
+Access details were added to our InfraRed workspace on the Hypervisor. We provide `openstack` as a
+shortcut script. Example:
 
-    ./openstack-overcloud network list
+    ./openstack network list
 
 
 How to Reset
