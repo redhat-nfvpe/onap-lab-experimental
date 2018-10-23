@@ -7,13 +7,12 @@ if [ "$EUID" == 0 ]; then
 fi
 
 HERE=$(dirname "$(readlink -f "$0")")
-cd "$HERE"
 
-sudo ./reset-virtual-resources
-./clean-infrared
-./install-infrared
-./delete-virtual-resources
-./provision-virtual-resources
-./install-undercloud
-./build-undercloud-images
-./install-overcloud
+sudo "$HERE/hypervisor/reset-virtual-resources"
+"$HERE/clean-infrared"
+"$HERE/install-infrared"
+"$HERE/delete-virtual-resources"
+"$HERE/provision-virtual-resources"
+"$HERE/install-undercloud"
+"$HERE/build-undercloud-images"
+"$HERE/install-overcloud"

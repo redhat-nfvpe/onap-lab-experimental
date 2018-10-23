@@ -1,0 +1,16 @@
+HYPERVISOR_ADDRESS=localhost
+
+OPENSTACK_IMAGES=~/cloud-images
+CENTOS7_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1809.qcow2
+
+PRIVATE_SUBNET_RANGE=192.0.2.0/24
+
+INFRARED_SOURCE=~/infrared-source
+INFRARED_VIRTUALENV=~/infrared-virtualenv
+export IR_HOME=~/infrared-home
+
+INFRARED_BRANCH=master
+INFRARED_COMMIT=9eb7f0ebbc1f3a5c9c4e9bda33c8832b165bac0f
+
+#INFRARED_BRANCH=stable
+#INFRARED_COMMIT=ab28a9fed9de2156306f693cf0d46f491f1f6909

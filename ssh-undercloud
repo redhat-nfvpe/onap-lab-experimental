@@ -21,4 +21,4 @@ if [ -z "$ctlplane" ]; then
 	echo "$MACHINE has no address on ctlplane network"
 fi
 
-"$HERE/ssh-virtual" "heat-admin@$ctlplane"
+sudo "$HERE/ssh-virtual" "heat-admin@$ctlplane"

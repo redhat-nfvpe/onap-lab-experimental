@@ -8,4 +8,17 @@ fi
 
 HERE=$(dirname "$(readlink -f "$0")")
 
-"$HERE/openstack" server create --flavor m1.tiny --image "CentOS 7" hello_world
+# Create server
+"$HERE/openstack" server create hello-world \
+	--flavor m1.tiny \
+	--image 'CentOS 7' \
+	--network private \
+        --key-name hello-world 
+SERVER_ID=$("$HERE/openstack" server list | awk '/hello-world/ {print $2}')
+
+# Create floating IP
+"$HERE/openstack" floating ip create nova
+FLOATING_IP_ID=$("$HERE/openstack" floating ip list | awk '/None/ {print $2}' | head -1)
+
+# Attach floating IP to server
+"$HERE/openstack" server add floating ip "$SERVER_ID" "$FLOATING_IP_ID"

@@ -11,7 +11,7 @@ fi
 # sudo pip install virtualenv==16.0.0
 
 HERE=$(dirname "$(readlink -f "$0")")
-. "$HERE/env"
+. "$HERE/conf/env"
 
 if [ ! -d "$INFRARED_SOURCE" ]; then
 	git clone --single-branch -b "$INFRARED_BRANCH" https://github.com/redhat-openstack/infrared.git "$INFRARED_SOURCE"
@@ -42,13 +42,6 @@ INFRARED_INSTALLED="$INFRARED_VIRTUALENV/lib/python2.7/site-packages/infrared"
 
 # Patch for: https://github.com/redhat-openstack/infrared/issues/337
 sed --in-place '0,/name: virtualbmc$/{s/name: virtualbmc$/name: virtualbmc==1.4.0/}' "$INFRARED_INSTALLED/common/roles/vbmc/tasks/install.yml"
-
-# Patch for: Nova doing wrong health check (tripleo)
-# TODO
-
-# Patch for ceph-mgr deployment broken (tripleo)
-#wget --output-document="$INFRARED_INSTALLED/common/roles/rdo-release/defaults/main.yml" \
-#https://raw.githubusercontent.com/redhat-openstack/infrared/15b09251c10f5dd218657573add474ffd7c4f2d7/infrared/common/roles/rdo-release/defaults/main.yml
 
 set +e
 

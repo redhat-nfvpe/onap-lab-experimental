@@ -10,18 +10,5 @@ HERE=$(dirname "$(readlink -f "$0")")
 . "$HERE/infrared-activate"
 
 infrared workspace checkout onap-lab
-infrared tripleo-overcloud -vv --from-file "$HERE/overcloud.ini"
-
-#infrared tripleo-overcloud -vv \
-#--version queens \
-#--deployment-files virt \
-#--introspect yes \
-#--tagging yes \
-#--deploy yes \
-#--containers yes \
-#--registry-mirror trunk.registry.rdoproject.org \
-#--registry-namespace master \
-#--registry-tag tripleo-ci-testing \
-#--registry-prefix=centos-binary- \
-#--registry-skip-puddle yes \
-#--post yes
+infrared tripleo-overcloud -vv \
+	--from-file "$HERE/conf/overcloud.ini"

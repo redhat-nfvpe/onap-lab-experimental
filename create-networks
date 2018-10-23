@@ -1,0 +1,30 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+# See: https://www.server-world.info/en/note?os=CentOS_7&p=openstack_queens&f=6
+
+HERE=$(dirname "$(readlink -f "$0")")
+. "$HERE/conf/env"
+
+# Public network already exists and is called "nova"
+PUBLIC_NETWORK_ID=$("$HERE/openstack" network show nova -c id -f value)
+
+# Create private network and private subnet
+"$HERE/openstack" network create private --provider-network-type vxlan
+"$HERE/openstack" subnet create private --network private --subnet-range "$PRIVATE_SUBNET_RANGE"
+PRIVATE_SUBNET_ID=$("$HERE/openstack" subnet show private -c id -f value)
+
+# Create router and attach it to public and private network
+"$HERE/openstack" router add subnet router01
+"$HERE/openstack" router add subnet router01 "$PRIVATE_SUBNET_ID"
+"$HERE/openstack" router set --external-gateway "$PUBLIC_NETWORK_ID"
+
+# Permit ports for admin project
+SECURITY_GROUP_ID=$("$HERE/openstack" security group list --project admin | awk '/default/ {print $2}')
+"$HERE/openstack" security group rule create "$SECURITY_GROUP_ID" --remote-ip 0.0.0.0/0 --protocol tcp --dst-port 22:22
+"$HERE/openstack" security group rule create "$SECURITY_GROUP_ID" --remote-ip 0.0.0.0/0 --protocol icmp --icmp-type -1 --icmp-code -1
