@@ -6,10 +6,29 @@ if [ "$EUID" == 0 ]; then
 	exit 1
 fi
 
-if [ ! -f ~/.ssh/id_rsa ]; then
-	ssh-keygen -f ~/.ssh/id_rsa -t rsa -N  ''
-else
-	echo Key already exists
+NAME=$1
+
+if [ -z "$NAME" ]; then
+	echo "Provide keypair name"
+	exit 1
 fi
 
-ssh-copy-id root@localhost
+HERE=$(dirname "$(readlink -f "$0")")
+. "$HERE/conf/env"
+
+mkdir --parents "$OPENSTACK_KEYPAIRS"
+
+if [ ! -f "$OPENSTACK_KEYPAIRS/$NAME" ]; then
+	ssh-keygen -f "$OPENSTACK_KEYPAIRS/$NAME" -t rsa -N ''
+else
+	echo "Files for keypair \"$NAME\" already exist"
+fi
+
+if ! "$HERE/openstack" keypair show "$NAME" >/dev/null 2>&1; then
+	echo "Creating keypair \"$NAME\"..."
+	"$HERE/openstack" keypair create "$NAME" \
+		--public-key "$OPENSTACK_KEYPAIRS/$NAME.pub"
+else
+	echo "Keypair \"$NAME\" already exists"
+	exit 1
+fi

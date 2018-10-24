@@ -1,0 +1,56 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+PROJECT=$1
+
+if [ -z "$PROJECT" ]; then
+	echo 'Provide project name'
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+
+function delete_resources () {
+	local RESOURCE=$1
+	local RESOURCE_ID
+
+	echo "Deleting ${RESOURCE}s..."
+	for RESOURCE_ID in $("$HERE/openstack" "$RESOURCE" list --project "$PROJECT" --column ID --format value); do
+        	"$HERE/openstack" "$RESOURCE" delete "$RESOURCE_ID"
+	done
+}
+
+delete_resources server
+
+# We *must* remove ports from routers before deleting either the router or the ports
+# Note: we cannot remove a port if it's associated with a server (command will not return error!)
+echo 'Removing ports from routers...'
+for ROUTER_ID in $("$HERE/openstack" router list --project "$PROJECT" --column ID --format value); do
+	for PORT_ID in $("$HERE/openstack" port list --router "$ROUTER_ID" --column id --format value); do
+		"$HERE/openstack" router remove port "$ROUTER_ID" "$PORT_ID"
+	done
+done
+
+delete_resources router
+
+# Our networks might have ports from other projects
+echo 'Deleting allocated ports...'
+for NETWORK_ID in $("$HERE/openstack" network list --project "$PROJECT" --column ID --format value); do
+	for PORT_ID in $("$HERE/openstack" port list --network "$NETWORK_ID" --column id --format value); do
+		"$HERE/openstack" port delete "$PORT_ID"
+	done
+done
+
+delete_resources port
+delete_resources subnet
+delete_resources network 
+delete_resources 'floating ip'
+delete_resources 'security group' 
+
+echo 'Deleting project...'
+"$HERE/openstack" project delete "$PROJECT"

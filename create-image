@@ -1,0 +1,40 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+PROJECT=$1
+NAME=$2
+URL=$3
+
+if [ -z "$PROJECT" ] || [ -z "$NAME" ] || [ -z "$URL" ]; then
+	echo 'Provide project name, image name, and image url'
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+. "$HERE/conf/env"
+
+if ! "$HERE/openstack" image show "$PROJECT.$NAME" >/dev/null 2>&1; then
+	mkdir --parents "$OPENSTACK_IMAGES"
+
+	FILENAME="$OPENSTACK_IMAGES/$(basename "$URL")"
+
+	if [ ! -f "$FILENAME" ]; then
+		wget --output-document="$FILENAME" "$URL"
+	fi
+
+	echo "Creating image \"$PROJECT.$NAME\"..."
+	"$HERE/openstack" image create "$PROJECT.$NAME" \
+		--project "$PROJECT" \
+		--file "$FILENAME" \
+		--disk-format qcow2 \
+		--container-format bare \
+		--public
+else
+	echo "Image \"$PROJECT.$NAME\" already exists"
+	exit 1
+fi

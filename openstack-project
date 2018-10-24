@@ -7,7 +7,10 @@ if [ "$EUID" == 0 ]; then
 fi
 
 HERE=$(dirname "$(readlink -f "$0")")
+. "$HERE/infrared-activate"
 
-"$HERE/openstack" project create common
-"$HERE/create-common-flavors" common
-"$HERE/create-common-images" common
+. "$IR_HOME/.workspaces/onap-lab/keystonerc"
+
+OS_PROJECT_NAME=$1
+
+openstack "${@:2}"
