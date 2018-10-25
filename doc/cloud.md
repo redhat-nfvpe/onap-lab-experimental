@@ -25,7 +25,7 @@ On `undercloud-0` you'll find useful logs for this step:
     /home/stack/ironic-python-agent.log
 
 
-Step 2: Install cloud machines
+Step 2: Prepare cloud machines
 ------------------------------
 
 If we're installing an all-in-one setup, then we should already have the cloud virtual machines set
@@ -76,12 +76,26 @@ command. We provide `ssh-undercloud` as a shortcut script. An example:
 
     ./ssh-undercloud compute-0
 
-Within each cloud machine we will be running the OpenStack components as Docker containers. This
-allows for better isolation, stability, and an easier upgrade path. Internally,
+Within each cloud machine we are running the OpenStack components as Docker containers. This allows
+for better isolation, stability, and an easier upgrade path. Internally,
 [Kolla](https://docs.openstack.org/kolla/queens/) is used to deploy the container images. To see the
 containers from within a cloud machine:
 
     sudo docker container list
+
+
+Step 3: Prepare cloud
+---------------------
+
+Now we have an OpenStack instance, but it's still very bare. Let's add the basics:
+
+    ./prepare-cloud
+
+This will create:
+
+* A `public` network in the `admin` project (subnet 10.0.0.0/24) 
+* Conventional public flavors, such `m1.tiny` and `m1.large`
+* Common images, such as `common.centos7` in the `common` project
 
 
 Accessing the Cloud
