@@ -36,14 +36,16 @@ if ! "$HERE/openstack" network list --project "$PROJECT" | grep --quiet --line-r
 		--format value)
 
 	echo "Creating router \"$PROJECT.$NAME\"..."
-	"$HERE/openstack" router create "$PROJECT.$NAME" \
-		--project "$PROJECT"
+	ROUTER_ID=$("$HERE/openstack" router create "$PROJECT.$NAME" \
+		--project "$PROJECT" \
+		--column id \
+		--format value)
 
 	echo "Adding subnet to router..."
-	"$HERE/openstack" router add subnet "$PROJECT.$NAME" "$SUBNET_ID"
+	"$HERE/openstack" router add subnet "$ROUTER_ID" "$SUBNET_ID"
 
 	echo "Setting external gateway for router..."
-	"$HERE/openstack" router set "$PROJECT.$NAME" --external-gateway nova 
+	"$HERE/openstack" router set "$ROUTER_ID" --external-gateway public 
 else
 	echo "Network \"$PROJECT.$NAME\" already exists"
 	exit 1

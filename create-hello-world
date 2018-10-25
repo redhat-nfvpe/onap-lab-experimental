@@ -23,20 +23,22 @@ echo "Creating project \"$PROJECT\"..."
 	--description "$PROJECT" > /dev/null
 
 echo "Adding admin role..."
+# This will allow us to login with user admin
 "$HERE/openstack" role add admin \
-	--project "$PROJECT"
+	--project "$PROJECT" \
 	--user admin
 
 # Create network
 "$HERE/create-network" "$PROJECT" private 192.0.2.0/24
 
 echo "Creating security group rules..."
+# Projects are created with a security group named "default", we'll just update it
 SECURITY_GROUP_ID=$("$HERE/openstack" security group list --project "$PROJECT" --column ID --format value | tail -n1)
 "$HERE/openstack" security group rule create "$SECURITY_GROUP_ID" --remote-ip 0.0.0.0/0 --protocol tcp --dst-port 22:22 > /dev/null
 "$HERE/openstack" security group rule create "$SECURITY_GROUP_ID" --remote-ip 0.0.0.0/0 --protocol icmp --icmp-type -1 --icmp-code -1 > /dev/null
 
 # Create server
-# Note: We cannot create a server on a different project than the current one, so we'll use our "openstack-project"
+# Note: "server create" does not support a "--project" switch, so we'll have to use "openstack-project"
 echo "Creating server..."
 SERVER_ID=$("$HERE/openstack-project" "$PROJECT" server create hello-world \
 	--column id \
@@ -48,12 +50,12 @@ SERVER_ID=$("$HERE/openstack-project" "$PROJECT" server create hello-world \
 
 # Create floating IP
 echo "Creating floating IP..."
-FLOATING_IP_ID=$("$HERE/openstack" floating ip create nova \
+FLOATING_IP_ID=$("$HERE/openstack" floating ip create public \
 	--project "$PROJECT" \
 	--column id \
 	--format value)
 FLOATING_IP=$("$HERE/openstack" floating ip show "$FLOATING_IP_ID" \
-	--column floating_ip_address
+	--column floating_ip_address \
 	--format value)
 
 # Add floating IP to server

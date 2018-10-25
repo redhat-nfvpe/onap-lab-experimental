@@ -27,7 +27,7 @@ fi
 if ! "$HERE/openstack" keypair show "$NAME" >/dev/null 2>&1; then
 	echo "Creating keypair \"$NAME\"..."
 	"$HERE/openstack" keypair create "$NAME" \
-		--public-key "$OPENSTACK_KEYPAIRS/$NAME.pub"
+		--public-key "$OPENSTACK_KEYPAIRS/$NAME.pub" > /dev/null
 else
 	echo "Keypair \"$NAME\" already exists"
 	exit 1

@@ -41,12 +41,13 @@ pip install "$INFRARED_SOURCE"
 INFRARED_INSTALLED="$INFRARED_VIRTUALENV/lib/python2.7/site-packages/infrared"
 
 # Patch for: https://github.com/redhat-openstack/infrared/issues/337
-sed --in-place '0,/name: virtualbmc$/{s/name: virtualbmc$/name: virtualbmc==1.4.0/}' "$INFRARED_INSTALLED/common/roles/vbmc/tasks/install.yml"
+#sed --in-place '0,/name: virtualbmc$/{s/name: virtualbmc$/name: virtualbmc==1.4.0/}' "$INFRARED_INSTALLED/common/roles/vbmc/tasks/install.yml"
 
 set +e
 
 infrared plugin add "$INFRARED_SOURCE/plugins/virsh"
 infrared plugin add "$INFRARED_SOURCE/plugins/tripleo-undercloud"
 infrared plugin add "$INFRARED_SOURCE/plugins/tripleo-overcloud"
+infrared plugin add cloud-config
 
 infrared workspace create onap-lab
