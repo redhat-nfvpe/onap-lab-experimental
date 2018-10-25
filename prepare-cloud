@@ -13,6 +13,6 @@ infrared workspace checkout onap-lab
 infrared cloud-config -vv \
 	--from-file "$HERE/conf/overcloud.ini"
 
+"$HERE/create-common-flavors"
 "$HERE/openstack" project create common
-"$HERE/create-common-flavors" common
 "$HERE/create-common-images" common
