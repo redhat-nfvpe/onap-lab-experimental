@@ -87,10 +87,20 @@ containers from within a cloud machine:
 Accessing the Cloud
 -------------------
 
-Access details were added to our InfraRed workspace on the Hypervisor. We provide `openstack` as a
-shortcut script. Example:
+Access details for the `admin` user on the `admin` proect were added to our InfraRed workspace on
+the Hypervisor. We provide `openstack` as a shortcut script. Example:
 
     ./openstack network list
+
+Another useful shortcut is `openstack-project`, which uses the `admin` user on a different project:
+
+    ./openstack-project my-project server list
+
+Note that if you create your own project, it does not by default grant the `admin` user access to
+it. To grant access:
+
+    ./openstack project create my-project --parent common
+    ./openstack role add admin --project my-project --user admin
 
 
 How to Reset
@@ -102,10 +112,3 @@ credentials in order to access the overcloud.
     ./ssh-virtual stack@undercloud-0
     . stackrc
     openstack overcloud delete overcloud
-
-
-
-
-
-https://rdo-container-registry.readthedocs.io/en/latest/using.html
-https://docs.openstack.org/tripleo-docs/latest/contributor/dlrn-promoter-overview.html

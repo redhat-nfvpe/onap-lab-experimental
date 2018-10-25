@@ -22,7 +22,6 @@ To activate the virtual environment and checkout our workspace:
 Ansible will be accessing the Hypervisor over ssh as the root user. This means that you must have a
 private key for which the paired public key is registered with root@Hypervisor. Note that this
 is true even if the Orchestrator and Hypervisor are the same physical machine, in which case Ansible
-will be ssh-ing to localhost. To make sure you have a key and to copy it:
+will be ssh-ing to localhost. We provide a shortcut to make sure you have a key and to copy it:
 
-    ./create-keypair
-    ssh-copy-id root@hypervisor_address
+    ./create-orchestrator-keypair

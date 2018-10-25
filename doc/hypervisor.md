@@ -40,7 +40,7 @@ Also, root user now has a keypair (at `/root/.ssh`) that can be used to login, e
 `stack` or as `root` to the cloud manager virtual machine. We provide `ssh-virtual` as a shortcut
 script to do this safely. So, to login, on Hypervisor:
 
-    ./ssh-virtual stack@undercloud-0
+    sudo ./ssh-virtual stack@undercloud-0
 
 Currently it's a fresh CentOS virtual machine. The next step will install our cloud manager software
 in it.
@@ -53,7 +53,9 @@ root user, you must use `sudo` to access them, e.g. on Hypervisor:
 
 You can also use a virsh client on a remote machine (such as the Orchestrator), e.g.:
 
-    virsh --connect=qemu+ssh://root@hypervisor_address/system list
+    ./virsh-hypervisor list
+
+Note that it will also work locally on the Hypervisor.
 
 
 Step 2: Install the cloud manager
@@ -131,6 +133,6 @@ this at the Orchestrator:
 However, if the virtual machines are in a broken state, some resources might not be deleted. You can
 make sure to completely remove _all_ virtual resources by running this script at the Hypervisor:
 
-    sudo ./reset-virtual-resources
+    sudo hypervisor/reset-virtual-resources
 
 Note that this will delete *both* the undercloud *and* the overcloud!
