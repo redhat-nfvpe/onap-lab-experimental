@@ -60,7 +60,7 @@ Physical Machines
 The lab comprises 3 physical machines roles:
 
 * Orchestrator: This is the machine on which we execute the Ansible playbooks that set up the lab.
-  It can be any Unix-like machine with Python (Python versions 2 and 3 are supported).
+  It can be any Unix-like machine with Python 2.7.
 * Hypervisor: This is the machine that manages and bootstraps our cloud machines. It *must* run
   CentOS or RHEL and be capable of supporting a few virtual machines.
 * Cloud: One or more machines that will provide physical resources for OpenStack to manage and
