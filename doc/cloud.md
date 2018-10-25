@@ -103,6 +103,33 @@ it. To grant access:
     ./openstack role add admin --project my-project --user admin
 
 
+Quick Test
+----------
+
+We have a script to create a "hello world" example:
+
+    ./create-hello-world
+
+This creates a `test` project with its own network, subnet, and router that used the `public`
+network as its external gateway. We make sure the project's `default` security group rules allow for
+ping (ICMP) and ssh. We then create a server named `hello-world` with a new `test` keypair and
+assign it a floating IP (again on the `public` network). Give the server a minute or two to startup,
+and then you can ssh into the fully functioning virtual machine using the private key, e.g.:
+
+    ./ssh-virtual -i ~/openstack-keypairs/test centos@10.0.0.210
+
+When done testing, you can delete the project and all its resources using our `delete-project`
+script:
+
+    ./delete-project test
+
+Note that deleting a project is tricky in OpenStack, because the simple `openstack project delete`
+command will *not* delete associated resources and instead leave them orphaned and dangling. It's
+likewise tricky to delete networks, because the operation will fail if ports on the network are in
+use. Yet another issue is that ports on the network can be created in *other* projects. This script
+does the heavy lifting to ensure that all resources associated with the project are safely deleted.
+
+
 How to Reset
 ------------
 
