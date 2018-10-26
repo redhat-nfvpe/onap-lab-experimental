@@ -122,15 +122,22 @@ Quick Test
 
 We have a script to create a "hello world" example:
 
-    ./create-hello-world
+    ./create-simple-project test hello-world
 
-This creates a `test` project with its own network, subnet, and router that used the `public`
-network as its external gateway. We make sure the project's `default` security group rules allow for
-ping (ICMP) and ssh. We then create a server named `hello-world` with a new `test` keypair and
-assign it a floating IP (again on the `public` network). Give the server a minute or two to startup,
-and then you can ssh into the fully functioning virtual machine using the private key, e.g.:
+This creates a `test` project with its own `test.private` network, subnet, and router that used the
+`public` network as its external gateway. We make sure the project's `default` security group rules
+allow for ping (ICMP) and ssh. We then create a server named `hello-world` with a new `test`
+keypair, create and attach a 2 GB volume to it, and finally assign it a floating IP (again on the
+`public` network).
+
+You can ssh into the fully functioning virtual machine using the private key, e.g.:
 
     ./ssh-virtual -i ~/openstack-keypairs/test centos@10.0.0.210
+
+You must manually format and mount the attached volume:
+
+    sudo mkfs.ext4 /dev/vdb
+    sudo mount /dev/vdb /mnt
 
 When done testing, you can delete the project and all its resources using our `delete-project`
 script:
