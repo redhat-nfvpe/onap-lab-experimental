@@ -1,0 +1,3 @@
+"override.compute.cpu": "16"
+"override.compute.memory": "204800"
+"override.ceph.disks.disk1.size": "200G"

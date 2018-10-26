@@ -51,7 +51,7 @@ SERVER_ID=$("$HERE/openstack-project" "$PROJECT" server create "$NAME" \
 	--column id \
 	--format value \
 	--wait \
-	--flavor m1.tiny \
+	--flavor m1.large \
 	--image common.centos7 \
 	--network "$PROJECT.private" \
 	--key-name "$PROJECT" | tail -n1)

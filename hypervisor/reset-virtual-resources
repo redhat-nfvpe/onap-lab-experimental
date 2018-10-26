@@ -21,3 +21,8 @@ echo 'Deleting all volumes in "images" pool...'
 for NAME in $(virsh vol-list images | tail --lines=+3 | head --line=-1 | cut --fields=2 --delimiter=' '); do
 	virsh vol-delete "$NAME" --pool images
 done
+
+echo 'Deleting all volumes in "libvirt" pool...'
+for NAME in $(virsh vol-list libvirt | tail --lines=+3 | head --line=-1 | cut --fields=2 --delimiter=' '); do
+	virsh vol-delete "$NAME" --pool libvirt
+done
