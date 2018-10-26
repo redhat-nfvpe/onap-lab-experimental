@@ -15,11 +15,28 @@ fi
 
 HERE=$(dirname "$(readlink -f "$0")")
 
-# Servers must be accessed from the project
-echo 'Deleting servers...'
-for SERVER_ID in $("$HERE/openstack-project" "$PROJECT" server list --column ID --format value); do
-	"$HERE/openstack-project" "$PROJECT" server delete "$SERVER_ID"
-done
+function delete_resources () {
+	local RESOURCE=$1
+	local RESOURCE_ID
+
+	echo "Deleting ${RESOURCE}s..."
+	for RESOURCE_ID in $("$HERE/openstack" "$RESOURCE" list --project "$PROJECT" --column ID --format value); do
+		"$HERE/openstack" "$RESOURCE" delete "$RESOURCE_ID"
+	done
+}
+
+function delete_project_resources () {
+	local RESOURCE=$1
+	local RESOURCE_ID
+
+	echo "Deleting ${RESOURCE}s..."
+	for RESOURCE_ID in $("$HERE/openstack-project" "$PROJECT" "$RESOURCE" list --column ID --format value); do
+		"$HERE/openstack-project" "$PROJECT" "$RESOURCE" delete "$RESOURCE_ID"
+	done
+}
+
+delete_project_resources server
+delete_project_resources volume
 
 # We *must* remove ports from routers before deleting either the router or the ports
 # Note: we cannot remove a port if it's associated with a server (command will not return error!)
@@ -38,16 +55,6 @@ for NETWORK_ID in $("$HERE/openstack" network list --project "$PROJECT" --column
 		"$HERE/openstack" port delete "$PORT_ID"
 	done
 done
-
-function delete_resources () {
-	local RESOURCE=$1
-	local RESOURCE_ID
-
-	echo "Deleting ${RESOURCE}s..."
-	for RESOURCE_ID in $("$HERE/openstack" "$RESOURCE" list --project "$PROJECT" --column ID --format value); do
-		"$HERE/openstack" "$RESOURCE" delete "$RESOURCE_ID"
-	done
-}
 
 delete_resources subnet
 delete_resources network 

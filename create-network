@@ -35,7 +35,7 @@ if ! "$HERE/openstack" network list --project "$PROJECT" | grep --quiet --line-r
 		--column id \
 		--format value)
 
-	echo "Setting DNS nameserver on subnet..."
+	echo "Setting DNS nameserver on subnet \"$PROJECT.$NAME\"..."
 	"$HERE/openstack" subnet set "$PROJECT.$NAME" --dns-nameserver "$DNS_NAMESERVER"
 
 	echo "Creating router \"$PROJECT.$NAME\"..."
@@ -44,10 +44,10 @@ if ! "$HERE/openstack" network list --project "$PROJECT" | grep --quiet --line-r
 		--column id \
 		--format value)
 
-	echo "Adding subnet to router..."
+	echo "Adding subnet \"$PROJECT.$NAME\" to router \"$PROJECT.$NAME\"..."
 	"$HERE/openstack" router add subnet "$ROUTER_ID" "$SUBNET_ID"
 
-	echo "Setting external gateway for router..."
+	echo "Setting external gateway for router \"$PROJECT.$NAME\"..."
 	"$HERE/openstack" router set "$ROUTER_ID" --external-gateway public 
 else
 	echo "Network \"$PROJECT.$NAME\" already exists"
