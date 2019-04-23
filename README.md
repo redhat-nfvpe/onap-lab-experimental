@@ -39,19 +39,16 @@ The full lab comprises 3 platform layers:
 * [RDO](https://www.rdoproject.org/): OpenStack distribution.
   Red Hat provides a supported version of RDO in its
   [OpenStack Platform](https://www.redhat.com/en/technologies/linux-platforms/openstack-platform).
-  We will be doing a comprehensive, full-featured installation of RDO that gives you a
-  straightforward upgrade path to a very large lab environment, with the same tooling you would
-  have in staging and even production environments.  
+  We will be doing a comprehensive, full-featured installation of RDO that gives you an upgrade path
+  to staging and even production environments.  
 
-Note that it is possible to avoid OpenStack and run OKD directly on bare metal. However, we find
-that in a lab environment it is useful to have OKD hosted inside OpenStack-managed virtual machines.
-Thi allows us to more easily set up and tear down OKD and run multiple OKD clusters (even of
-different versions) simultaneously.
+Note that it is possible to avoid OKD-on-OpenStack layering and run OKD directly on bare metal.
+However, we find that in a lab environment it is useful to have OKD hosted inside OpenStack-managed
+virtual machines. This allows us to more easily set up and tear down OKD and run multiple OKD
+clusters (even of different versions) simultaneously.
 
 Furthermore, because we need an OpenStack cloud to run ONAP integration tests (ONAP will orchestrate
 VNFs there), we might as well use it to host OKD and ONAP itself.
-
-As OKD bare metal support matures we will provide that installation option here.
 
 
 Physical Machines
@@ -60,20 +57,15 @@ Physical Machines
 The lab comprises 3 physical machines roles:
 
 * Orchestrator: This is the machine on which we execute the Ansible playbooks that set up the lab.
-  It can be any Unix-like machine with Python 2.7.
+  It should be a Linux machine with Python 2.7.
 * Hypervisor: This is the machine that manages and bootstraps our cloud machines. It *must* run
-  CentOS or RHEL and be capable of supporting a few virtual machines.
+  CentOS (or RHEL) and be capable of supporting a few virtual machines.
 * Cloud: One or more machines that will provide physical resources for OpenStack to manage and
   provision. Actually, within the cloud role there are various sub-roles: compute, storage, etc.
-  From this high-level, though, they are managed in the same way. 
-
-All 3 roles can definitely be combined into a single physical machine, which we'll call the
-"all-in-one" setup. We strongly recommend the all-in-one setup for newcomers, as it is significantly
-easier to install and administer.
-
-If you are combining the Hypervisor and Cloud roles into one machine, it may make sense to have both
-SSD and HDD drives in it. The Hypervisor software has a finite size and its storage can fit on the
-SSD. One or more large HDDs can be reserved for cloud storage.
+  From this high-level, though, they are managed in the same way. These machines must have one of
+  the management technologies supported by
+  [Ironic](https://docs.openstack.org/ironic/latest/admin/drivers.html). Note that ONAP is a RAM-
+  and storage-hungry workload, so your cloud machine(s) should have plenty of each.
 
 
 Chapters

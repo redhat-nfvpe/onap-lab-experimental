@@ -13,3 +13,5 @@ rm --recursive --force \
 	"$IR_HOME" \
 	"$INFRARED_VIRTUALENV" \
 	"$INFRARED_SOURCE" 
+
+echo Done!

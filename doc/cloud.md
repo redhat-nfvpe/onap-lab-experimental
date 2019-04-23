@@ -1,33 +1,6 @@
 Installing the Cloud
 ====================
 
-Step 1: Install cloud images
-----------------------------
-
-Our cloud manager ("undercloud") provides operating system images for bootstrapping the cloud
-machines. We need to install them. On Orchestrator:
-
-    ./build-undercloud-images
-
-Another option, which is a bit faster, is to download ready-made images. However, we cannot
-guarantee that they will be identical to the built images. To import:
-
-    ./download-undercloud-images
-
-To list the images, on Hypervisor:
-
-    ./openstack-undercloud image list
-
-On `undercloud-0` you'll find useful logs for this step:
-
-    /home/stack/overcloud-full.log
-    /home/stack/openstack-build-images.log
-    /home/stack/ironic-python-agent.log
-
-
-Step 2: Prepare cloud machines
-------------------------------
-
 If we're installing an all-in-one setup, then we should already have the cloud virtual machines set
 up for us from the previous step: `controller-0`, `compute-0`, and `ceph-0`. In RDO, each cloud
 machine is assigned a role that defines which OpenStack components run on it:
@@ -58,30 +31,6 @@ cunning to make the virtual machines behave more like bare metal. To learn more 
 technology see [VirtualBMC](https://github.com/openstack/virtualbmc), which exposes an
 [IPMI](https://en.wikipedia.org/wiki/Intelligent_Platform_Management_Interface).
 
-Let's install them:
-
-    ./install-overcloud
-
-On `undercloud-0` you'll find useful logs and topology files for this step:
-
-    /home/stack/overcloud_install.log
-    /home/stack/overcloud_deployment_44.log
-    /home/stack/openstack_failures_long.log
-    /home/stack/instackenv.json
-
-The root user at the Hypervisor (and also in `undercloud-0`) now has a keypair (at `/root/.ssh`)
-that can be used to login as user `heat-admin` to the cloud machines, which has sudo access there.
-To login, you need to find their addresses, which you can see with the `openstack server info`
-command. We provide `ssh-undercloud` as a shortcut script. An example:  
-
-    ./ssh-undercloud compute-0
-
-Within each cloud machine we are running the OpenStack components as Docker containers. This allows
-for better isolation, stability, and an easier upgrade path. Internally,
-[Kolla](https://docs.openstack.org/kolla/queens/) is used to deploy the container images. To see the
-containers from within a cloud machine:
-
-    sudo docker container list
 
 
 Step 3: Prepare cloud

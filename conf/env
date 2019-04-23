@@ -1,7 +1,4 @@
-# Hypervisor
-HYPERVISOR_ADDRESS=localhost
-
-# Directories
+# Orchestrator Directories
 _ROOT=$HOME
 OPENSTACK_IMAGES="$_ROOT/openstack-images"
 OPENSTACK_KEYPAIRS="$_ROOT/openstack-keypairs"
@@ -9,12 +6,34 @@ INFRARED_SOURCE="$_ROOT/infrared-source"
 INFRARED_VIRTUALENV="$_ROOT/infrared-virtualenv"
 export IR_HOME="$_ROOT/infrared-home"
 
+# Hypervisor
+HYPERVISOR_ADDRESS=onap1
+
 # InfraRed
-INFRARED_BRANCH=stable
-INFRARED_COMMIT=0f84d2f52eab358a3eedf3e06fd2785bda9f93c0
-#INFRARED_BRANCH=master
-#INFRARED_COMMIT=9eb7f0ebbc1f3a5c9c4e9bda33c8832b165bac0f
+#INFRARED_BRANCH=stable
+#INFRARED_COMMIT=b9788dd718cd42f8d0b27d4f79bac187e9f05ccf
+INFRARED_BRANCH=master
+INFRARED_COMMIT=b0551c6b150a1cfd9dd802518520c3c441239fc2
+
+# Python Libraries
+PIP_VERSION=19.0.3
+SETUPTOOLS_VERSION=41.0.0
+TOX_VERSION=3.8.6
+
+# OpenStack
+# Note: version names are for RDO, version numbers are for RHOSP
+# BUG: "queens" on the undercloud does not use Docker
+# BUG: "stein" on the undercloud is missing python3 package on CentOS, perhaps it will work on Fedora?
+UNDERCLOUD_OPENSTACK_VERSION=rocky
+OVERCLOUD_OPENSTACK_VERSION=rocky
+#OVERCLOUD_OPENSTACK_VERSION=queens
+
+# Ceph
+# See: https://github.com/ceph/ceph-container/blob/master/README.md
+# See: https://hub.docker.com/r/ceph/daemon/tags/
+CEPH_TAG=v4.0.0-stable-4.0-nautilus-centos-7-x86_64
+# v3.1.0-stable-3.1-luminous-centos-7-x86_64
 
 # Resources
-CENTOS7_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1809.qcow2
+CENTOS_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1901.qcow2
 DNS_NAMESERVER=1.0.0.1

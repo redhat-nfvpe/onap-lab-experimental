@@ -1,0 +1,35 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+. "$HERE/infrared-activate"
+
+mkdir --parents "$HERE/work"
+
+infrared workspace checkout onap-lab
+
+rm --force "$HERE/work/provision-hypervisor-virtual.log"
+ANSIBLE_LOG_PATH="$HERE/work/provision-hypervisor-virtual.log" \
+infrared virsh -vv \
+	--output "$HERE/work/provision-hypervisor-virtual.yaml" \
+	--from-file "$HERE/conf/hypervisor-virtual-resources.ini" \
+	--image-url "$CENTOS_IMAGE"
+
+# This doesn't work:
+# infrared virsh -vv \
+# 	--from-file "$HERE/conf/hypervisor-virtual-resources.ini" \
+# 	--extra-vars "@$HERE/conf/hypervisor-virtual-resources.yaml"
+
+# Note: memory is in mebibyte
+# infrared virsh -vv \
+# 	--from-file "$HERE/conf/hypervisor-virtual-resources.ini" \
+# 	--extra-vars override.compute.cpu=16 \
+# 	--extra-vars override.compute.memory=204800 \
+# 	--extra-vars override.ceph.disks.disk1.size=200G
+
+echo Done!

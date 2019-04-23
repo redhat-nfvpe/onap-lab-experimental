@@ -1,0 +1,40 @@
+#!/bin/bash
+set -e
+
+# See: https://infrared.readthedocs.io/en/stable/tripleo-undercloud.html
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+. "$HERE/infrared-activate"
+
+mkdir --parents "$HERE/work"
+
+infrared workspace checkout onap-lab
+rm --force "$HERE/work/install-overcloud-images.log"
+
+if [ "$1" == "-b" ]; then
+
+	ANSIBLE_LOG_PATH="$HERE/work/install-overcloud-images.log" \
+	infrared tripleo-undercloud -vv \
+		--output "$HERE/work/install-overcloud-images.yaml" \
+		--images-task build
+	
+	#	--build current-tripleo-rdo
+
+else
+
+	# See: https://images.rdoproject.org/rocky/
+
+	ANSIBLE_LOG_PATH="$HERE/work/install-overcloud-images.log" \
+	infrared tripleo-undercloud -vv \
+		--output "$HERE/work/install-overcloud-images.yaml" \
+		--images-task import \
+		--images-url "https://images.rdoproject.org/$OVERCLOUD_OPENSTACK_VERSION/rdo_trunk/current-tripleo-rdo/"
+
+fi
+
+echo Done!

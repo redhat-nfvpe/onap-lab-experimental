@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# See: https://infrared.readthedocs.io/en/stable/tripleo-overcloud.html
+# See: https://hub.docker.com/u/tripleorocky with prefix "centos-binary-"
+
 if [ "$EUID" == 0 ]; then
 	echo "Do not run this script as root"
 	exit 1
@@ -9,6 +12,22 @@ fi
 HERE=$(dirname "$(readlink -f "$0")")
 . "$HERE/infrared-activate"
 
+# Copy our environment-plan to where InfraRed can find it
+#cp "$HERE/conf/overcloud.yaml" "$IR_HOME/plugins/tripleo-overcloud/files/"
+
+mkdir --parents "$HERE/work"
+
 infrared workspace checkout onap-lab
+
+rm --force "$HERE/work/install-overcloud.log"
+ANSIBLE_LOG_PATH="$HERE/work/install-overcloud.log" \
 infrared tripleo-overcloud -vv \
-	--from-file "$HERE/conf/overcloud.ini"
+	--output "$HERE/work/install-overcloud.yaml" \
+	--from-file "$HERE/conf/overcloud.ini" \
+	--version "$OVERCLOUD_OPENSTACK_VERSION" \
+	--registry-namespace "tripleo$OVERCLOUD_OPENSTACK_VERSION" \
+	--registry-ceph-tag "$CEPH_TAG"
+
+#	--instackenv-file "$HERE/conf/overcloud.yaml"
+
+echo Done!

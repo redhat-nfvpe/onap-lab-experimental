@@ -7,8 +7,8 @@ if [ "$EUID" == 0 ]; then
 fi
 
 HERE=$(dirname "$(readlink -f "$0")")
-. "$HERE/infrared-activate"
 
-. "$IR_HOME/.workspaces/onap-lab/stackrc"
+# Note: stackrc is backed up on Orchestrator at "$IR_HOME/.workspaces/onap-lab/stackrc"
 
-openstack "$@"
+"$HERE/ssh-hypervisor-virtual" stack@undercloud-0 \
+". /home/stack/stackrc && openstack $@"

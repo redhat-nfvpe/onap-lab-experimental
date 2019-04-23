@@ -6,14 +6,7 @@ if [ "$EUID" == 0 ]; then
 	exit 1
 fi
 
-PROJECT=$1
-
-if [ -z "$PROJECT" ]; then
-	echo 'Provide project name'
-	exit 1
-fi
-
 HERE=$(dirname "$(readlink -f "$0")")
 . "$HERE/conf/env"
 
-"$HERE/create-image" "$PROJECT" centos "$CENTOS_IMAGE"
+ssh "root@$HYPERVISOR_ADDRESS" "$@"

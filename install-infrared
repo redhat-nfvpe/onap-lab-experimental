@@ -6,10 +6,6 @@ if [ "$EUID" == 0 ]; then
 	exit 1
 fi
 
-# Requirements
-# sudo yum install git libselinux-python
-# sudo pip install virtualenv==16.0.0
-
 HERE=$(dirname "$(readlink -f "$0")")
 . "$HERE/conf/env"
 
@@ -21,21 +17,22 @@ if [ ! -d "$INFRARED_SOURCE" ]; then
 fi
 
 if [ ! -d "$INFRARED_VIRTUALENV" ]; then
-	virtualenv "$INFRARED_VIRTUALENV"
-	# Allow running on localhost (Orchestrator and Hypervisor are same machine)
-	ln --symbolic /usr/lib64/python2.7/site-packages/selinux "$INFRARED_VIRTUALENV/lib64/python2.7/site-packages/selinux"
+	virtualenv --python=python2.7 "$INFRARED_VIRTUALENV"
+	# Note: handled automatically by InfraRed master
+	# Allow ssh to localhost (required when Orchestrator and Hypervisor are same machine)
+	#ln --symbolic /usr/lib64/python2.7/site-packages/selinux "$INFRARED_VIRTUALENV/lib64/python2.7/site-packages/selinux"
 fi
 
 mkdir --parents "$IR_HOME"
 
 . "$HERE/infrared-activate"
 
-pip install --upgrade pip==18.1
-pip install --upgrade setuptools==40.4.3
+pip install --upgrade pip==$PIP_VERSION
+pip install --upgrade setuptools==$SETUPTOOLS_VERSION
 pip install "$INFRARED_SOURCE"
 
 # Using tox to install:
-#pip install --upgrade tox==3.5.2
+#pip install --upgrade tox==$TOX_VERSION
 #tox --workdir "$INFRARED_SOURCE" -e cli
 
 INFRARED_INSTALLED="$INFRARED_VIRTUALENV/lib/python2.7/site-packages/infrared"
@@ -51,3 +48,5 @@ infrared plugin add "$INFRARED_SOURCE/plugins/tripleo-overcloud"
 infrared plugin add cloud-config
 
 infrared workspace create onap-lab
+
+echo Done!
