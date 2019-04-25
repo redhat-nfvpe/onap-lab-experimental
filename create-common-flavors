@@ -8,7 +8,7 @@ fi
 
 HERE=$(dirname "$(readlink -f "$0")")
 
-# Note: only private flavors can be associated with projects
+# NOTE: public flavors cannot be associated with projects
 
 "$HERE/openstack" flavor create --id 0 --ram 512  --vcpus 1 --disk 10  m1.tiny
 "$HERE/openstack" flavor create --id 1 --ram 1024 --vcpus 1 --disk 20  m1.small

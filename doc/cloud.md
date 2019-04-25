@@ -6,18 +6,18 @@ up for us from the previous step: `controller-0`, `compute-0`, and `ceph-0`. In 
 machine is assigned a role that defines which OpenStack components run on it:
 
 * Controller:
-  Manages networking ([Neutron](https://docs.openstack.org/neutron/queens/)) as well
+  Manages networking ([Neutron](https://docs.openstack.org/neutron/latest/)) as well
   as virtual machine scheduling
-  ([nova-scheduler](https://docs.openstack.org/nova/queens/cli/nova-scheduler.html)).
+  ([nova-scheduler](https://docs.openstack.org/nova/latest/cli/nova-scheduler.html)).
   It requires only minimal compute and disk resources. The defaults should suffice.
-* Compute: [nova-compute](https://docs.openstack.org/nova/queens/cli/nova-compute.html). This is
+* Compute: [nova-compute](https://docs.openstack.org/nova/latest/cli/nova-compute.html). This is
   where our cloud virtual machines will be provisioned (in nested virtualization). So, we want this
   machine to be alloted a lot of RAM and CPU cores.
 * Ceph: [Ceph](https://ceph.com/) is a powerful distributed storage system with good OpenStack
   integration. This is where our
-  block storage ([Cinder](https://docs.openstack.org/cinder/queens/)),
-  file storage ([Manila](https://docs.openstack.org/manila/queens/)),
-  and object storage ([Swift](https://docs.openstack.org/swift/queens/)) will be provisioned.
+  block storage ([Cinder](https://docs.openstack.org/cinder/latest/)),
+  file storage ([Manila](https://docs.openstack.org/manila/latest/)),
+  and object storage ([Swift](https://docs.openstack.org/swift/latest/)) will be provisioned.
   So, on the lab we want this machine to be alloted a lot of disk space. RAM and CPU defaults
   should suffice.
 

@@ -1,0 +1,48 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+CONTROLLER=$1
+
+if [ -z "$CONTROLLER" ]; then
+	echo "Provide controller virtual machine name"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+. "$HERE/conf/env"
+
+if [ "$CONTROLLER" == "undercloud-0" ]; then
+
+	ssh -t -o LogLevel=QUIET "root@$HYPERVISOR_ADDRESS" \
+	ssh -t -o LogLevel=QUIET -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "stack@$CONTROLLER" \
+	\"${@:2}\"
+
+else
+
+	set +e
+	ADDRESSES=$("$HERE/openstack-undercloud" server show --format value --column addresses "$CONTROLLER")
+	if [ $? != 0 ]; then
+		echo "Controller $CONTROLLER does not exist"
+		exit 1
+	fi
+	set -e
+
+	eval "$ADDRESSES"
+
+	if [ -z "$ctlplane" ]; then
+		echo "Controller $CONTROLLER has no address on ctlplane network"
+		exit 1
+	fi
+
+	echo "$CONTROLLER address on ctlplane: $ctlplane"
+
+	ssh -t -o LogLevel=QUIET "root@$HYPERVISOR_ADDRESS" \
+	ssh -t -o LogLevel=QUIET -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "heat-admin@$ctlplane" \
+	\"${@:2}\"
+
+fi

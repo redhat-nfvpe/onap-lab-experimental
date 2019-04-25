@@ -39,7 +39,7 @@ delete_project_resources server
 delete_project_resources volume
 
 # We *must* remove ports from routers before deleting either the router or the ports
-# Note: we cannot remove a port if it's associated with a server (command will not return error!)
+# NOTE: we cannot remove a port if it's associated with a server (command will not return error!)
 echo 'Deleting routers...'
 for ROUTER_ID in $("$HERE/openstack" router list --project "$PROJECT" --column ID --format value); do
 	for PORT_ID in $("$HERE/openstack" port list --router "$ROUTER_ID" --column id --format value); do

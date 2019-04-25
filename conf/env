@@ -2,7 +2,7 @@
 _ROOT=$HOME
 OPENSTACK_IMAGES="$_ROOT/openstack-images"
 OPENSTACK_KEYPAIRS="$_ROOT/openstack-keypairs"
-INFRARED_SOURCE="$_ROOT/infrared-source"
+INFRARED_SOURCE="/tmp/infrared-source"
 INFRARED_VIRTUALENV="$_ROOT/infrared-virtualenv"
 export IR_HOME="$_ROOT/infrared-home"
 
@@ -13,26 +13,28 @@ HYPERVISOR_ADDRESS=onap1
 #INFRARED_BRANCH=stable
 #INFRARED_COMMIT=b9788dd718cd42f8d0b27d4f79bac187e9f05ccf
 INFRARED_BRANCH=master
-INFRARED_COMMIT=b0551c6b150a1cfd9dd802518520c3c441239fc2
+INFRARED_COMMIT=8c09994ebeab0a7bd6626e8dfb8af1c84aba572c
 
 # Python Libraries
-PIP_VERSION=19.0.3
-SETUPTOOLS_VERSION=41.0.0
-TOX_VERSION=3.8.6
+PIP_VERSION=19.1
+SETUPTOOLS_VERSION=41.0.1
+TOX_VERSION=3.9.0
 
 # OpenStack
-# Note: version names are for RDO, version numbers are for RHOSP
-# BUG: "queens" on the undercloud does not use Docker
-# BUG: "stein" on the undercloud is missing python3 package on CentOS, perhaps it will work on Fedora?
-UNDERCLOUD_OPENSTACK_VERSION=rocky
-OVERCLOUD_OPENSTACK_VERSION=rocky
-#OVERCLOUD_OPENSTACK_VERSION=queens
+# NOTE: version names are for RDO, version numbers are for RHOSP
+# "queens" (13) is the last LTS
+# NOTE: "queens" on the undercloud does not use Docker
+# BUG: "stein" on the undercloud is missing some Python 3 packages on CentOS 7
+UNDERCLOUD_OPENSTACK_VERSION=queens
+OVERCLOUD_OPENSTACK_VERSION=queens
 
 # Ceph
 # See: https://github.com/ceph/ceph-container/blob/master/README.md
 # See: https://hub.docker.com/r/ceph/daemon/tags/
-CEPH_TAG=v4.0.0-stable-4.0-nautilus-centos-7-x86_64
-# v3.1.0-stable-3.1-luminous-centos-7-x86_64
+# "luminous" (12) is the last LTS
+CEPH_VERSION=luminous
+CEPH_TAG=v4.0.0-stable-4.0-$CEPH_VERSION-centos-7-x86_64
+#CEPH_TAG=v3.1.0-stable-3.1-$CEPH_VERSION-centos-7-x86_64
 
 # Resources
 CENTOS_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1901.qcow2

@@ -19,7 +19,7 @@ HERE=$(dirname "$(readlink -f "$0")")
 
 if ! "$HERE/openstack" volume list --project "$PROJECT" | grep --quiet --line-regexp --fixed-strings "$PROJECT.$NAME"; then
 	echo "Creating volume \"$PROJECT.$NAME\"..."
-	# Note: "volume create" has a "--project" switch, but it seems to be ignored
+	# NOTE: "volume create" has a "--project" switch, but it seems to be ignored
 	VOLUME_ID=$("$HERE/openstack-project" "$PROJECT" volume create "$PROJECT.$NAME" \
 		--size "$SIZE" \
 		--column id \

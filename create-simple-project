@@ -44,9 +44,9 @@ SECURITY_GROUP_ID=$("$HERE/openstack" security group list --project "$PROJECT" -
 "$HERE/openstack" security group rule create "$SECURITY_GROUP_ID" --remote-ip 0.0.0.0/0 --protocol icmp --icmp-type -1 --icmp-code -1 > /dev/null
 
 # Create server
-# Note: "server create" does not support a "--project" switch, so we'll have to use "openstack-project"
+# NOTE: "server create" does not support a "--project" switch, so we'll have to use "openstack-project"
 echo "Creating server \"$NAME\"..."
-# Note: "--wait" causes an empty line to be printed before id
+# NOTE: "--wait" causes an empty line to be printed before id
 SERVER_ID=$("$HERE/openstack-project" "$PROJECT" server create "$NAME" \
 	--column id \
 	--format value \

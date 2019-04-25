@@ -25,7 +25,7 @@ infrared virsh -vv \
 # 	--from-file "$HERE/conf/hypervisor-virtual-resources.ini" \
 # 	--extra-vars "@$HERE/conf/hypervisor-virtual-resources.yaml"
 
-# Note: memory is in mebibyte
+# NOTE: memory is in mebibyte
 # infrared virsh -vv \
 # 	--from-file "$HERE/conf/hypervisor-virtual-resources.ini" \
 # 	--extra-vars override.compute.cpu=16 \

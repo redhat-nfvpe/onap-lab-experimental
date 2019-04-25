@@ -10,32 +10,34 @@ HERE=$(dirname "$(readlink -f "$0")")
 
 if [ "$1" == "-f" ]; then
 
+	set +e
 	echo 'Deleting all virtual machines...'
 	for UUID in $("$HERE/virsh-hypervisor" list --all --uuid); do
 		"$HERE/virsh-hypervisor" destroy "$UUID"
 		"$HERE/virsh-hypervisor" undefine "$UUID" --managed-save --remove-all-storage --delete-snapshots --snapshots-metadata --nvram  
 	done
-	
+
 	echo 'Deleting all networks...'
 	for UUID in $("$HERE/virsh-hypervisor" net-list --uuid); do
 		"$HERE/virsh-hypervisor" net-destroy "$UUID"
 		"$HERE/virsh-hypervisor" net-undefine "$UUID"
 	done
-	
+
 	echo 'Deleting all volumes in "images" pool...'
 	for NAME in $("$HERE/virsh-hypervisor" vol-list images 2> /dev/null | tail --lines=+3 | head --line=-1 | cut --fields=2 --delimiter=' '); do
 		"$HERE/virsh-hypervisor" vol-delete "$NAME" --pool images
 	done
-	
+
 	echo 'Deleting all volumes in "libvirt" pool...'
 	for NAME in $("$HERE/virsh-hypervisor" vol-list libvirt 2> /dev/null | tail --lines=+3 | head --line=-1 | cut --fields=2 --delimiter=' '); do
 		"$HERE/virsh-hypervisor" vol-delete "$NAME" --pool libvirt
 	done
+	set -e
 
 else
 
 	. "$HERE/infrared-activate"
-	
+
 	infrared workspace checkout onap-lab
 	infrared virsh -vv \
 		--from-file "$HERE/conf/hypervisor-virtual-resources.ini" \

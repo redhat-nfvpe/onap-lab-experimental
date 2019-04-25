@@ -9,9 +9,11 @@ fi
 HERE=$(dirname "$(readlink -f "$0")")
 
 #"$HERE/remove-infrared"
-"$HERE/install-infrared"
+#"$HERE/install-infrared"
 #"$HERE/remove-hypervisor-virtual" -f
+
 "$HERE/provision-hypervisor-virtual"
 "$HERE/install-undercloud"
 "$HERE/install-overcloud-images"
 "$HERE/install-overcloud"
+"$HERE/configure-overcloud"

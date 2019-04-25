@@ -28,12 +28,13 @@ if [ "$1" == "-b" ]; then
 else
 
 	# See: https://images.rdoproject.org/rocky/
+	# NOTE: images should match the undercloud version
 
 	ANSIBLE_LOG_PATH="$HERE/work/install-overcloud-images.log" \
 	infrared tripleo-undercloud -vv \
 		--output "$HERE/work/install-overcloud-images.yaml" \
 		--images-task import \
-		--images-url "https://images.rdoproject.org/$OVERCLOUD_OPENSTACK_VERSION/rdo_trunk/current-tripleo-rdo/"
+		--images-url "https://images.rdoproject.org/$UNDERCLOUD_OPENSTACK_VERSION/rdo_trunk/current-tripleo-rdo/"
 
 fi
 

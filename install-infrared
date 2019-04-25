@@ -18,7 +18,7 @@ fi
 
 if [ ! -d "$INFRARED_VIRTUALENV" ]; then
 	virtualenv --python=python2.7 "$INFRARED_VIRTUALENV"
-	# Note: handled automatically by InfraRed master
+	# NOTE: this is required only for InfraRed stable, already handled in InfraRed master
 	# Allow ssh to localhost (required when Orchestrator and Hypervisor are same machine)
 	#ln --symbolic /usr/lib64/python2.7/site-packages/selinux "$INFRARED_VIRTUALENV/lib64/python2.7/site-packages/selinux"
 fi

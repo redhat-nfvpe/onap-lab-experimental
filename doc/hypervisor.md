@@ -1,6 +1,12 @@
 Preparing the Hypervisor
 ========================
 
+In production OpenStack environments there's no single hypervisor, but rather there are many
+controllers running on dedicated hardware, with redundancy. For our lab we will converge all these
+roles in a single machine. However, it's important to understand that this machine will be
+fulfilling several roles.
+
+
 Step 1: Install the operating system
 ------------------------------------
 
@@ -28,15 +34,24 @@ key to the Hypervisor:
 
     ./install-orchestrator-keypair
 
+You can then ssh with script:
+
+	./ssh-hypervisor
+
 
 Step 2: Provision the virtual resources
 ---------------------------------------
 
-Although technically we can install our infrastructure manager software directly on the Hypervisor's
-operating system, we will instead install it in virtual machines. This separation allows for better
-control and more flexible administration. So, our first step is to provision those virtual machines.
+Because our Hypervisor will be running several controllers once, we will have the software for each
+controller in its own virtual machine. This separation allows for more isolation and easier
+administration, and also mimics production environments in which controllers would be running on
+dedicated hardware.
 
-On the Orchestrator:
+There's actually yet another level of isolation: within some controller virtual machines we will be
+running individual services as [Docker](https://www.docker.com/) containers. Internally,
+[Puppet](https://puppet.com/) is used to deploy these services.
+
+In this step we will provision all virtual resources at once. On the Orchestrator:
 
     ./provision-hypervisor-virtual
 
@@ -48,24 +63,20 @@ as a shortcut to connect remotely. Example:
 
     ./virsh-hypervisor list
 
-We provide `./ssh-hypervisor` as a shortcut to ssh to the Hypervisor as root. If you do so, you will
-notice:
+If you `./ssh-hypervisor` you'll notice:
 
 * Many new virtual network interfaces (`ip addr`)
 * Virtual storage is located in `/home/libvirt/`
 
 
-Step 3: Install the infrastructure manager ("undercloud")
----------------------------------------------------------
+Step 3: Install the infrastructure controller ("undercloud")
+------------------------------------------------------------
 
 On the Orchestrator:
 
     ./install-undercloud
 
-This can take about 20 minutes. Internally, the components are installed as
-[Docker](https://www.docker.com/) containers and [Puppet](https://puppet.com/) is used to deploy
-them. (If you configure for upstream developer packages then
-[Delorean](https://dlrn.readthedocs.io/en/latest/) is used to build them.)
+This can take about 20 minutes.
 
 If you `./ssh-hypervisor` you'll notice:
 
@@ -73,17 +84,15 @@ If you `./ssh-hypervisor` you'll notice:
 * `/etc/hosts` has domain names for the virtual machines (though only `undercloud-0` has an IP
   address)
 * The root user now has a keypair (at `/root/.ssh`) that can be used to ssh, either as user `stack`
-  *or* as `root`, to the `undercloud-0` virtual machine
+  *or* as `root`, to the `undercloud-0` virtual machine (note that user `stack` has sudo access)
 
-The `./ssh-hypervisor-virtual` can be used to double-ssh from the Orchestrator to the virtual
-machine:
+The `./ssh-controller` can be used to double-ssh from the Orchestrator to the controller virtual
+machines:
 
-    ./ssh-hypervisor-virtual stack@undercloud-0
+    ./ssh-controller undercloud-0
 
-If you don't provide `stack@` it will ssh as root.
-
-If you `./ssh-hypervisor-virtual stack@undercloud-0` you'll find useful logs and access files for
-this step:
+If you `./ssh-controller undercloud-0` you'll find useful logs and access files for this
+step:
 
     /home/stack/undercloud_install.log
     /home/stack/undercloud-passwords.conf
@@ -91,17 +100,11 @@ this step:
     /home/stack/undercloud.conf
     /home/stack/stackrc
 
-You can also see the status of the components using the `docker` command, for example:
+> You might be wondering why the infrastructure controller virtual machine is called "undercloud".
+To understand this term, first you must understand that the infrastructure controller software is
+_itself_ implemented as a small all-in-one OpenStack cloud.
 
-    sudo docker container list
-
-TODO docker-hypervisor-virtual
-
-> You might be wondering why the infrastructure manager virtual machine is called "undercloud". To
-understand this term, first you must understand that the infrastructure manager software is _itself_
-implemented as a small all-in-one OpenStack cloud.
-
-> Why use OpenStack to manage OpenStack? First, consider why an infrastructure manager is even
+> Why use OpenStack to manage OpenStack? First, consider why an infrastructure controller is even
 necessary. After all, you could potentially create an OpenStack cloud manually: take a bunch of
 physical machines, install the necessary OpenStack components on them, and configure them to work
 together. But for a real cloud we need some automation. We need to easily add and remove physical
@@ -115,10 +118,10 @@ component, which relies on PXE and IPMI technologies to bootstrap the bare metal
 provisioned, there is no significant difference between managing virtual machines and managing
 physical machines.
 
-> This, then, is what our infrastructure manager does: allows us to add and remove machines to and
-from the cloud. Together, all these machines comprise the "undercloud". The "overcloud" comprises
-our actual cloud resources provisioned on top of these machines. In effect, what we have here is one
-OpenStack cloud running on top another: OpenStack-On-OpenStack, a.k.a.
+> This, then, is what our infrastructure controller does: allows us to add and remove machines to
+and from the cloud. Together, all these machines comprise the "undercloud". The "overcloud"
+comprises our actual cloud resources provisioned on top of these machines. In effect, what we have
+here is one OpenStack cloud running on top another: OpenStack-On-OpenStack, a.k.a.
 [TripleO](https://docs.openstack.org/tripleo-docs/latest/).
 
 > (Actually, adding new machines to the cloud is not just about installing and configuring them but
@@ -131,23 +134,28 @@ undercloud.)
 > Confused? You really don't have to worry about it too much. The fact that our infrastructure
 manager is itself implemented in OpenStack is just that: an implementation detail. Indeed, the
 undercloud and overcloud could each be running on entirely different versions of OpenStack. All you
-need to know is that the virtual machine called "undercloud-0" is your infrastructure manager.
+need to know is that the virtual machine called "undercloud-0" is your infrastructure controller.
 
-You can connect to the undercloud just like to any other OpenStack deployment, with the `openstack`
-command from within the undercloud machine. We provide `./openstack-undercloud` as a shortcut. For
-example, let's see what networks we have:
+You can connect to the undercloud just like to any other OpenStack deployment. However, note that
+its virtual machine, `undercloud-0`, is not network-accessible outside of the Hypervisor. We provide
+`./openstack-undercloud` as a shortcut to access it from the Orchestrator. For example, let's see
+what networks we have:
 
     ./openstack-undercloud network list
 
-Note that at this stage `server list` will be empty because have not yet on-boarded any
-infrastructure.
+Note that at this stage `./openstack-undercloud server list` will be empty because have not yet
+on-boarded any infrastructure.
+
+Also note that in TripleO version 13 ("queens") all OpenStack services run as simple executables,
+rather than Docker containers. The other controllers for "queens" all use Docker containers (see
+step 4, below). From version 14 ("rocky") TripleO also uses containers. 
 
 
-Step 4: Install cloud images
-----------------------------
+Step 4: Install infrastructure images
+-------------------------------------
 
-Our infrastructure manager ("undercloud") will be providing operating system images, based on
-CentOS, for bootstrapping the cloud machines. On the Orchestrator:
+Our infrastructure controller ("undercloud") will be providing operating system images, based on
+CentOS, for bootstrapping the other controllers. On the Orchestrator:
 
     ./install-overcloud-images
 
@@ -162,43 +170,71 @@ To list the installed images:
 
     ./openstack-undercloud image list
 
-If you `./ssh-hypervisor-virtual stack@undercloud-0` you'll find useful logs for this step:
+If you `./ssh-controller undercloud-0` you'll find useful logs for this step:
 
     /home/stack/overcloud-full.log
     /home/stack/openstack-build-images.log
     /home/stack/ironic-python-agent.log
 
 
-Step 5: Install controllers???
----------------------------
+Step 5: Install other cloud controllers
+---------------------------------------
+
+Now that we have an infrastructure controller ("undercloud") we can use it provision and install our
+other controllers ("overcloud"). Internally this is done using Ansible,
+[Heat](https://docs.openstack.org/heat/latest/), and
+[Mistral](https://docs.openstack.org/mistral/latest/) on the undercloud.
+[Kolla](https://docs.openstack.org/kolla/latest/) is used as the source of the Docker container
+images.
+
+Our overcloud installation consists of these controllers:
+
+* `controller-0`: Manages networking ([Neutron](https://docs.openstack.org/neutron/latest/)) as well
+  as virtual machine scheduling
+  ([nova-scheduler](https://docs.openstack.org/nova/latest/cli/nova-scheduler.html)).
+* `ceph-0`: [Ceph](https://ceph.com/) is a powerful distributed storage system with good OpenStack
+  and OKD integration. Ceph will provide our
+  block storage ([Cinder](https://docs.openstack.org/cinder/latest/)),
+  file storage ([Manila](https://docs.openstack.org/manila/latest/)),
+  and object storage ([Swift](https://docs.openstack.org/swift/latest/)).
+  (Actually, some Ceph services will also be running on `controller-0`.)
 
 On the Orchestrator:
 
     ./install-overcloud
 
-Uses Heat
+This can take ??? minutes.
 
-If you `./ssh-hypervisor-virtual stack@undercloud-0` you'll find useful logs and topology files for
-this step:
+If you `./ssh-controller undercloud-0` you'll find useful logs and topology files for this step:
 
     /home/stack/overcloud_install.log
-    /home/stack/overcloud_deployment_44.log
+    /home/stack/overcloud_deployment_*.log
     /home/stack/openstack_failures_long.log
+    /var/lib/mistral/overcloud/ansible.log
     /home/stack/instackenv.json
+    /home/stack/containers-prepare-parameter.yaml
 
 The root user at the Hypervisor (and also in `undercloud-0`) now has a keypair (at `/root/.ssh`)
-that can be used to login as user `heat-admin` to the cloud machines, which has sudo access there.
-To login, you need to find their addresses, which you can see with the `openstack server info`
-command. We provide `ssh-undercloud` as a shortcut script. An example:  
+that can be used to login as user `heat-admin` to the controller virtual machines. To login, you
+need to find their addresses, which you can see with the `openstack server info` command. The
+`./ssh-controller` will do this for you and double-ssh from the Orchestrator:
 
-    ./ssh-undercloud compute-0
+    ./ssh-controller controller-0
 
-Within each cloud machine we are running the OpenStack components as Docker containers. This allows
-for better isolation, stability, and an easier upgrade path. Internally,
-[Kolla](https://docs.openstack.org/kolla/queens/) is used to deploy the container images. To see the
-containers from within a cloud machine:
+Once in a controller you can see its running service as containers:
 
     sudo docker container list
+
+
+Step 6: Configure cloud controllers
+-----------------------------------
+
+On the Orchestrator:
+
+    ./configure-overcloud
+
+This can take ??? minutes.
+
 
 
 How to Reset

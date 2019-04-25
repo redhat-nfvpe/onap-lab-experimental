@@ -23,7 +23,7 @@ rm --force "$HERE/work/install-overcloud.log"
 ANSIBLE_LOG_PATH="$HERE/work/install-overcloud.log" \
 infrared tripleo-overcloud -vv \
 	--output "$HERE/work/install-overcloud.yaml" \
-	--from-file "$HERE/conf/overcloud.ini" \
+	--from-file "$HERE/conf/install-overcloud.ini" \
 	--version "$OVERCLOUD_OPENSTACK_VERSION" \
 	--registry-namespace "tripleo$OVERCLOUD_OPENSTACK_VERSION" \
 	--registry-ceph-tag "$CEPH_TAG"
