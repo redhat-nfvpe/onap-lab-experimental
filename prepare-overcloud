@@ -12,7 +12,7 @@ HERE=$(dirname "$(readlink -f "$0")")
 "$HERE/tripleo-quickstart" \
 	--tags all \
 	--nodes "$QUICKSTART_WORK/config/nodes/1ctlr_1comp.yml" \
-	--playbook quickstart-extras-overcloud.yml \
+	--playbook quickstart-extras-overcloud-prep.yml \
 	--retain-inventory \
 	--teardown none \
 	"$HYPERVISOR_ADDRESS"

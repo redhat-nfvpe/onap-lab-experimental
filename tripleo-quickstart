@@ -1,0 +1,37 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+. "$HERE/conf/env"
+
+cd "$ORCHESTRATOR_ROOT"
+
+# See: https://docs.openstack.org/tripleo-quickstart/latest/getting-started.html#provision-a-libvirt-guest-environment
+
+ANSIBLE_LOG_PATH="$ORCHESTRATOR_ROOT/ansible.log" \
+LIBGUESTFS_BACKEND_SETTINGS=network_bridge=virbr0 \
+"$ORCHESTRATOR_ROOT/quickstart.sh" \
+	--working-dir "$QUICKSTART_WORK" \
+	--ansible-debug \
+	--override_sudo_check \
+	--system-site-packages \
+	--release "$UNDERCLOUD_OPENSTACK_VERSION" \
+	--extra-vars "virthost_nameservers=$NAMESERVER" \
+	"$@"
+
+exit
+
+	--retain-inventory \
+	--teardown none \
+
+
+	--clean \
+	--release queens \
+
+overcloud_dns_servers: ["192.168.24.250"]
+undercloud_undercloud_nameservers: ["192.168.24.250"]

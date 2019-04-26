@@ -10,8 +10,6 @@ HERE=$(dirname "$(readlink -f "$0")")
 . "$HERE/conf/env"
 
 rm --recursive --force \
-	"$IR_HOME" \
-	"$INFRARED_VIRTUALENV" \
-	"$INFRARED_SOURCE" 
+	"$ORCHESTRATOR_ROOT"
 
 echo Done!

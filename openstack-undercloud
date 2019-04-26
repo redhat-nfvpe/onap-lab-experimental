@@ -10,4 +10,4 @@ HERE=$(dirname "$(readlink -f "$0")")
 
 # NOTE: stackrc is backed up on Orchestrator at "$IR_HOME/.workspaces/onap-lab/stackrc"
 
-"$HERE/ssh-controller" undercloud-0 ". /home/stack/stackrc && openstack $@"
+"$HERE/ssh-hypervisor" undercloud ". /home/stack/stackrc && openstack $@"

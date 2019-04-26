@@ -2,18 +2,16 @@
 _ROOT=$HOME
 OPENSTACK_IMAGES="$_ROOT/openstack-images"
 OPENSTACK_KEYPAIRS="$_ROOT/openstack-keypairs"
-INFRARED_SOURCE="/tmp/infrared-source"
-INFRARED_VIRTUALENV="$_ROOT/infrared-virtualenv"
-export IR_HOME="$_ROOT/infrared-home"
+
+ORCHESTRATOR_ROOT="$HERE/orchestrator"
+QUICKSTART_WORK="$ORCHESTRATOR_ROOT/work"
 
 # Hypervisor
 HYPERVISOR_ADDRESS=onap1
 
-# InfraRed
-#INFRARED_BRANCH=stable
-#INFRARED_COMMIT=b9788dd718cd42f8d0b27d4f79bac187e9f05ccf
-INFRARED_BRANCH=master
-INFRARED_COMMIT=8c09994ebeab0a7bd6626e8dfb8af1c84aba572c
+# TripleO Quickstart
+QUICKSTART_BRANCH=master
+QUICKSTART_COMMIT=6bc336e65137fdf1d20feca529a69cce49e2cbe2
 
 # Python Libraries
 PIP_VERSION=19.1
@@ -38,4 +36,4 @@ CEPH_TAG=v4.0.0-stable-4.0-$CEPH_VERSION-centos-7-x86_64
 
 # Resources
 CENTOS_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1901.qcow2
-DNS_NAMESERVER=1.0.0.1
+NAMESERVER=1.0.0.1

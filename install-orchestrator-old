@@ -1,0 +1,50 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+. "$HERE/conf/env"
+
+if [ ! -d "$QUICKSTART_SOURCE" ]; then
+	git clone --single-branch -b "$QUICKSTART_BRANCH" https://github.com/openstack/tripleo-quickstart.git "$QUICKSTART_SOURCE"
+	pushd "$QUICKSTART_SOURCE"
+	git reset --hard "$QUICKSTART_COMMIT"
+	popd
+fi
+
+if [ ! -d "$ORCHESTRATOR_VIRTUALENV" ]; then
+	virtualenv --python=python3 "$ORCHESTRATOR_VIRTUALENV"
+fi
+
+. "$HERE/orchestrator-activate"
+
+pip install --upgrade pip==$PIP_VERSION
+pip install --upgrade setuptools==$SETUPTOOLS_VERSION
+pip install "$QUICKSTART_SOURCE"
+
+mkdir --parents "$ORCHESTRATOR_WORK"
+
+if [ ! -f "$ORCHESTRATOR_WORK/ansible.cfg" ]; then
+cat << EOT > "$ORCHESTRATOR_WORK/ansible.cfg"
+[defaults]
+host_key_checking = False
+gathering = smart
+
+[ssh_connection]
+pipelining = True
+EOT
+fi
+
+if [ ! -d "$ORCHESTRATOR_WORK/playbooks" ]; then
+	mv "$ORCHESTRATOR_VIRTUALENV/playbooks" "$ORCHESTRATOR_WORK"
+fi
+
+if [ ! -d "$ORCHESTRATOR_WORK/roles" ]; then
+	cp --recursive "$QUICKSTART_SOURCE/roles" "$ORCHESTRATOR_WORK"
+fi
+
+echo Done!

@@ -1,3 +1,0 @@
-. "$HERE/conf/env"
-. "$INFRARED_VIRTUALENV/bin/activate"
-cd "$IR_HOME"

@@ -1,45 +1,26 @@
 #!/bin/bash
 set -e
 
-# See: https://infrared.readthedocs.io/en/stable/tripleo-undercloud.html
-# See: https://hub.docker.com/u/tripleorocky with prefix "centos-binary-"
-
 if [ "$EUID" == 0 ]; then
 	echo "Do not run this script as root"
 	exit 1
 fi
 
 HERE=$(dirname "$(readlink -f "$0")")
-. "$HERE/infrared-activate"
+. "$HERE/conf/env"
 
-mkdir --parents "$HERE/work"
-
-infrared workspace checkout onap-lab
-
-rm --force "$HERE/work/install-undercloud.log"
-ANSIBLE_LOG_PATH="$HERE/work/install-undercloud.log" \
-infrared tripleo-undercloud -vv \
-	--output "$HERE/work/install-undercloud.yaml" \
-	--from-file "$HERE/conf/install-undercloud.ini" \
-    --version "$UNDERCLOUD_OPENSTACK_VERSION" \
-	--registry-namespace "tripleo$OVERCLOUD_OPENSTACK_VERSION"
-
-#    --build current-tripleo-rdo
-
-if [ "$UNDERCLOUD_OPENSTACK_VERSION" == "rocky" ]; then
-
-# BUG: The "python-tripleoclient" package from "rocky" is broken for InfraRed
-# See: https://bugs.launchpad.net/tripleo/+bug/1791970
-# See: https://bugs.launchpad.net/tripleo/+bug/1817634
-	
-"$HERE/ssh-controller" undercloud-0 "sudo mv /etc/pki/ca-trust/source/anchors/cm-local-ca.pem /etc/pki/ca-trust/source/anchors/cm-local-ca.pem.original && sudo cp /etc/pki/ca-trust/source/anchors/undercloud-cacert.pem /etc/pki/ca-trust/source/anchors/cm-local-ca.pem"
-
-#. /home/stack/stackrc && openstack tripleo container image prepare default --output-env-file containers-prepare-parameter.yaml
-
-# BUG:"containers-prepare-parameter.yaml" is not generated, but is needed for overcloud install
-
-"$HERE/ssh-controller" undercloud-0 "cp tripleo-config-generated-env-files/undercloud_parameters.yaml containers-prepare-parameter.yaml"
-
-fi
+"$HERE/tripleo-quickstart" \
+	--tags all \
+	--nodes "$QUICKSTART_WORK/config/nodes/1ctlr_1comp.yml" \
+	--playbook quickstart-extras-undercloud.yml \
+	--retain-inventory \
+	--teardown none \
+	"$HYPERVISOR_ADDRESS"
 
 echo Done!
+
+# GUI
+# See: https://docs.openstack.org/tripleo-docs/latest/install/basic_deployment/basic_deployment_ui.html#access-the-ui
+# https://onap1
+# user = admin
+# password = ./ssh-hypervisor undercloud "sudo hiera keystone::admin_password"
