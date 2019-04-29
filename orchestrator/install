@@ -1,0 +1,27 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/conf/env"
+
+mkdir --parents "$WORKSPACE_ROOT"
+
+curl \
+	--output "$WORKSPACE_ROOT/quickstart.sh" \
+	"https://raw.githubusercontent.com/openstack/tripleo-quickstart/$TRIPLEO_QUICKSTART_COMMIT/quickstart.sh"
+chmod +x "$WORKSPACE_ROOT/quickstart.sh"
+
+# See: https://bugs.launchpad.net/tripleo/+bug/1820945
+curl \
+	--output "$WORKSPACE_ROOT/bindep.txt" \
+	"https://raw.githubusercontent.com/openstack/tripleo-quickstart/$TRIPLEO_QUICKSTART_COMMIT/bindep.txt"
+
+"$ROOT/hypervisor/tripleo-quickstart" --install-deps
+
+echo Done!

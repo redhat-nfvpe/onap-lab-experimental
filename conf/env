@@ -1,39 +1,23 @@
 # Orchestrator Directories
-_ROOT=$HOME
-OPENSTACK_IMAGES="$_ROOT/openstack-images"
-OPENSTACK_KEYPAIRS="$_ROOT/openstack-keypairs"
-
-ORCHESTRATOR_ROOT="$HERE/orchestrator"
-QUICKSTART_WORK="$ORCHESTRATOR_ROOT/work"
+WORKSPACE_ROOT="$ROOT/workspace"
+TRIPLEO_QUICKSTART_WORKSPACE="$WORKSPACE_ROOT/tripleo-quickstart"
 
 # Hypervisor
 HYPERVISOR_ADDRESS=onap1
 
-# TripleO Quickstart
-QUICKSTART_BRANCH=master
-QUICKSTART_COMMIT=6bc336e65137fdf1d20feca529a69cce49e2cbe2
-
-# Python Libraries
-PIP_VERSION=19.1
-SETUPTOOLS_VERSION=41.0.1
-TOX_VERSION=3.9.0
+# Undercloud Directories
+OPENSTACK_IMAGES="/home/stack/openstack-images"
+OPENSTACK_KEYPAIRS="/home/stack/openstack-keypairs"
 
 # OpenStack
-# NOTE: version names are for RDO, version numbers are for RHOSP
-# "queens" (13) is the last LTS
-# NOTE: "queens" on the undercloud does not use Docker
-# BUG: "stein" on the undercloud is missing some Python 3 packages on CentOS 7
-UNDERCLOUD_OPENSTACK_VERSION=queens
-OVERCLOUD_OPENSTACK_VERSION=queens
-
-# Ceph
-# See: https://github.com/ceph/ceph-container/blob/master/README.md
-# See: https://hub.docker.com/r/ceph/daemon/tags/
-# "luminous" (12) is the last LTS
-CEPH_VERSION=luminous
-CEPH_TAG=v4.0.0-stable-4.0-$CEPH_VERSION-centos-7-x86_64
-#CEPH_TAG=v3.1.0-stable-3.1-$CEPH_VERSION-centos-7-x86_64
-
-# Resources
-CENTOS_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1901.qcow2
+# NOTE: "queens" (13) and "rocky" (14) supported
+OPENSTACK_VERSION=rocky
+OPENSTACK_NODES=1ctlr_1comp
+# BUG: fails to provision ceph node
+#OPENSTACK_NODES=1ctlr_1comp_1ceph
 NAMESERVER=1.0.0.1
+CENTOS7_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1901.qcow2
+
+# TripleO Quickstart
+TRIPLEO_QUICKSTART_BRANCH=master
+TRIPLEO_QUICKSTART_COMMIT=6bc336e65137fdf1d20feca529a69cce49e2cbe2

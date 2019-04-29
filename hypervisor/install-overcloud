@@ -7,12 +7,11 @@ if [ "$EUID" == 0 ]; then
 fi
 
 HERE=$(dirname "$(readlink -f "$0")")
-. "$HERE/conf/env"
 
 "$HERE/tripleo-quickstart" \
+	--playbook quickstart-extras-overcloud.yml \
 	--tags all \
-	--nodes "$QUICKSTART_WORK/config/nodes/1ctlr_1comp.yml" \
-	--playbook quickstart.yml \
-	"$HYPERVISOR_ADDRESS"
+	--retain-inventory \
+	--teardown none
 
 echo Done!

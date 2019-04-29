@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/conf/env"
+
+"$ROOT/hypervisor/ssh" undercloud ". /home/stack/overcloudrc && OS_PROJECT_NAME=$1 openstack ${@:2}"

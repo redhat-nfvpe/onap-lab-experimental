@@ -1,0 +1,29 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+CONTROLLER=${1:-virthost}
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/conf/env"
+
+if [ -f "$TRIPLEO_QUICKSTART_WORKSPACE/ssh.config.ansible" ]; then
+
+	ssh \
+		-F "$TRIPLEO_QUICKSTART_WORKSPACE/ssh.config.ansible" \
+		-o LogLevel=ERROR \
+		"$CONTROLLER" \
+		"${@:2}"
+
+else
+
+	ssh \
+		"root@$HYPERVISOR_ADDRESS" \
+		"${@:2}"
+
+fi

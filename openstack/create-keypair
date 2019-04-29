@@ -1,0 +1,41 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+NAME=$1
+
+if [ -z "$NAME" ]; then
+	echo "Provide keypair name"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/conf/env"
+
+
+"$ROOT/hypervisor/ssh" undercloud "
+mkdir --parents \"$OPENSTACK_KEYPAIRS\";
+if [ ! -f \"$OPENSTACK_KEYPAIRS/$NAME\" ]; then
+	ssh-keygen -f \"$OPENSTACK_KEYPAIRS/$NAME\" -t rsa -N '';
+else
+	echo \"Files for keypair $NAME already exist\";
+fi
+"
+
+if ! "$HERE/openstack" keypair show "$NAME" >/dev/null 2>&1; then
+	echo "Creating keypair \"$NAME\"..."
+
+"$ROOT/hypervisor/ssh" undercloud "
+. /home/stack/overcloudrc;
+openstack keypair create \"$NAME\" --public-key \"$OPENSTACK_KEYPAIRS/$NAME.pub\" > /dev/null
+"
+
+else
+	echo "Keypair \"$NAME\" already exists"
+	exit 1
+fi

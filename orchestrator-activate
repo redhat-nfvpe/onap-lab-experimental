@@ -1,3 +1,0 @@
-. "$HERE/conf/env"
-. "$ORCHESTRATOR_VIRTUALENV/bin/activate"
-cd "$ORCHESTRATOR_WORK"

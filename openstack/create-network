@@ -16,7 +16,8 @@ if [ -z "$PROJECT" ] || [ -z "$NAME" ] || [ -z "$SUBNET_RANGE" ]; then
 fi
 
 HERE=$(dirname "$(readlink -f "$0")")
-. "$HERE/conf/env"
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/conf/env"
 
 # Create network, subnet, and router
 if ! "$HERE/openstack" network list --project "$PROJECT" | grep --quiet --line-regexp --fixed-strings "$PROJECT.$NAME"; then
@@ -36,7 +37,7 @@ if ! "$HERE/openstack" network list --project "$PROJECT" | grep --quiet --line-r
 		--format value)
 
 	echo "Setting DNS nameserver on subnet \"$PROJECT.$NAME\"..."
-	"$HERE/openstack" subnet set "$PROJECT.$NAME" --dns-nameserver "$DNS_NAMESERVER"
+	"$HERE/openstack" subnet set "$PROJECT.$NAME" --dns-nameserver "$NAMESERVER"
 
 	echo "Creating router \"$PROJECT.$NAME\"..."
 	ROUTER_ID=$("$HERE/openstack" router create "$PROJECT.$NAME" \

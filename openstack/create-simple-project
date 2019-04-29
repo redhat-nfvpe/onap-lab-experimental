@@ -15,7 +15,8 @@ if [ -z "$PROJECT" ] || [ -z "$NAME" ]; then
 fi
 
 HERE=$(dirname "$(readlink -f "$0")")
-. "$HERE/conf/env"
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/conf/env"
 
 # Create keypair (not associated with a project)
 set +e
@@ -52,7 +53,7 @@ SERVER_ID=$("$HERE/openstack-project" "$PROJECT" server create "$NAME" \
 	--format value \
 	--wait \
 	--flavor m1.large \
-	--image common.centos \
+	--image common.centos7 \
 	--network "$PROJECT.private" \
 	--key-name "$PROJECT" | tail -n1)
 

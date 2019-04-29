@@ -7,9 +7,5 @@ if [ "$EUID" == 0 ]; then
 fi
 
 HERE=$(dirname "$(readlink -f "$0")")
-. "$HERE/conf/env"
 
-rm --recursive --force \
-	"$ORCHESTRATOR_ROOT"
-
-echo Done!
+"$HERE/ssh-hypervisor" undercloud ". /home/stack/stackrc && openstack $@"
