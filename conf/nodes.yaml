@@ -1,0 +1,29 @@
+# See: https://docs.openstack.org/tripleo-quickstart/latest/node-configuration.html
+# Based on config/nodes/1ctlr_1comp_1ceph.yml
+
+overcloud_nodes:
+- name: control_0
+  flavor: control
+  virtualbmc_port: 6230
+
+- name: compute_0
+  flavor: compute
+  virtualbmc_port: 6231
+
+- name: ceph_0
+  flavor: ceph
+  virtualbmc_port: 6232
+
+node_count: 3
+
+topology_map:
+  CephStorage:
+    scale: 1
+
+network_isolation: true
+network_isolation_type: single-nic-vlans
+
+# Ceph disk sizes
+#ceph_disk: 80 # ceph_0.qcow2, number in GiB, 50 is default
+extradisks_size: 107374182400 # ceph_0_vdb, _vdc, _vdd, number in bytes (GiB = * 1073741824)
+# To check: hypervisor/virsh vol-info ceph_0_vdb.img --pool oooq_pool

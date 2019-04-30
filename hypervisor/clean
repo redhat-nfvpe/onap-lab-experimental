@@ -11,8 +11,10 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/conf/env"
 
 echo 'Deleting all virtual machines...'
-for UUID in $("$HERE/virsh" list --all --uuid); do
+for UUID in $("$HERE/virsh" list --uuid); do
 	"$HERE/virsh" destroy "$UUID"
+done
+for UUID in $("$HERE/virsh" list --all --uuid); do
 	"$HERE/virsh" undefine "$UUID" --managed-save --remove-all-storage --delete-snapshots --snapshots-metadata --nvram  
 done
 

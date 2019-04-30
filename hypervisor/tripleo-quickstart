@@ -22,7 +22,7 @@ LIBGUESTFS_BACKEND_SETTINGS=network_bridge=virbr0 \
 	--system-site-packages \
 	--ansible-debug \
 	--release "$OPENSTACK_VERSION" \
-	--nodes "$TRIPLEO_QUICKSTART_WORKSPACE/config/nodes/$OPENSTACK_NODES.yml" \
+	--nodes "$ROOT/conf/nodes.yaml" \
 	--extra-vars "virthost_nameservers=$NAMESERVER" \
 	"$@" \
 	"$HYPERVISOR_ADDRESS"

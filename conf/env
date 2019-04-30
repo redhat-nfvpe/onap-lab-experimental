@@ -12,9 +12,6 @@ OPENSTACK_KEYPAIRS="/home/stack/openstack-keypairs"
 # OpenStack
 # NOTE: "queens" (13) and "rocky" (14) supported
 OPENSTACK_VERSION=rocky
-OPENSTACK_NODES=1ctlr_1comp
-# BUG: fails to provision ceph node
-#OPENSTACK_NODES=1ctlr_1comp_1ceph
 NAMESERVER=1.0.0.1
 CENTOS7_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1901.qcow2
 

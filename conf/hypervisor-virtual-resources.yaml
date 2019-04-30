@@ -1,8 +1,0 @@
-override.compute.cpu: "16"
-override.compute.memory: "204800" # mebibytes
-override.ceph.disks.disk1.size: "200G"
-
-override:
-  compute.memory: "204800"
-  compute:
-    memory: "204800"
