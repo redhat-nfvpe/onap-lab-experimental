@@ -24,6 +24,11 @@ network_isolation: true
 network_isolation_type: single-nic-vlans
 
 # Ceph disk sizes
-#ceph_disk: 80 # ceph_0.qcow2, number in GiB, 50 is default
-extradisks_size: 107374182400 # ceph_0_vdb, _vdc, _vdd, number in bytes (GiB = * 1073741824)
-# To check: hypervisor/virsh vol-info ceph_0_vdb.img --pool oooq_pool
+# To check, e.g.: hypervisor/virsh vol-info ceph_0_vdb.img --pool oooq_pool
+
+# For ceph_0.qcow2
+#ceph_disk: 80 # number in GiB, 50 is default
+
+# For # ceph_0_vdb, _vdc, _vdd
+extradisks_size: 100G # number in bytes, can use "G" suffix for GiB
+

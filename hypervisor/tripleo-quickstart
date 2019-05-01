@@ -22,6 +22,7 @@ LIBGUESTFS_BACKEND_SETTINGS=network_bridge=virbr0 \
 	--system-site-packages \
 	--ansible-debug \
 	--release "$OPENSTACK_VERSION" \
+	--config "$ROOT/conf/config.yaml" \
 	--nodes "$ROOT/conf/nodes.yaml" \
 	--extra-vars "virthost_nameservers=$NAMESERVER" \
 	"$@" \
