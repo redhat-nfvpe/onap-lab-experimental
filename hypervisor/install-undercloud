@@ -14,7 +14,7 @@ HERE=$(dirname "$(readlink -f "$0")")
 	--retain-inventory \
 	--teardown none
 
-echo Done!
+echo "Finished $(basename $0)!"
 
 # GUI
 # See: https://docs.openstack.org/tripleo-docs/latest/install/basic_deployment/basic_deployment_ui.html#access-the-ui

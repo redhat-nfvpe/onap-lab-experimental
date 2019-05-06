@@ -11,7 +11,7 @@ HERE=$(dirname "$(readlink -f "$0")")
 # See: https://docs.openstack.org/tripleo-docs/latest/install/advanced_deployment/ceph_config.html
 
 # WORKAROUND: "ERROR! the playbook: /usr/share/ceph-ansible/site-docker.yml.sample could not be found"
-"$HERE/ssh-hypervisor" undercloud "sudo yum --assumeyes install ceph-ansible"
+"$HERE/ssh" undercloud "sudo yum --assumeyes install ceph-ansible"
 
 "$HERE/tripleo-quickstart" \
 	--playbook quickstart-extras-overcloud.yml \
@@ -19,4 +19,4 @@ HERE=$(dirname "$(readlink -f "$0")")
 	--retain-inventory \
 	--teardown none
 
-echo Done!
+echo "Finished $(basename $0)!"

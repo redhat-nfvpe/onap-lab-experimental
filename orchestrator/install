@@ -34,4 +34,4 @@ curl \
 
 "$ROOT/hypervisor/tripleo-quickstart" --install-deps
 
-echo Done!
+echo "Finished $(basename $0)!"

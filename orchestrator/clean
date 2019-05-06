@@ -13,4 +13,4 @@ ROOT=$(readlink -f "$HERE/..")
 rm --recursive --force \
 	"$WORKSPACE_ROOT"
 
-echo Done!
+echo "Finished $(basename $0)!"

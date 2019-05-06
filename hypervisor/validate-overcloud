@@ -14,4 +14,4 @@ HERE=$(dirname "$(readlink -f "$0")")
 	--retain-inventory \
 	--teardown none
 
-echo Done!
+echo "Finished $(basename $0)!"

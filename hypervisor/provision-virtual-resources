@@ -12,4 +12,4 @@ HERE=$(dirname "$(readlink -f "$0")")
 	--tags all \
 	--playbook quickstart.yml
 
-echo Done!
+echo "Finished $(basename $0)!"

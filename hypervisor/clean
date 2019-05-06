@@ -32,4 +32,4 @@ done
 echo 'Deleting user "stack"...'
 ssh "root@$HYPERVISOR_ADDRESS" "if id -u stack >/dev/null 2>&1; then userdel --force --remove stack; fi"
 
-echo Done!
+echo "Finished $(basename $0)!"

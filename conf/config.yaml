@@ -74,6 +74,7 @@ extra_args: >-
    {% if release not in ['newton', 'ocata', 'pike'] %}
    -e {{ overcloud_templates_path }}/ci/environments/ovb-ha.yaml
    {% endif %}
+   {# ONAP #}
    -e {{ overcloud_templates_path }}/environments/ceph-ansible/ceph-ansible.yaml
    -e {{ overcloud_templates_path }}/environments/ceph-ansible/ceph-mds.yaml
    -e {{ overcloud_templates_path }}/environments/ceph-ansible/ceph-rgw.yaml
