@@ -14,6 +14,6 @@ fi
 
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..)
-. "$ROOT/conf/env"
+. "$ROOT/configuration/environment"
 
 ssh-copy-id "root@$HYPERVISOR_ADDRESS"

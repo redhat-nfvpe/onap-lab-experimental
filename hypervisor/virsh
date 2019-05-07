@@ -8,4 +8,4 @@ fi
 
 HERE=$(dirname "$(readlink -f "$0")")
 
-"$HERE/ssh" virthost virsh "$@"
+"$HERE/ssh" virthost "virsh $(printf ' %q' "$@")"

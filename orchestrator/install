@@ -8,7 +8,9 @@ fi
 
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
-. "$ROOT/conf/env"
+. "$ROOT/configuration/environment"
+
+"$HERE/clean"
 
 mkdir --parents "$WORKSPACE_ROOT"
 

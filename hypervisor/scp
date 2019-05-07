@@ -6,15 +6,19 @@ if [ "$EUID" == 0 ]; then
 	exit 1
 fi
 
-PROJECT=$1
-
-if [ -z "$PROJECT" ]; then
-	echo 'Provide project name'
-	exit 1
-fi
-
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 
-"$HERE/create-image" "$PROJECT" centos7 "$CENTOS7_IMAGE"
+if [ -f "$TRIPLEO_QUICKSTART_WORKSPACE/ssh.config.ansible" ]; then
+
+	scp \
+		-F "$TRIPLEO_QUICKSTART_WORKSPACE/ssh.config.ansible" \
+		-o LogLevel=ERROR \
+		"$@"
+
+else
+	
+	exit 1
+
+fi

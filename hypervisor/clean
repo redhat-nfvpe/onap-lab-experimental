@@ -8,7 +8,7 @@ fi
 
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
-. "$ROOT/conf/env"
+. "$ROOT/configuration/environment"
 
 echo 'Deleting all virtual machines...'
 for UUID in $("$HERE/virsh" list --uuid); do

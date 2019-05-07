@@ -17,7 +17,7 @@ fi
 
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
-. "$ROOT/conf/env"
+. "$ROOT/configuration/environment"
 
 if ! "$HERE/openstack" image show "$PROJECT.$NAME" >/dev/null 2>&1; then
 	FILENAME="$OPENSTACK_IMAGES/$(basename "$URL")"

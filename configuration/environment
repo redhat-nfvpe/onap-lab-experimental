@@ -4,6 +4,7 @@ TRIPLEO_QUICKSTART_WORKSPACE="$WORKSPACE_ROOT/tripleo-quickstart"
 
 # Hypervisor
 HYPERVISOR_ADDRESS=onap1
+HYPERVISOR_HARDWARE_VIRTUALIZATION=true
 
 # Undercloud Directories
 OPENSTACK_IMAGES="/home/stack/openstack-images"

@@ -6,8 +6,9 @@ if [ "$EUID" == 0 ]; then
 	exit 1
 fi
 
+PROJECT_NAME=$1
+
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
-. "$ROOT/conf/env"
 
-"$ROOT/hypervisor/ssh" undercloud ". /home/stack/overcloudrc && OS_PROJECT_NAME=$1 openstack ${@:2}"
+"$ROOT/hypervisor/ssh" undercloud ". /home/stack/overcloudrc && OS_PROJECT_NAME=\"$PROJECT_NAME\" openstack $(printf ' %q' "${@:2}")"

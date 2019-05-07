@@ -8,22 +8,27 @@ fi
 
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
-. "$ROOT/conf/env"
+. "$ROOT/configuration/environment"
 
 cd "$WORKSPACE_ROOT"
 
 # See: https://docs.openstack.org/tripleo-quickstart/latest/getting-started.html#provision-a-libvirt-guest-environment
+if [ "$HYPERVISOR_HARDWARE_VIRTUALIZATION" == 'true' ]; then
+	LIBGUESTFS_BACKEND_SETTINGS=network_bridge=virbr0
+else
+	LIBGUESTFS_BACKEND_SETTINGS=force_tcg
+fi
 
 ANSIBLE_LOG_PATH="$WORKSPACE_ROOT/ansible.log" \
-LIBGUESTFS_BACKEND_SETTINGS=network_bridge=virbr0 \
+LIBGUESTFS_BACKEND_SETTINGS=$LIBGUESTFS_BACKEND_SETTINGS \
 "$WORKSPACE_ROOT/quickstart.sh" \
 	--working-dir "$TRIPLEO_QUICKSTART_WORKSPACE" \
 	--override_sudo_check \
 	--system-site-packages \
 	--ansible-debug \
 	--release "$OPENSTACK_VERSION" \
-	--config "$ROOT/conf/config.yaml" \
-	--nodes "$ROOT/conf/nodes.yaml" \
+	--config "$ROOT/conf/tripleo-quickstart/config.yaml" \
+	--nodes "$ROOT/conf/tripleo-quickstart/nodes.yaml" \
 	--extra-vars "virthost_nameservers=$NAMESERVER" \
 	"$@" \
 	"$HYPERVISOR_ADDRESS"

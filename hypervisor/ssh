@@ -6,24 +6,36 @@ if [ "$EUID" == 0 ]; then
 	exit 1
 fi
 
-CONTROLLER=${1:-virthost}
-
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
-. "$ROOT/conf/env"
+. "$ROOT/configuration/environment"
 
 if [ -f "$TRIPLEO_QUICKSTART_WORKSPACE/ssh.config.ansible" ]; then
 
-	ssh \
-		-F "$TRIPLEO_QUICKSTART_WORKSPACE/ssh.config.ansible" \
-		-o LogLevel=ERROR \
-		"$CONTROLLER" \
-		"${@:2}"
+	HOST=${1:-virthost}
+
+	if [ "$HOST" == ? ]; then
+		grep '^Host [^\*]' "$TRIPLEO_QUICKSTART_WORKSPACE/ssh.config.ansible" | cut --fields=2 --delimiter=' '
+	else
+		ssh \
+			-F "$TRIPLEO_QUICKSTART_WORKSPACE/ssh.config.ansible" \
+			-o LogLevel=ERROR \
+			"$HOST" \
+			"$2"
+	fi
 
 else
 
-	ssh \
-		"root@$HYPERVISOR_ADDRESS" \
-		"${@:2}"
+	HOST=${1:-virthost-root}
 
+	if [ "$HOST" == ? ]; then
+		echo virthost-root
+	elif [ "$HOST" == virthost-root ]; then
+		ssh \
+			"root@$HYPERVISOR_ADDRESS" \
+			"$2"
+	else
+		echo "Host $HOST is unsupported: must use virthost-root" > /dev/stderr
+		exit 1
+	fi
 fi
