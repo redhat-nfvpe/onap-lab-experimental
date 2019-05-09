@@ -20,15 +20,15 @@ else
 fi
 
 ANSIBLE_LOG_PATH="$WORKSPACE_ROOT/ansible.log" \
-LIBGUESTFS_BACKEND_SETTINGS=$LIBGUESTFS_BACKEND_SETTINGS \
+LIBGUESTFS_BACKEND_SETTINGS="$LIBGUESTFS_BACKEND_SETTINGS" \
 "$WORKSPACE_ROOT/quickstart.sh" \
 	--working-dir "$TRIPLEO_QUICKSTART_WORKSPACE" \
 	--override_sudo_check \
 	--system-site-packages \
 	--ansible-debug \
 	--release "$OPENSTACK_VERSION" \
-	--config "$ROOT/conf/tripleo-quickstart/config.yaml" \
-	--nodes "$ROOT/conf/tripleo-quickstart/nodes.yaml" \
+	--config "$ROOT/configuration/tripleo-quickstart/config.yaml" \
+	--nodes "$ROOT/configuration/tripleo-quickstart/nodes.yaml" \
 	--extra-vars "virthost_nameservers=$NAMESERVER" \
 	"$@" \
 	"$HYPERVISOR_ADDRESS"

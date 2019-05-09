@@ -1,0 +1,50 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/configuration/environment"
+
+RESULTS="$WORKSPACE_ROOT/results"
+
+rm --recursive --force "$RESULTS" 
+
+mkdir --parents "$RESULTS/configuration/hypervisor/"
+mkdir --parents "$RESULTS/logs/hypervisor/"
+mkdir --parents "$RESULTS/logs/undercloud/"
+
+"$HERE/rsync" --recursive --copy-links --ignore-missing-args --prune-empty-dirs \
+	--exclude=config-download-latest/ \
+	--include=*/ \
+	--include=*.sh \
+	--include=*.conf \
+	--include=*.yaml \
+	--include=*.json \
+	--exclude=* \
+	undercloud-root:/home/stack/ \
+	undercloud-root:/var/lib/mistral \
+	"$RESULTS/configuration/hypervisor/"
+
+"$HERE/rsync" --recursive --copy-links --ignore-missing-args --prune-empty-dirs \
+	--include=*/ \
+	--include=*.log \
+	--exclude=* \
+	undercloud-root:/home/stack/ \
+	undercloud-root:/var/log/dmesg \
+	undercloud-root:/var/log/virtualbmc \
+	undercloud-root:/var/log/openvswitch \
+	undercloud-root:/var/lib/mistral/overcloud/ceph-ansible \
+	"$RESULTS/logs/hypervisor/"
+
+"$HERE/rsync" --recursive --copy-links --ignore-missing-args --prune-empty-dirs \
+	undercloud-root:/var/log/containers/ \
+	"$RESULTS/logs/undercloud/"
+
+echo "See: $RESULTS/"
+
+echo "Finished $(basename $0)!"

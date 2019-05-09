@@ -31,4 +31,3 @@ network_isolation_type: single-nic-vlans
 
 # For # ceph_0_vdb, _vdc, _vdd
 extradisks_size: 100G # number in bytes, can use "G" suffix for GiB
-

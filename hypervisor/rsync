@@ -12,9 +12,8 @@ ROOT=$(readlink -f "$HERE/..")
 
 if [ -f "$TRIPLEO_QUICKSTART_WORKSPACE/ssh.config.ansible" ]; then
 
-	scp \
-		-F "$TRIPLEO_QUICKSTART_WORKSPACE/ssh.config.ansible" \
-		-o LogLevel=ERROR \
+	rsync \
+		--rsh="ssh -F \"$TRIPLEO_QUICKSTART_WORKSPACE/ssh.config.ansible\" -o LogLevel=ERROR" \
 		"$@"
 
 else

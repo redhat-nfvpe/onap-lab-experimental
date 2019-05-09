@@ -70,15 +70,18 @@ telemetry_args: >-
    -e {{ overcloud_templates_path }}/environments/disable-telemetry.yaml
    {% endif %}
 
+# ONAP: we need the ceph-ansible environments
 extra_args: >-
    {% if release not in ['newton', 'ocata', 'pike'] %}
    -e {{ overcloud_templates_path }}/ci/environments/ovb-ha.yaml
    {% endif %}
-   {# ONAP #}
    -e {{ overcloud_templates_path }}/environments/ceph-ansible/ceph-ansible.yaml
    -e {{ overcloud_templates_path }}/environments/ceph-ansible/ceph-mds.yaml
    -e {{ overcloud_templates_path }}/environments/ceph-ansible/ceph-rgw.yaml
 
+# ONAP: we need to install ceph-ansible (has no effect)
+package_installs: true
+  
 # keep the doc gen settings at the bottom of the config file.
 # options below direct automatic doc generation by tripleo-collect-logs
 artcl_gen_docs: true
