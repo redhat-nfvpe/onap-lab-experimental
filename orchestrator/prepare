@@ -1,0 +1,25 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+
+"$HERE/clean"
+
+m '[orchestrator] Ensuring keypair exists for this user'
+"$ROOT/utils/ensure-ssh-key-exists" "$KEYPAIR"
+
+m "[orchestrator] Ensuring workspace directories exist"
+mkdir --parents "$WORKSPACE_ROOT"
+mkdir --parents "$PASSWORDS_ROOT"
+
+# sshpass libvirt-client
+
+m "Finished $(basename $0)!"

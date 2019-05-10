@@ -1,0 +1,18 @@
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+RED='\033[0;31m'
+RESET='\033[0m'
+
+function m () {
+	local COLOR=${2:-$BLUE}
+	echo -e "${COLOR}$@$RESET"
+}
+
+function q () {
+	local Q="$(printf ' %q' "$@")"
+	echo "${Q:1}"
+}
+
+function random_password () {
+	openssl rand -base64 32
+}

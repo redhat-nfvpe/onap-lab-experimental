@@ -1,0 +1,7 @@
+# Resource requirements
+# See: https://images.rdoproject.org/docs/baremetal/requirements.html
+
+--vcpus 4
+
+# In MB:
+--ram 16000

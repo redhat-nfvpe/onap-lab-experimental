@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+
+KEY_PATH=$1
+
+if [ ! -f "$KEY_PATH" ]; then
+	ssh-keygen -f "$KEY_PATH" -t rsa -N ''
+else
+	echo 'Already exists'
+fi

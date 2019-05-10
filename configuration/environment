@@ -1,9 +1,11 @@
-# Orchestrator Directories
+# Orchestrator
 WORKSPACE_ROOT="$ROOT/workspace"
-TRIPLEO_QUICKSTART_WORKSPACE="$WORKSPACE_ROOT/tripleo-quickstart"
+PASSWORDS_ROOT="$WORKSPACE_ROOT/passwords"
+KEYPAIR=~/.ssh/id_rsa
 
 # Hypervisor
 HYPERVISOR_ADDRESS=onap1
+HYPERVISOR_USER=stack
 HYPERVISOR_HARDWARE_VIRTUALIZATION=true
 
 # Undercloud Directories
@@ -15,7 +17,3 @@ OPENSTACK_KEYPAIRS="/home/stack/openstack-keypairs"
 OPENSTACK_VERSION=rocky
 NAMESERVER=1.0.0.1
 CENTOS7_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1901.qcow2
-
-# TripleO Quickstart
-TRIPLEO_QUICKSTART_BRANCH=master
-TRIPLEO_QUICKSTART_COMMIT=6bc336e65137fdf1d20feca529a69cce49e2cbe2

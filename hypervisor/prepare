@@ -1,0 +1,73 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+
+# See: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/director_installation_and_usage/installing-the-undercloud
+
+m '[hypervisor] Ensuring orchestrator keypair authorized by user "root" (you will be prompted for password if not)'
+"$ROOT/utils/ensure-ssh-key-authorized" "$KEYPAIR.pub" \
+ssh "root@$HYPERVISOR_ADDRESS"
+
+Q_HYPERVISOR_USER="$(q "$HYPERVISOR_USER")"
+
+m "[hypervisor] Ensuring user $HYPERVISOR_USER exists"
+ssh "root@$HYPERVISOR_ADDRESS" \
+"if ! id --user $Q_HYPERVISOR_USER > /dev/null 2>&1; then
+	useradd $Q_HYPERVISOR_USER
+else
+	echo 'Already exists'
+fi"
+
+PASSWORD="$("$ROOT/utils/ensure-password-exists" "$PASSWORDS_ROOT/hypervisor-stack")
+
+m "[hypervisor] Ensuring user \"$HYPERVISOR_USER\" has the right password"
+ssh "root@$HYPERVISOR_ADDRESS" \
+"echo $(q "$PASSWORD") | passwd --stdin $Q_HYPERVISOR_USER"
+
+m "[hypervisor] Ensuring user \"$HYPERVISOR_USER\" can use \"sudo\" without requiring a password"
+ssh "root@$HYPERVISOR_ADDRESS" \
+"echo \"$Q_HYPERVISOR_USER ALL=(root) NOPASSWD:ALL\" > /etc/sudoers.d/$Q_HYPERVISOR_USER"
+
+m "[hypervisor] Ensuring orchestrator keypair authorized by user \"$HYPERVISOR_USER\""
+"$ROOT/utils/ensure-ssh-key-authorized" "$KEYPAIR.pub" \
+sshpass -p "$PASSWORD" ssh "$HYPERVISOR_USER@$HYPERVISOR_ADDRESS"
+
+m "[hypervisor] Ensuring requirements are installed and initialized"
+ssh "$HYPERVISOR_USER@$HYPERVISOR_ADDRESS" \
+"sudo yum install --assumeyes python-pip git virt-install cloud-utils
+pip install --user virtualenv==16.5.0
+
+virsh pool-autostart default
+sudo virsh net-define /usr/share/libvirt/networks/default.xml
+sudo virsh net-autostart default
+sudo virsh net-start default
+
+if [ ! -d .env ]; then
+	/home/stack/.local/bin/virtualenv .env
+fi
+. .env/bin/activate
+pip install python-tripleoclient==11.4.0
+#ansible==2.7.10
+deactivate
+
+if [ ! -d ceph-ansible ]; then
+	git clone --depth 1 --branch v3.2.16 https://github.com/ceph/ceph-ansible.git
+fi
+# ceph-ansible gets its own virtualenv because it requires an older version of Ansible 
+if [ ! -d ceph-ansible/.env ]; then
+	/home/stack/.local/bin/virtualenv ceph-ansible/.env
+fi
+. ceph-ansible/.env/bin/activate
+pip install --requirement ceph-ansible/requirements.txt
+deactivate" 
+
+m "Finished $(basename $0)!"

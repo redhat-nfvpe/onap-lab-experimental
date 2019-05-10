@@ -7,17 +7,29 @@ if [ "$EUID" == 0 ]; then
 fi
 
 HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
 
-"$HERE/tripleo-quickstart" \
-	--playbook quickstart-extras-undercloud.yml \
-	--tags all \
-	--retain-inventory \
-	--teardown none
+#rsync "$ROOT/configuration/undercloud.conf" "$HYPERVISOR_USER@$HYPERVISOR_ADDRESS:tripleo/"
+#ssh "$HYPERVISOR_USER@$HYPERVISOR_ADDRESS" "mkdir --parents libvirt/configuration/"
+#rsync --recursive "$ROOT/configuration/libvirt/user-data.base" "$ROOT/configuration/libvirt/meta-data" "$HYPERVISOR_USER@$HYPERVISOR_ADDRESS:libvirt/configuration/"
 
-echo "Finished $(basename $0)!"
+LINE="$(cat "$ROOT/configuration/libvirt/virt-install" | grep --invert-match '^#\|^$' | tr '\n' ' ')"
 
-# GUI
-# See: https://docs.openstack.org/tripleo-docs/latest/install/basic_deployment/basic_deployment_ui.html#access-the-ui
-# https://onap1
-# user = admin
-# password = ./ssh-hypervisor undercloud "sudo hiera keystone::admin_password"
+# See: https://github.com/giovtorres/kvm-install-vm/blob/master/kvm-install-vm
+
+m "[hypervisor] Ensuring virtual machine base image exists"
+ssh -t "$HYPERVISOR_USER@$HYPERVISOR_ADDRESS" \
+"if [ ! -f libvirt/images/centos7.qcow2 ]; then
+	mkdir --parents libvirt/images/
+	wget --output-document=libvirt/images/centos7.qcow2 $(q "$CENTOS7_IMAGE")
+fi
+
+if [ ! -f ~/.ssh/id_rsa ]; then
+	ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''
+fi"
+
+"$HERE/create-virtual-machine" centos7 undercloud 80G
+
+m "Finished $(basename $0)!"

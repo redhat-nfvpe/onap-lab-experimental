@@ -26,16 +26,16 @@ if [ -f "$TRIPLEO_QUICKSTART_WORKSPACE/ssh.config.ansible" ]; then
 
 else
 
-	HOST=${1:-virthost-root}
+	HOST=${1:-hypervisor-root}
 
 	if [ "$HOST" == ? ]; then
-		echo virthost-root
-	elif [ "$HOST" == virthost-root ]; then
+		echo hypervisor-root
+	elif [ "$HOST" == hypervisor-root ]; then
 		ssh \
 			"root@$HYPERVISOR_ADDRESS" \
 			"$2"
 	else
-		echo "Host $HOST is unsupported: must use virthost-root" > /dev/stderr
+		echo "Host $HOST is unsupported: must use hypervisor-root" > /dev/stderr
 		exit 1
 	fi
 fi
