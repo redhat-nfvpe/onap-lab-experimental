@@ -13,36 +13,32 @@ ROOT=$(readlink -f "$HERE/..")
 
 # See: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/director_installation_and_usage/installing-the-undercloud
 
-m '[hypervisor] Ensuring orchestrator keypair authorized by user "root" (you will be prompted for password if not)'
-"$ROOT/utils/ensure-ssh-key-authorized" "$KEYPAIR.pub" \
+m '[hypervisor] Ensuring keypair authorization for user "root" (you will be prompted for password if not)'
+"$ROOT/utils/ensure-ssh-key-authorized" root@hypervisor \
 ssh "root@$HYPERVISOR_ADDRESS"
 
-Q_HYPERVISOR_USER="$(q "$HYPERVISOR_USER")"
+"$ROOT/utils/ensure-ssh-config" hypervisor-root "$HYPERVISOR_ADDRESS" root root@hypervisor
 
-m "[hypervisor] Ensuring user $HYPERVISOR_USER exists"
-ssh "root@$HYPERVISOR_ADDRESS" \
-"if ! id --user $Q_HYPERVISOR_USER > /dev/null 2>&1; then
-	useradd $Q_HYPERVISOR_USER
-else
-	echo 'Already exists'
-fi"
+PASSWORD="$("$ROOT/utils/get-password" stack@hypervisor)"
 
-PASSWORD="$("$ROOT/utils/ensure-password-exists" "$PASSWORDS_ROOT/hypervisor-stack")
+m "[hypervisor] Ensuring user \"stack\" exists and is configured correctly"
+"$HERE/ssh" root@hypervisor \
+"if ! id --user stack > /dev/null 2>&1; then
+	useradd stack
+fi
 
-m "[hypervisor] Ensuring user \"$HYPERVISOR_USER\" has the right password"
-ssh "root@$HYPERVISOR_ADDRESS" \
-"echo $(q "$PASSWORD") | passwd --stdin $Q_HYPERVISOR_USER"
+echo $(q "$PASSWORD") | passwd --stdin stack
 
-m "[hypervisor] Ensuring user \"$HYPERVISOR_USER\" can use \"sudo\" without requiring a password"
-ssh "root@$HYPERVISOR_ADDRESS" \
-"echo \"$Q_HYPERVISOR_USER ALL=(root) NOPASSWD:ALL\" > /etc/sudoers.d/$Q_HYPERVISOR_USER"
+echo \"stack ALL=(root) NOPASSWD:ALL\" > /etc/sudoers.d/stack"
 
-m "[hypervisor] Ensuring orchestrator keypair authorized by user \"$HYPERVISOR_USER\""
-"$ROOT/utils/ensure-ssh-key-authorized" "$KEYPAIR.pub" \
-sshpass -p "$PASSWORD" ssh "$HYPERVISOR_USER@$HYPERVISOR_ADDRESS"
+m "[hypervisor] Ensuring keypair authorization for user \"stack\""
+"$ROOT/utils/ensure-ssh-key-authorized" stack@hypervisor \
+sshpass -p "$PASSWORD" ssh "stack@$HYPERVISOR_ADDRESS"
+
+"$ROOT/utils/ensure-ssh-config" hypervisor-stack "$HYPERVISOR_ADDRESS" stack stack@hypervisor
 
 m "[hypervisor] Ensuring requirements are installed and initialized"
-ssh "$HYPERVISOR_USER@$HYPERVISOR_ADDRESS" \
+"$HERE/ssh" stack@hypervisor \
 "sudo yum install --assumeyes python-pip git virt-install cloud-utils
 pip install --user virtualenv==16.5.0
 

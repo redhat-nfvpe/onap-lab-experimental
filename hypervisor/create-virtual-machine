@@ -8,59 +8,68 @@ fi
 
 # See: https://stafwag.github.io/blog/blog/2019/03/03/howto-use-centos-cloud-images-with-cloud-init/
 # See: https://github.com/giovtorres/kvm-install-vm/blob/master/kvm-install-vm
+# See: https://cloudinit.readthedocs.io/en/latest/index.html
 
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
 
-BASE=$1
-NAME=$2
-DISK_SIZE=$3
+NAME=$1
+DISK_SIZE=$2
+BASE=$3
+BASE_IMAGE=$4
 
 VIRT_INSTALL="$(cat "$ROOT/configuration/libvirt/$NAME" | grep --invert-match '^#\|^$' | tr '\n' ' ')"
 
 m "[hypervisor] Ensuring virtual machine \"$NAME\" exists"
-ssh -t "$HYPERVISOR_USER@$HYPERVISOR_ADDRESS" \
+"$ROOT/utils/ensure-ssh-key-exists" "stack@$NAME"
+"$HERE/rsync" "$KEYS_ROOT/stack@$NAME" "$KEYS_ROOT/stack@$NAME.pub" hypervisor-stack:keys/
+"$HERE/ssh" -t hypervisor-stack \
 "if [ ! -f libvirt/images/$NAME.qcow2 ]; then
+	if [ ! -f libvirt/images/$BASE.qcow2 ]; then
+		mkdir --parents libvirt/images/
+		wget --output-document=libvirt/images/$BASE.qcow2 $(q "$BASE_IMAGE")
+	fi
+
 	cp libvirt/images/$BASE.qcow2 libvirt/images/$NAME.qcow2
 	qemu-img resize libvirt/images/$NAME.qcow2 $DISK_SIZE
 	#qemu-img create -f qcow2 -o preallocation=metadata libvirt/images/$NAME.qcow2 $DISK_SIZE
 	#virt-resize --expand /dev/sda1 libvirt/images/$BASE.qcow2 libvirt/images/$NAME.qcow2
 fi
 
-if [ ! -f images/$NAME-cloud-init.iso ]; then
-	KEY=\$(< ~/.ssh/id_rsa.pub)
+if [ ! -f libvirt/images/$NAME-cloud-init.iso ]; then
+	KEY=\$(< ~/\"keys/stack@$NAME.pub\")
+	PASSWORD=\"$("$ROOT/utils/get-password" "stack@$NAME")\"
 
-	cat > /tmp/cloud-init.yaml << EOT
+	cat > /tmp/$NAME-cloud-init.yaml << EOT
 #cloud-config
 
 output: 
   all: \">> /var/log/cloud-init.log\"
 
 preserve_hostname: false
-hostname: undercloud
-fqdn: undercloud.localdomain
+hostname: $NAME
+fqdn: $NAME.localdomain
 
-ssh_genkeytypes: [ 'ed25519', 'rsa' ]
+resolv_conf:
+  nameservers: ['$NAMESERVER']
 
 users:
 - name: stack
   groups: wheel
   lock_passwd: false
-  passwd: stack
+  passwd: $PASSWORD
   shell: /bin/bash
   sudo: ALL=(ALL) NOPASSWD:ALL
   ssh-authorized-keys:
   - \$KEY
 
 runcmd:
-- systemctl stop network
-- systemctl start network
 - systemctl disable cloud-init.service
 EOT
 
-	cloud-localds libvirt/images/$NAME-cloud-init.iso /tmp/cloud-init.yaml
+	cloud-localds libvirt/images/$NAME-cloud-init.iso /tmp/$NAME-cloud-init.yaml
 
 	#rm /tmp/cloud-init.yaml
 fi
@@ -79,7 +88,20 @@ virt-install \\
 	$VIRT_INSTALL
 
 virsh autostart --domain $NAME
-#virsh change-media $NAME hda --eject --config
+virsh change-media $NAME hda --eject --config || true
 "
 
-m "Finished $(basename $0)!"
+while true; do
+	m "[hypervisor] Waiting for virtual machine \"$NAME\" to start..."
+	ADDR=$("$HERE/ssh" hypervisor-stack \
+	"virsh domifaddr \"$NAME\" --interface eth0 --source agent | tail --lines=+3 | head --lines=-1 | awk '{ split(\$4,a,\"/\"); print \$3 \"=\" a[1] }'")
+	if [ "$ADDR" != 'N/A=N' ]; then
+		eval "$ADDR"
+		if [ -n "$ipv4" ]; then
+			break
+		fi
+	fi
+	sleep 1
+done
+
+"$ROOT/utils/ensure-ssh-config" "$NAME-stack" "$ipv4" stack "stack@$NAME" hypervisor-stack

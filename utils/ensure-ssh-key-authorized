@@ -4,12 +4,16 @@ set -e
 # ssh-copy-id is unfortunately buggy and will create duplicate keys
 # See: https://superuser.com/a/264401
 
-KEY_PATH=$1
+KEY=$1
 
 HERE=$(dirname "$(readlink -f "$0")")
-. "$HERE/functions"
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
 
-Q_KEY="$(q "$(cat "$KEY_PATH")")"
+"$HERE/ensure-ssh-key-exists" "$KEY"
+
+Q_KEY="$(q "$(< "$KEYS_ROOT/$KEY.pub")")"
 
 "${@:2}" \
 "echo $Q_KEY | while read -r KTYPE KEY COMMENT; do

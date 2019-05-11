@@ -10,32 +10,4 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 
-if [ -f "$TRIPLEO_QUICKSTART_WORKSPACE/ssh.config.ansible" ]; then
-
-	HOST=${1:-virthost}
-
-	if [ "$HOST" == ? ]; then
-		grep '^Host [^\*]' "$TRIPLEO_QUICKSTART_WORKSPACE/ssh.config.ansible" | cut --fields=2 --delimiter=' '
-	else
-		ssh \
-			-F "$TRIPLEO_QUICKSTART_WORKSPACE/ssh.config.ansible" \
-			-o LogLevel=ERROR \
-			"$HOST" \
-			"$2"
-	fi
-
-else
-
-	HOST=${1:-hypervisor-root}
-
-	if [ "$HOST" == ? ]; then
-		echo hypervisor-root
-	elif [ "$HOST" == hypervisor-root ]; then
-		ssh \
-			"root@$HYPERVISOR_ADDRESS" \
-			"$2"
-	else
-		echo "Host $HOST is unsupported: must use hypervisor-root" > /dev/stderr
-		exit 1
-	fi
-fi
+ssh -F "$WORKSPACE_ROOT/ssh.config" "$@"

@@ -1,12 +1,11 @@
 # Orchestrator
 WORKSPACE_ROOT="$ROOT/workspace"
 PASSWORDS_ROOT="$WORKSPACE_ROOT/passwords"
+KEYS_ROOT="$WORKSPACE_ROOT/keys"
 KEYPAIR=~/.ssh/id_rsa
 
 # Hypervisor
 HYPERVISOR_ADDRESS=onap1
-HYPERVISOR_USER=stack
-HYPERVISOR_HARDWARE_VIRTUALIZATION=true
 
 # Undercloud Directories
 OPENSTACK_IMAGES="/home/stack/openstack-images"

@@ -1,0 +1,44 @@
+#!/bin/bash
+set -e
+
+NAME=$1
+HOST=$2
+THE_USER=$3
+KEY=$4
+PROXY=$5
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+
+CONFIG="$WORKSPACE_ROOT/ssh.config"
+
+if [ -f "$CONFIG" ]; then
+	sed --in-place "/Host \"$NAME\"/,/^$/d" "$CONFIG"
+fi
+	
+if [ -z "$PROXY" ]; then
+
+cat >> "$CONFIG" << EOT
+Host "$NAME"
+  HostName "$HOST"
+  User "$THE_USER"
+  IdentityFile "$KEYS_ROOT/$KEY"
+
+EOT
+
+else
+
+cat >> "$CONFIG" << EOT
+Host "$NAME"
+  HostName "$HOST"
+  User "$THE_USER"
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+  LogLevel ERROR
+  ProxyCommand ssh -A -F "$CONFIG" "$PROXY" "ssh-add \"/home/stack/keys/$KEY\" && nc %h %p"
+
+EOT
+
+fi

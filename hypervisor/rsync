@@ -7,17 +7,5 @@ if [ "$EUID" == 0 ]; then
 fi
 
 HERE=$(dirname "$(readlink -f "$0")")
-ROOT=$(readlink -f "$HERE/..")
-. "$ROOT/configuration/environment"
 
-if [ -f "$TRIPLEO_QUICKSTART_WORKSPACE/ssh.config.ansible" ]; then
-
-	rsync \
-		--rsh="ssh -F \"$TRIPLEO_QUICKSTART_WORKSPACE/ssh.config.ansible\" -o LogLevel=ERROR" \
-		"$@"
-
-else
-	
-	exit 1
-
-fi
+rsync --rsh="\"$HERE/ssh\"" "$@"
