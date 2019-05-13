@@ -1,0 +1,40 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+# See: https://docs.openstack.org/tripleo-docs/latest/install/installation/installation.html
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/../..")
+. "$ROOT/configuration/environment"
+
+"$ROOT/hypervisor/ssh" undercloud-stack "$(cat <<- EOT
+
+	GREEN='\033[0;32m'
+	RESET='\033[0m'
+	function m () { echo -e "\$GREEN\$@\$RESET"; }
+
+	m '[undercloud] Creating "\$HOME/undercloud.conf"'
+	cat > "\$HOME/undercloud.conf" <<- _EOT
+		[DEFAULT]
+		undercloud_hostname = undercloud.localdomain
+		undercloud_nameservers = $NAMESERVER
+		local_interface = eth1
+	_EOT
+
+	m '[undercloud] Creating "\$HOME/containers-prepare-parameter.yaml"'
+	openstack tripleo container image prepare default \
+  		--local-push-destination \
+  		--output-env-file "\$HOME/containers-prepare-parameter.yaml"
+
+	m '[undercloud] Installing (~ 15 minutes)'
+	openstack undercloud install
+
+EOT
+)"
+
+m "Finished $(basename $0)!"

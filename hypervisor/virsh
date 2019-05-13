@@ -8,8 +8,18 @@ fi
 
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
-. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
 
 #virsh --connect="qemu+ssh://$HYPERVISOR_USER@$HYPERVISOR_ADDRESS/system" $LINE
 
-"$HERE/ssh" hypervisor-stack "virsh $(printf ' %q' "$@")"
+if [ "$1" == '-r' ]; then
+
+	"$HERE/ssh" hypervisor-root \
+	"virsh $(q "${@:2}")"
+
+else
+
+	"$HERE/ssh" hypervisor-stack \
+	"virsh $(q "$@")"
+
+fi

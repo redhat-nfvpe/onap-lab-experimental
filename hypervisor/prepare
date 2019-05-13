@@ -12,6 +12,7 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/utils/functions"
 
 # See: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/director_installation_and_usage/installing-the-undercloud
+# See: https://libvirt.org/formatnetwork.html
 
 m '[hypervisor] Ensuring keypair authorization for user "root" (you will be prompted for password if not)'
 "$ROOT/utils/ensure-ssh-key-authorized" root@hypervisor \
@@ -21,7 +22,7 @@ ssh "root@$HYPERVISOR_ADDRESS"
 
 PASSWORD="$("$ROOT/utils/get-password" stack@hypervisor)"
 
-m "[hypervisor] Ensuring user \"stack\" exists and is configured correctly"
+m "[hypervisor] Ensuring user \"stack\" exists and is configured"
 "$HERE/ssh" hypervisor-root "$(cat <<- EOT
 
 	if ! id --user stack > /dev/null 2>&1; then
@@ -38,47 +39,68 @@ EOT
 m "[hypervisor] Ensuring keypair authorization for user \"stack\""
 "$ROOT/utils/ensure-ssh-key-authorized" stack@hypervisor \
 sshpass -p "$PASSWORD" ssh "stack@$HYPERVISOR_ADDRESS"
-
 "$ROOT/utils/ensure-ssh-config" hypervisor-stack "$HYPERVISOR_ADDRESS" stack stack@hypervisor
 
-m "[hypervisor] Ensuring requirements are installed and initialized"
+"$HERE/ssh" hypervisor-stack "mkdir --parents libvirt/"
+"$HERE/rsync" --recursive \
+	"$ROOT/configuration/libvirt/networks" \
+	hypervisor-stack:libvirt/
+
 "$HERE/ssh" hypervisor-stack "$(cat <<- EOT
 
 	GREEN='\033[0;32m'
 	RESET='\033[0m'
 	function m () { echo -e "\$GREEN\$@\$RESET"; }
 
-	m '[hypervisor] Installing operating system packages'
-	sudo yum install --assumeyes python-pip git virt-install cloud-utils
+	function virsh_enable_network () {
+		local NETWORK=\$1
+		if ! grep --quiet --line-regexp "allow br-\$NETWORK" /etc/qemu-kvm/bridge.conf; then
+			echo "allow br-\$NETWORK" | sudo tee --append /etc/qemu-kvm/bridge.conf
+		fi
+		sudo virsh net-define "\$HOME/libvirt/networks/\$NETWORK.xml"
+		sudo virsh net-autostart \$NETWORK
+		sudo virsh net-start \$NETWORK
+	}
 
-	m '[hypervisor] Installing Python packages'
-	pip install --user virtualenv==16.5.0
+	m '[hypervisor] Ensuring required operating system packages are installed'
+	sudo yum install --assumeyes \
+		epel-release deltarpm
+	sudo yum install --assumeyes \
+		python-pip python-devel gcc git virt-install cloud-utils
 
-	m '[hypervisor] Initializing libvirt'
+	m '[hypervisor] Ensuring Python packages are installed'
+	pip install --user \
+		"virtualenv==$PYTHON_VIRTUALENV_VERSION"
+
+	m '[hypervisor] Ensuring libvirt is configured'
+	virsh_enable_network external
+	virsh_enable_network controlplane
 	virsh pool-autostart default
-	sudo virsh net-define /usr/share/libvirt/networks/default.xml
-	sudo virsh net-autostart default
-	sudo virsh net-start default
 
-	m '[hypervisor] Installing python-tripleoclient'
-	if [ ! -d .env ]; then
-		/home/stack/.local/bin/virtualenv .env
+	m '[hypervisor] Ensuring python-tripleoclient is installed'
+	if [ ! -d "\$HOME/.env" ]; then
+		"\$HOME/.local/bin/virtualenv" "\$HOME/.env"
 	fi
-	. .env/bin/activate
-		pip install python-tripleoclient==11.4.0
+	. "\$HOME/.env/bin/activate"
+		pip install \
+			"python-tripleoclient==$PYTHON_TRIPLEOCLIENT_VERSION"
 		#ansible==2.7.10
 	deactivate
 
-	m '[hypervisor] Installing ceph-ansible'
-	if [ ! -d ceph-ansible ]; then
-		git clone --depth 1 --branch v3.2.16 https://github.com/ceph/ceph-ansible.git
+	m '[hypervisor] Ensuring ceph-ansible is installed'
+	if [ ! -d "\$HOME/ceph-ansible" ]; then
+		git clone \
+			--depth 1 \
+			--branch "v$CEPH_ANSIBLE_VERSION" \
+			https://github.com/ceph/ceph-ansible.git "\$HOME/ceph-ansible"
 	fi
 	# ceph-ansible gets its own virtualenv because it requires an older version of Ansible 
-	if [ ! -d ceph-ansible/.env ]; then
-		/home/stack/.local/bin/virtualenv ceph-ansible/.env
+	if [ ! -d "\$HOME/ceph-ansible/.env" ]; then
+		"\$HOME/.local/bin/virtualenv" "\$HOME/ceph-ansible/.env"
 	fi
-	. ceph-ansible/.env/bin/activate
-		pip install --requirement ceph-ansible/requirements.txt
+	. "\$HOME/ceph-ansible/.env/bin/activate"
+		pip install \
+			--requirement "\$HOME/ceph-ansible/requirements.txt"
 	deactivate
 
 EOT

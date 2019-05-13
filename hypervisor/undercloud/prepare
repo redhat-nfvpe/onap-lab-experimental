@@ -1,0 +1,44 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+# See: https://docs.openstack.org/tripleo-docs/latest/install/installation/installation.html
+
+# This warning: "RequestsDependencyWarning: urllib3 (1.24.1) or chardet (2.2.1) doesn't match a supported version!"
+# See: /usr/lib/python2.7/site-packages/requests/__init__.py
+# urllib3 >= 1.21.1, <= 1.24, chardet >= 3.0.2, < 3.1.0
+# The problem is python2-urllib3 == 1.24.1
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/../..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+
+"$ROOT/hypervisor/create-virtual-machine" undercloud 80G centos7 "$CENTOS7_IMAGE"
+
+"$ROOT/hypervisor/ssh" undercloud-stack "$(cat <<- EOT
+
+	GREEN='\033[0;32m'
+	RESET='\033[0m'
+	function m () { echo -e "\$GREEN\$@\$RESET"; }
+
+	m '[hypervisor] Ensuring TripleO operating system packages are installed'
+	sudo yum install --assumeyes \
+		"$TRIPLEO_REPOS" \
+		deltarpm
+	sudo --preserve-env tripleo-repos \
+		-b "$TRIPLEO_VERSION" \
+		-d centos7 \
+		current ceph
+	sudo yum install --assumeyes \
+		python2-tripleoclient \
+		ceph-ansible
+
+EOT
+)"
+
+m "Finished $(basename $0)!"

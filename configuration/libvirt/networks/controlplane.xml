@@ -1,0 +1,6 @@
+<network ipv6="yes">
+  <name>controlplane</name>
+  <bridge name="br-controlplane"/>
+  <forward/>
+  <ip address="192.168.123.1" netmask="255.255.255.0"/>
+</network>

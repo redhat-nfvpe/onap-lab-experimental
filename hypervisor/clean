@@ -9,8 +9,9 @@ fi
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
 
-echo 'Deleting all virtual machines...'
+m '[hypervisor] Ensuring no virtual machines'
 for UUID in $("$HERE/virsh" list --uuid); do
 	"$HERE/virsh" destroy "$UUID"
 done
@@ -18,21 +19,21 @@ for UUID in $("$HERE/virsh" list --all --uuid); do
 	"$HERE/virsh" undefine "$UUID" --managed-save --remove-all-storage --delete-snapshots --snapshots-metadata --nvram  
 done
 
-echo 'Deleting all networks...'
-for UUID in $("$HERE/virsh" net-list --uuid); do
-	"$HERE/virsh" net-destroy "$UUID"
-	"$HERE/virsh" net-undefine "$UUID"
+m '[hypervisor] Ensuring no volumes'
+for NAME in $("$HERE/virsh" vol-list images 2> /dev/null | tail --lines=+3 | head --line=-1 | cut --fields=2 --delimiter=' '); do
+	"$HERE/virsh" vol-delete "$NAME" --pool oooq_pool
 done
 
-#echo 'Deleting all volumes in "oooq_pool" pool...'
-#for NAME in $("$HERE/virsh" vol-list images 2> /dev/null | tail --lines=+3 | head --line=-1 | cut --fields=2 --delimiter=' '); do
-#	"$HERE/virsh" vol-delete "$NAME" --pool oooq_pool
-#done
+m '[hypervisor] Ensuring no networks'
+for UUID in $("$HERE/virsh" -r net-list --uuid); do
+	"$HERE/virsh" -r net-destroy "$UUID"
+	"$HERE/virsh" -r net-undefine "$UUID"
+done
 
-echo 'Deleting all images...'
-"$HERE/ssh" hypervisor-stack "rm --recursive --force libvirt/images" 
+m '[hypervisor] Ensuring no images'
+"$HERE/ssh" hypervisor-stack "rm --recursive --force libvirt/" 
 
 #echo 'Deleting user "stack"...'
 #ssh "root@$HYPERVISOR_ADDRESS" "if id -u stack >/dev/null 2>&1; then userdel --force --remove stack; fi"
 
-echo "Finished $(basename $0)!"
+m "Finished $(basename $0)!"

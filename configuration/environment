@@ -7,6 +7,13 @@ KEYPAIR=~/.ssh/id_rsa
 # Hypervisor
 HYPERVISOR_ADDRESS=onap1
 
+PYTHON_VIRTUALENV_VERSION==16.5.0
+PYTHON_TRIPLEOCLIENT_VERSION=11.4.0
+CEPH_ANSIBLE_VERSION=3.2.16
+
+TRIPLEO_REPOS=https://trunk.rdoproject.org/centos7/current/python2-tripleo-repos-0.0.1-0.20190513071441.ca9796a.el7.noarch.rpm
+TRIPLEO_VERSION=stein
+
 # Undercloud Directories
 OPENSTACK_IMAGES="/home/stack/openstack-images"
 OPENSTACK_KEYPAIRS="/home/stack/openstack-keypairs"

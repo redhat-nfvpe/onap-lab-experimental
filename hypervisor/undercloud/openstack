@@ -1,0 +1,14 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/../..")
+. "$ROOT/utils/functions"
+
+"$ROOT/hypervisor/ssh" undercloud-stack \
+". \$HOME/stackrc && openstack $(q "$@")"
