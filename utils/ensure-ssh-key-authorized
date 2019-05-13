@@ -13,7 +13,7 @@ ROOT=$(readlink -f "$HERE/..")
 
 "$HERE/ensure-ssh-key-exists" "$KEY"
 
-Q_KEY="$(q "$(< "$KEYS_ROOT/$KEY.pub")")"
+Q_KEY=$(q "$(< "$KEYS_ROOT/$KEY.pub")")
 
 "${@:2}" \
 "echo $Q_KEY | while read -r KTYPE KEY COMMENT; do

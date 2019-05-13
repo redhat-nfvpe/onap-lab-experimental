@@ -1,18 +1,20 @@
+RED='\033[0;31m'
+GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
-RED='\033[0;31m'
 RESET='\033[0m'
 
 function m () {
 	local COLOR=${2:-$BLUE}
-	echo -e "${COLOR}$@$RESET"
+	echo -e "$COLOR$@$RESET"
 }
 
 function q () {
-	local Q="$(printf ' %q' "$@")"
+	local Q=$(printf ' %q' "$@")
 	echo "${Q:1}"
 }
 
+# See: https://www.rosehosting.com/blog/generate-password-linux-command-line/#2-Generate-a-strong-password-with-urandom
 function random_password () {
-	openssl rand -base64 32
+	echo "$(< /dev/urandom tr --delete --complement A-Za-z0-9 | head --bytes=16)"
 }

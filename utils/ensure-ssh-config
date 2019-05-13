@@ -20,25 +20,25 @@ fi
 	
 if [ -z "$PROXY" ]; then
 
-cat >> "$CONFIG" << EOT
-Host "$NAME"
-  HostName "$HOST"
-  User "$THE_USER"
-  IdentityFile "$KEYS_ROOT/$KEY"
+cat >> "$CONFIG" <<- EOT
+	Host "$NAME"
+	  HostName "$HOST"
+	  User "$THE_USER"
+	  IdentityFile "$KEYS_ROOT/$KEY"
 
-EOT
+	EOT
 
 else
 
-cat >> "$CONFIG" << EOT
-Host "$NAME"
-  HostName "$HOST"
-  User "$THE_USER"
-  StrictHostKeyChecking no
-  UserKnownHostsFile /dev/null
-  LogLevel ERROR
-  ProxyCommand ssh -A -F "$CONFIG" "$PROXY" "ssh-add \"/home/stack/keys/$KEY\" && nc %h %p"
+cat >> "$CONFIG" <<- EOT
+	Host "$NAME"
+	  HostName "$HOST"
+	  User "$THE_USER"
+	  StrictHostKeyChecking no
+	  UserKnownHostsFile /dev/null
+	  LogLevel ERROR
+	  ProxyCommand ssh -A -F "$CONFIG" "$PROXY" "ssh-add \"/home/stack/keys/$KEY\" && nc %h %p"
 
-EOT
+	EOT
 
 fi

@@ -22,14 +22,18 @@ ssh "root@$HYPERVISOR_ADDRESS"
 PASSWORD="$("$ROOT/utils/get-password" stack@hypervisor)"
 
 m "[hypervisor] Ensuring user \"stack\" exists and is configured correctly"
-"$HERE/ssh" root@hypervisor \
-"if ! id --user stack > /dev/null 2>&1; then
-	useradd stack
-fi
+"$HERE/ssh" hypervisor-root "$(cat <<- EOT
 
-echo $(q "$PASSWORD") | passwd --stdin stack
+	if ! id --user stack > /dev/null 2>&1; then
+		useradd stack
+	fi
 
-echo \"stack ALL=(root) NOPASSWD:ALL\" > /etc/sudoers.d/stack"
+	echo $(q "$PASSWORD") | passwd --stdin stack
+
+	echo "stack ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/stack
+
+EOT
+)"
 
 m "[hypervisor] Ensuring keypair authorization for user \"stack\""
 "$ROOT/utils/ensure-ssh-key-authorized" stack@hypervisor \
@@ -38,32 +42,46 @@ sshpass -p "$PASSWORD" ssh "stack@$HYPERVISOR_ADDRESS"
 "$ROOT/utils/ensure-ssh-config" hypervisor-stack "$HYPERVISOR_ADDRESS" stack stack@hypervisor
 
 m "[hypervisor] Ensuring requirements are installed and initialized"
-"$HERE/ssh" stack@hypervisor \
-"sudo yum install --assumeyes python-pip git virt-install cloud-utils
-pip install --user virtualenv==16.5.0
+"$HERE/ssh" hypervisor-stack "$(cat <<- EOT
 
-virsh pool-autostart default
-sudo virsh net-define /usr/share/libvirt/networks/default.xml
-sudo virsh net-autostart default
-sudo virsh net-start default
+	GREEN='\033[0;32m'
+	RESET='\033[0m'
+	function m () { echo -e "\$GREEN\$@\$RESET"; }
 
-if [ ! -d .env ]; then
-	/home/stack/.local/bin/virtualenv .env
-fi
-. .env/bin/activate
-pip install python-tripleoclient==11.4.0
-#ansible==2.7.10
-deactivate
+	m '[hypervisor] Installing operating system packages'
+	sudo yum install --assumeyes python-pip git virt-install cloud-utils
 
-if [ ! -d ceph-ansible ]; then
-	git clone --depth 1 --branch v3.2.16 https://github.com/ceph/ceph-ansible.git
-fi
-# ceph-ansible gets its own virtualenv because it requires an older version of Ansible 
-if [ ! -d ceph-ansible/.env ]; then
-	/home/stack/.local/bin/virtualenv ceph-ansible/.env
-fi
-. ceph-ansible/.env/bin/activate
-pip install --requirement ceph-ansible/requirements.txt
-deactivate" 
+	m '[hypervisor] Installing Python packages'
+	pip install --user virtualenv==16.5.0
+
+	m '[hypervisor] Initializing libvirt'
+	virsh pool-autostart default
+	sudo virsh net-define /usr/share/libvirt/networks/default.xml
+	sudo virsh net-autostart default
+	sudo virsh net-start default
+
+	m '[hypervisor] Installing python-tripleoclient'
+	if [ ! -d .env ]; then
+		/home/stack/.local/bin/virtualenv .env
+	fi
+	. .env/bin/activate
+		pip install python-tripleoclient==11.4.0
+		#ansible==2.7.10
+	deactivate
+
+	m '[hypervisor] Installing ceph-ansible'
+	if [ ! -d ceph-ansible ]; then
+		git clone --depth 1 --branch v3.2.16 https://github.com/ceph/ceph-ansible.git
+	fi
+	# ceph-ansible gets its own virtualenv because it requires an older version of Ansible 
+	if [ ! -d ceph-ansible/.env ]; then
+		/home/stack/.local/bin/virtualenv ceph-ansible/.env
+	fi
+	. ceph-ansible/.env/bin/activate
+		pip install --requirement ceph-ansible/requirements.txt
+	deactivate
+
+EOT
+)"
 
 m "Finished $(basename $0)!"

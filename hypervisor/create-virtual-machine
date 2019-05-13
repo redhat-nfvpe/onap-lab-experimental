@@ -20,87 +20,117 @@ DISK_SIZE=$2
 BASE=$3
 BASE_IMAGE=$4
 
-VIRT_INSTALL="$(cat "$ROOT/configuration/libvirt/$NAME" | grep --invert-match '^#\|^$' | tr '\n' ' ')"
-
 m "[hypervisor] Ensuring virtual machine \"$NAME\" exists"
+
+VIRT_INSTALL=$(cat "$ROOT/configuration/libvirt/$NAME" | grep --invert-match '^#\|^$' | tr '\n' ' ')
+
 "$ROOT/utils/ensure-ssh-key-exists" "stack@$NAME"
-"$HERE/rsync" "$KEYS_ROOT/stack@$NAME" "$KEYS_ROOT/stack@$NAME.pub" hypervisor-stack:keys/
-"$HERE/ssh" -t hypervisor-stack \
-"if [ ! -f libvirt/images/$NAME.qcow2 ]; then
-	if [ ! -f libvirt/images/$BASE.qcow2 ]; then
-		mkdir --parents libvirt/images/
-		wget --output-document=libvirt/images/$BASE.qcow2 $(q "$BASE_IMAGE")
+"$HERE/rsync" \
+	"$KEYS_ROOT/stack@$NAME" \
+	"$KEYS_ROOT/stack@$NAME.pub" \
+	hypervisor-stack:keys/
+"$HERE/ssh" hypervisor-stack "chmod --recursive go-rwx keys/"
+
+"$HERE/ssh" -t hypervisor-stack "$(cat <<- EOT
+
+	GREEN='\033[0;32m'
+	RESET='\033[0m'
+	function m () { echo -e "\$GREEN\$@\$RESET"; }
+
+	if [ ! -f "libvirt/images/$NAME.qcow2" ]; then
+		if [ ! -f "libvirt/images/$BASE.qcow2" ]; then
+			m "[hypervisor] Downloading base image: \"libvirt/images/$BASE.qcow2\""
+			mkdir --parents libvirt/images/
+			wget --output-document="libvirt/images/$BASE.qcow2" $(q "$BASE_IMAGE")
+		fi
+
+		m "[hypervisor] Creating virtual machine disk image: \"libvirt/images/$NAME.qcow2\" ($DISK_SIZE)"
+		cp "libvirt/images/$BASE.qcow2" "libvirt/images/$NAME.qcow2"
+		qemu-img resize "libvirt/images/$NAME.qcow2" "$DISK_SIZE"
+		#qemu-img create -f qcow2 -o preallocation=metadata "libvirt/images/$NAME.qcow2" "$DISK_SIZE"
+		#virt-resize --expand /dev/sda1 "libvirt/images/$BASE.qcow2" "libvirt/images/$NAME.qcow2"
 	fi
 
-	cp libvirt/images/$BASE.qcow2 libvirt/images/$NAME.qcow2
-	qemu-img resize libvirt/images/$NAME.qcow2 $DISK_SIZE
-	#qemu-img create -f qcow2 -o preallocation=metadata libvirt/images/$NAME.qcow2 $DISK_SIZE
-	#virt-resize --expand /dev/sda1 libvirt/images/$BASE.qcow2 libvirt/images/$NAME.qcow2
-fi
+	if [ ! -f "libvirt/images/$NAME-cloud-init.iso" ]; then
+		m "[hypervisor] Creating cloud-init configuration disk image: \"libvirt/images/$NAME-cloud-init.iso\""
+		PASSWORD="$("$ROOT/utils/get-password" "stack@$NAME")"
+		KEY=\$(< "\$HOME/keys/stack@$NAME.pub")
+		CLOUD_INIT=\$(mktemp --tmpdir=libvirt/images ".${NAME}_cloud-init.yaml.XXXXXXXX")
 
-if [ ! -f libvirt/images/$NAME-cloud-init.iso ]; then
-	KEY=\$(< ~/\"keys/stack@$NAME.pub\")
-	PASSWORD=\"$("$ROOT/utils/get-password" "stack@$NAME")\"
+		cat > "\$CLOUD_INIT" <<- _EOT
+			#cloud-config
 
-	cat > /tmp/$NAME-cloud-init.yaml << EOT
-#cloud-config
+			output: 
+			  all: ">> /var/log/cloud-init.log"
 
-output: 
-  all: \">> /var/log/cloud-init.log\"
+			preserve_hostname: false
+			hostname: "$NAME"
+			fqdn: "$NAME.localdomain"
 
-preserve_hostname: false
-hostname: $NAME
-fqdn: $NAME.localdomain
+			resolv_conf:
+			  nameservers:
+			  - "$NAMESERVER"
 
-resolv_conf:
-  nameservers: ['$NAMESERVER']
+			users:
+			- name: stack
+			  groups: wheel
+			  lock_passwd: false
+			  passwd: "\$PASSWORD"
+			  shell: /bin/bash
+			  sudo: ALL=(ALL) NOPASSWD:ALL
+			  ssh-authorized-keys:
+			  - \$KEY
 
-users:
-- name: stack
-  groups: wheel
-  lock_passwd: false
-  passwd: $PASSWORD
-  shell: /bin/bash
-  sudo: ALL=(ALL) NOPASSWD:ALL
-  ssh-authorized-keys:
-  - \$KEY
+			runcmd:
+			- systemctl disable cloud-init.service
+		_EOT
 
-runcmd:
-- systemctl disable cloud-init.service
+		cloud-localds "libvirt/images/$NAME-cloud-init.iso" "/tmp/$NAME-cloud-init.yaml"
+
+		#rm "\$CLOUD_INIT"
+	fi
+
+	# Run osinfo-query os to see options
+	m "[hypervisor] Creating virtual machine \"$NAME\""
+	virt-install \
+		--name "$NAME" \
+		--virt-type kvm \
+		--graphics none \
+		--noautoconsole \
+		--network bridge=virbr0,model=virtio \
+		--os-type linux \
+		--os-variant centos7.0 \
+		--import --disk path="libvirt/images/$NAME.qcow2,device=disk,bus=virtio" \
+		--disk "libvirt/images/$NAME-cloud-init.iso,device=cdrom" \
+		$VIRT_INSTALL
+
+	m "[hypervisor] Setting virtual machine \"$NAME\" to autostart"
+	virsh autostart --domain "$NAME"
+
+	m "[hypervisor] Ejecting cloud-init disk from \"$NAME\" virtual machine"
+	virsh change-media "$NAME" hda --eject --config || true
+
 EOT
-
-	cloud-localds libvirt/images/$NAME-cloud-init.iso /tmp/$NAME-cloud-init.yaml
-
-	#rm /tmp/cloud-init.yaml
-fi
-
-# Run osinfo-query os to see options
-virt-install \\
-	--virt-type kvm \\
-	--graphics none \\
-	--noautoconsole \\
-	--name $NAME \\
-	--os-type linux \\
-	--os-variant centos7.0 \\
-	--network bridge=virbr0,model=virtio \\
-	--import --disk path=libvirt/images/$NAME.qcow2,device=disk,bus=virtio \\
-	--disk libvirt/images/$NAME-cloud-init.iso,device=cdrom \\
-	$VIRT_INSTALL
-
-virsh autostart --domain $NAME
-virsh change-media $NAME hda --eject --config || true
-"
+)"
 
 while true; do
-	m "[hypervisor] Waiting for virtual machine \"$NAME\" to start..."
-	ADDR=$("$HERE/ssh" hypervisor-stack \
-	"virsh domifaddr \"$NAME\" --interface eth0 --source agent | tail --lines=+3 | head --lines=-1 | awk '{ split(\$4,a,\"/\"); print \$3 \"=\" a[1] }'")
+	m "[hypervisor] Waiting for virtual machine \"$NAME\" to have an IP address..."
+
+	ADDR=$("$HERE/ssh" hypervisor-stack "$(cat <<- EOT
+		virsh domifaddr "$NAME" --interface eth0 --source agent | \
+			tail --lines=+3 | \
+			head --lines=-1 | \
+			awk '{ split(\$4,a,"/"); print \$3 "=" a[1] }'
+	EOT
+	)")
+
 	if [ "$ADDR" != 'N/A=N' ]; then
 		eval "$ADDR"
 		if [ -n "$ipv4" ]; then
 			break
 		fi
 	fi
+
 	sleep 1
 done
 

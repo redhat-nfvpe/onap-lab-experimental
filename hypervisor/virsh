@@ -12,4 +12,4 @@ ROOT=$(readlink -f "$HERE/..")
 
 #virsh --connect="qemu+ssh://$HYPERVISOR_USER@$HYPERVISOR_ADDRESS/system" $LINE
 
-ssh -i "$KEYS_ROOT/stack@hypervisor" "stack@$HYPERVISOR_ADDRESS" "virsh $(printf ' %q' "$@")"
+"$HERE/ssh" hypervisor-stack "virsh $(printf ' %q' "$@")"

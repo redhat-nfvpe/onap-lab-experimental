@@ -24,12 +24,13 @@ for UUID in $("$HERE/virsh" net-list --uuid); do
 	"$HERE/virsh" net-undefine "$UUID"
 done
 
-#.local/share/libvirt/images/
-
 #echo 'Deleting all volumes in "oooq_pool" pool...'
 #for NAME in $("$HERE/virsh" vol-list images 2> /dev/null | tail --lines=+3 | head --line=-1 | cut --fields=2 --delimiter=' '); do
 #	"$HERE/virsh" vol-delete "$NAME" --pool oooq_pool
 #done
+
+echo 'Deleting all images...'
+"$HERE/ssh" hypervisor-stack "rm --recursive --force libvirt/images" 
 
 #echo 'Deleting user "stack"...'
 #ssh "root@$HYPERVISOR_ADDRESS" "if id -u stack >/dev/null 2>&1; then userdel --force --remove stack; fi"
