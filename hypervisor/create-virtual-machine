@@ -32,6 +32,7 @@ VIRT_INSTALL=$(cat "$ROOT/configuration/libvirt/$NAME" | grep --invert-match '^#
 
 "$HERE/ssh" -t hypervisor-stack "$(cat <<- EOT
 
+	set -e
 	GREEN='\033[0;32m'
 	RESET='\033[0m'
 	function m () { echo -e "\$GREEN\$@\$RESET"; }
@@ -50,14 +51,14 @@ VIRT_INSTALL=$(cat "$ROOT/configuration/libvirt/$NAME" | grep --invert-match '^#
 		#virt-resize --expand /dev/sda1 "libvirt/images/$BASE.qcow2" "libvirt/images/$NAME.qcow2"
 	fi
 
-	if [ ! -f "libvirt/images/$NAME-cloud-init.iso" ]; then
+	if [ ! -f "\$HOME/libvirt/images/$NAME-cloud-init.iso" ]; then
 		m "[hypervisor] Creating cloud-init configuration disk image: \"\$HOME/libvirt/images/$NAME-cloud-init.iso\""
 		PASSWORD="$("$ROOT/utils/get-password" "stack@$NAME")"
 		KEY=\$(< "\$HOME/keys/stack@$NAME.pub")
 		CLOUD_INIT=\$(mktemp --tmpdir="\$HOME/libvirt/images" ".${NAME}_cloud-init.yaml.XXXXXXXX")
 
-		# Note: we are purposely not doing runcmd "dhclient eth1" below because TripleO will be
-		# taking over that interface
+		# Note: we are purposely not doing 'runcmd "dhclient eth1"' below because TripleO needs the
+		# interface defined but unused
 
 		cat > "\$CLOUD_INIT" <<- _EOT
 			#cloud-config
@@ -92,6 +93,8 @@ VIRT_INSTALL=$(cat "$ROOT/configuration/libvirt/$NAME" | grep --invert-match '^#
 			  passwd: "\$PASSWORD"
 			  ssh-authorized-keys:
 			  - \$KEY
+
+			timezone: "$TIMEZONE"
 
 			runcmd:
 			- systemctl disable cloud-init.service
@@ -130,6 +133,7 @@ while true; do
 	m "[hypervisor] Waiting for virtual machine \"$NAME\" to have an IP address..."
 
 	ADDR=$("$HERE/ssh" hypervisor-stack "$(cat <<- EOT
+		set -e
 		virsh domifaddr "$NAME" --interface eth0 --source agent | \
 			tail --lines=+3 | \
 			head --lines=-1 | \

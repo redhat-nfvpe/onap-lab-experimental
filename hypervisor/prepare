@@ -22,15 +22,22 @@ ssh "root@$HYPERVISOR_ADDRESS"
 
 PASSWORD="$("$ROOT/utils/get-password" stack@hypervisor)"
 
-m "[hypervisor] Ensuring user \"stack\" exists and is configured"
 "$HERE/ssh" hypervisor-root "$(cat <<- EOT
+
+	set -e
+	GREEN='\033[0;32m'
+	RESET='\033[0m'
+	function m () { echo -e "\$GREEN\$@\$RESET"; }
+
+	m "[hypervisor] Setting timezone to \"$TIMEZONE\""
+	timedatectl set-timezone $(q "$TIMEZONE")
+
+	m "[hypervisor] Ensuring user \"stack\" exists and is configured"
 
 	if ! id --user stack > /dev/null 2>&1; then
 		useradd stack
 	fi
-
 	echo $(q "$PASSWORD") | passwd --stdin stack
-
 	echo "stack ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/stack
 
 EOT
@@ -39,6 +46,7 @@ EOT
 m "[hypervisor] Ensuring keypair authorization for user \"stack\""
 "$ROOT/utils/ensure-ssh-key-authorized" stack@hypervisor \
 sshpass -p "$PASSWORD" ssh "stack@$HYPERVISOR_ADDRESS"
+
 "$ROOT/utils/ensure-ssh-config" hypervisor-stack "$HYPERVISOR_ADDRESS" stack stack@hypervisor
 
 "$HERE/ssh" hypervisor-stack "mkdir --parents libvirt/"
@@ -48,6 +56,7 @@ sshpass -p "$PASSWORD" ssh "stack@$HYPERVISOR_ADDRESS"
 
 "$HERE/ssh" hypervisor-stack "$(cat <<- EOT
 
+	set -e
 	GREEN='\033[0;32m'
 	RESET='\033[0m'
 	function m () { echo -e "\$GREEN\$@\$RESET"; }

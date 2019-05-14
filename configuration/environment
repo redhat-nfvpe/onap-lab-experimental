@@ -5,21 +5,20 @@ KEYS_ROOT="$WORKSPACE_ROOT/keys"
 KEYPAIR=~/.ssh/id_rsa
 
 # Hypervisor
-HYPERVISOR_ADDRESS=onap1
+HYPERVISOR_ADDRESS=lab1
 
 PYTHON_VIRTUALENV_VERSION==16.5.0
 PYTHON_TRIPLEOCLIENT_VERSION=11.4.0
 CEPH_ANSIBLE_VERSION=3.2.16
 
+NAMESERVER=1.0.0.1
+TIMEZONE=America/Chicago
+CENTOS7_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1901.qcow2
+
+# TripleO
 TRIPLEO_REPOS=https://trunk.rdoproject.org/centos7/current/python2-tripleo-repos-0.0.1-0.20190513071441.ca9796a.el7.noarch.rpm
 TRIPLEO_VERSION=stein
-
-# Undercloud Directories
-OPENSTACK_IMAGES="/home/stack/openstack-images"
-OPENSTACK_KEYPAIRS="/home/stack/openstack-keypairs"
-
-# OpenStack
-# NOTE: "queens" (13) and "rocky" (14) supported
-OPENSTACK_VERSION=rocky
-NAMESERVER=1.0.0.1
-CENTOS7_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1901.qcow2
+# See: https://hub.docker.com/r/tripleomaster/centos-binary-nova-api/tags
+TRIPLEO_TAG=28588bdaba5dcc57cb3d6ca4e78880aee9817143_df596717
+# See: https://hub.docker.com/r/ceph/daemon/tags or "skopeo inspect docker://docker.io/ceph/daemon"
+CEPH_TAG=v4.0.0-stable-4.0-nautilus-centos-7-x86_64

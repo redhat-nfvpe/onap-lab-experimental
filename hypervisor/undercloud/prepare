@@ -22,6 +22,7 @@ ROOT=$(readlink -f "$HERE/../..")
 
 "$ROOT/hypervisor/ssh" undercloud-stack "$(cat <<- EOT
 
+	set -e
 	GREEN='\033[0;32m'
 	RESET='\033[0m'
 	function m () { echo -e "\$GREEN\$@\$RESET"; }
@@ -29,7 +30,7 @@ ROOT=$(readlink -f "$HERE/../..")
 	m '[hypervisor] Ensuring TripleO operating system packages are installed'
 	sudo yum install --assumeyes \
 		"$TRIPLEO_REPOS" \
-		deltarpm
+		deltarpm wget
 	sudo --preserve-env tripleo-repos \
 		-b "$TRIPLEO_VERSION" \
 		-d centos7 \

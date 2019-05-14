@@ -37,7 +37,7 @@ cat >> "$CONFIG" <<- EOT
 	  StrictHostKeyChecking no
 	  UserKnownHostsFile /dev/null
 	  LogLevel ERROR
-	  ProxyCommand ssh -A -F "$CONFIG" "$PROXY" "ssh-add \"/home/stack/keys/$KEY\" && nc %h %p"
+	  ProxyCommand ssh -A -F "$CONFIG" "$PROXY" "ssh-add \"/home/stack/keys/$KEY\" 2> /dev/null && nc %h %p"
 
 	EOT
 
