@@ -1,0 +1,34 @@
+<!--
+OpenStack control plane.
+
+Used by OpenStack manager (TripleO) to control and provision OpenStack nodes.
+
+For this to work, you need to configure bridge "br-os-ctl" on the hypervisor.
+
+There are two main ways to configure this bridge:
+
+1) Dedicated LAN for the OpenStack control plane. In this case all OpenStack nodes will be on this
+   LAN. Your hypervisor will also need a dedicated NIC on this LAN, and it should be added to the
+   bridge. Example: "brctl addif br-os-ctl eth1"
+
+2) Single LAN. This is a more complicated scenario. In this case your hypervisor just needs a single
+   NIC. However, you will also need to configure your router. First you will need to IP route
+   192.168.24.0/24 to your hypervisor IP address. This will allow the OpenStack nodes to access the
+   OpenStack manager. Then you'll need to configure your router's DHCP server to forward PXE
+   requests to 192.168.24.1, which is the OpenStack manager's TFTP server.
+
+Relevant virtual machines (the undercloud and other controllers) will connect to this on eth1.
+
+See: https://libvirt.org/formatnetwork.html
+
+sudo virsh net-destroy os-ctl
+sudo virsh net-undefine os-ctl
+sudo virsh net-define libvirt/networks/os-ctl.xml
+sudo virsh net-start os-ctl
+-->
+
+<network>
+  <name>os-ctl</name>
+  <bridge name="br-os-ctl"/>
+  <forward mode="bridge"/>
+</network>

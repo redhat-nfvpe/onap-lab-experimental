@@ -112,8 +112,8 @@ VIRT_INSTALL=$(cat "$ROOT/configuration/libvirt/$NAME" | grep --invert-match '^#
 		--virt-type kvm \
 		--graphics none \
 		--noautoconsole \
-		--network bridge=br-external,model=virtio \
-		--network bridge=br-controlplane,model=virtio \
+		--network bridge=br-vm-ctl,model=virtio \
+		--network bridge=br-os-ctl,model=virtio \
 		--os-type linux \
 		--os-variant centos7.0 \
 		--import --disk path="\$HOME/libvirt/images/$NAME.qcow2,device=disk,bus=virtio" \
@@ -151,8 +151,8 @@ while true; do
 	sleep 1
 done
 
-# Give it a second to fully come up
-sleep 1
+# Give it some time to fully come up
+sleep 5
 
 m "[$NAME] Ensuring keypair authorization for user \"stack\""
 "$ROOT/utils/ensure-ssh-config" "$NAME-stack" "$ipv4" stack "stack@$NAME" hypervisor-stack

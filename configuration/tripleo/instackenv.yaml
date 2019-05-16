@@ -1,3 +1,5 @@
+# See: https://docs.openstack.org/tripleo-docs/latest/install/environments/baremetal.html#instackenv
+
 nodes:
 - name: compute-0
   _comment: lab1

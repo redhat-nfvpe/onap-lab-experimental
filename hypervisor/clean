@@ -25,9 +25,9 @@ for NAME in $("$HERE/virsh" vol-list images 2> /dev/null | tail --lines=+3 | hea
 done
 
 m '[hypervisor] Ensuring no networks'
-for UUID in $("$HERE/virsh" -r net-list --uuid); do
-	"$HERE/virsh" -r net-destroy "$UUID"
+for UUID in $("$HERE/virsh" -r net-list --all --uuid); do
 	"$HERE/virsh" -r net-undefine "$UUID"
+	"$HERE/virsh" -r net-destroy "$UUID"
 done
 
 m '[hypervisor] Ensuring no images'

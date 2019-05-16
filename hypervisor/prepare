@@ -29,14 +29,46 @@ PASSWORD="$("$ROOT/utils/get-password" stack@hypervisor)"
 	RESET='\033[0m'
 	function m () { echo -e "\$GREEN\$@\$RESET"; }
 
-	m "[hypervisor] Setting timezone to \"$TIMEZONE\""
+	m '[hypervisor] Ensuring required operating system packages are installed'
+	yum install --assumeyes \
+		epel-release deltarpm
+	yum install --assumeyes \
+		python-pip python-devel gcc git virt-install cloud-utils
+
+	m "[hypervisor] Ensuring timezone is \"$TIMEZONE\""
 	timedatectl set-timezone $(q "$TIMEZONE")
 
-	m "[hypervisor] Ensuring user \"stack\" exists and is configured"
+	m '[hypervisor] Ensuring OpenStack control plane bridge is configured'
+	if ! brctl show br-os-ctl > /dev/null; then
+		brctl addbr br-os-ctl
+	fi
+	ip link set br-os-ctl up
+	ip addr add 192.168.24.254/24 dev br-os-ctl || true
+	ip route add 192.168.24.0/24 dev br-os-ctl || true
 
-	if ! id --user stack > /dev/null 2>&1; then
+	m '[hypervisor] Ensuring virtual networks are configured'
+	# Note: Network names work best when <=8 characters
+
+	function virsh_enable_network () {
+		local NETWORK=\$1
+		if ! grep --quiet --line-regexp "allow br-\$NETWORK" /etc/qemu-kvm/bridge.conf; then
+			echo "allow br-\$NETWORK" >> /etc/qemu-kvm/bridge.conf
+		fi
+		if ! virsh net-uuid "\$NETWORK" > /dev/null; then
+			virsh net-define "\$HOME/libvirt/networks/\$NETWORK.xml"
+		fi
+		virsh net-autostart "\$NETWORK"
+		virsh net-start "\$NETWORK" || true
+	}
+
+	virsh_enable_network vm-ctl
+	virsh_enable_network os-ctl
+
+	m "[hypervisor] Ensuring user \"stack\" exists and is configured"
+	if ! id --user stack > /dev/null; then
 		useradd stack
 	fi
+
 	echo $(q "$PASSWORD") | passwd --stdin stack
 	echo "stack ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/stack
 
@@ -61,29 +93,11 @@ sshpass -p "$PASSWORD" ssh "stack@$HYPERVISOR_ADDRESS"
 	RESET='\033[0m'
 	function m () { echo -e "\$GREEN\$@\$RESET"; }
 
-	function virsh_enable_network () {
-		local NETWORK=\$1
-		if ! grep --quiet --line-regexp "allow br-\$NETWORK" /etc/qemu-kvm/bridge.conf; then
-			echo "allow br-\$NETWORK" | sudo tee --append /etc/qemu-kvm/bridge.conf
-		fi
-		sudo virsh net-define "\$HOME/libvirt/networks/\$NETWORK.xml"
-		sudo virsh net-autostart \$NETWORK
-		sudo virsh net-start \$NETWORK
-	}
-
-	m '[hypervisor] Ensuring required operating system packages are installed'
-	sudo yum install --assumeyes \
-		epel-release deltarpm
-	sudo yum install --assumeyes \
-		python-pip python-devel gcc git virt-install cloud-utils
-
 	m '[hypervisor] Ensuring Python packages are installed'
 	pip install --user \
 		"virtualenv==$PYTHON_VIRTUALENV_VERSION"
 
 	m '[hypervisor] Ensuring libvirt is configured'
-	virsh_enable_network external
-	virsh_enable_network controlplane
 	virsh pool-autostart default
 
 	m '[hypervisor] Ensuring python-tripleoclient is installed'

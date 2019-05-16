@@ -38,9 +38,16 @@ ROOT=$(readlink -f "$HERE/../..")
 	m "[undercloud] Ensuring \"\$HOME/undercloud.conf\" exists"
 	cat > "\$HOME/undercloud.conf" <<- _EOT
 		[DEFAULT]
+		local_interface = eth1
+
 		undercloud_hostname = undercloud.localdomain
 		undercloud_nameservers = $NAMESERVER
-		local_interface = eth1
+		undercloud_debug = true
+		#undercloud_update_packages = true
+		#enable_tempest = true
+		#enable_telemetry = true
+
+		# Ironic
 		enabled_hardware_types = cisco-ucs-managed,cisco-ucs-standalone,idrac,ilo,ilo5,ipmi,irmc,manual-management,redfish,snmp,xclarity
 		enabled_boot_interfaces = fake,ilo-pxe,ilo-virtual-media,ipxe,irmc-pxe,irmc-virtual-media,pxe
 		enabled_console_interfaces = fake,ilo,ipmitool-shellinabox,ipmitool-socat,no-console
@@ -59,6 +66,8 @@ ROOT=$(readlink -f "$HERE/../..")
   		--local-push-destination \
   		--output-env-file "\$HOME/containers-prepare-parameter.yaml.original"
 
+	# Annoyingly, TripleO by default locks some container images at specific versions while leaving
+	# others at latest upstream versions, so we must make sure to lock those, too
 	python <<- _EOT
 		import yaml
 
@@ -73,7 +82,7 @@ ROOT=$(readlink -f "$HERE/../..")
 		    yaml.dump(y, f, default_flow_style=False)
 	_EOT
 
-	m '[undercloud] Installing (~ 15 minutes)'
+	m '[undercloud] Ensuring undercloud is installed (~ 15 minutes)'
 	openstack undercloud install
 
 EOT

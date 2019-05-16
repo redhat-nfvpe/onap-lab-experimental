@@ -8,11 +8,6 @@ fi
 
 # See: https://docs.openstack.org/tripleo-docs/latest/install/installation/installation.html
 
-# This warning: "RequestsDependencyWarning: urllib3 (1.24.1) or chardet (2.2.1) doesn't match a supported version!"
-# See: /usr/lib/python2.7/site-packages/requests/__init__.py
-# urllib3 >= 1.21.1, <= 1.24, chardet >= 3.0.2, < 3.1.0
-# The problem is python2-urllib3 == 1.24.1
-
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
@@ -35,8 +30,9 @@ ROOT=$(readlink -f "$HERE/../..")
 		-b "$TRIPLEO_VERSION" \
 		-d centos7 \
 		current ceph
+	# "python2-chardet" is workaround for: https://bugs.launchpad.net/tripleo/+bug/1829263
 	sudo yum install --assumeyes \
-		python2-tripleoclient \
+		python2-tripleoclient python2-chardet \
 		ceph-ansible
 
 EOT
