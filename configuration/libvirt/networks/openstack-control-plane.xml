@@ -17,18 +17,23 @@ There are two main ways to configure this bridge:
    OpenStack manager. Then you'll need to configure your router's DHCP server to forward PXE
    requests to 192.168.24.1, which is the OpenStack manager's TFTP server.
 
-Relevant virtual machines (the undercloud and other controllers) will connect to this on eth1.
+Relevant virtual machines (undercloud and other controllers) will connect to this network on eth1.
 
 See: https://libvirt.org/formatnetwork.html
+Note: bridge name length should be no longer than 11 
 
 sudo virsh net-destroy os-ctl
 sudo virsh net-undefine os-ctl
 sudo virsh net-define libvirt/networks/os-ctl.xml
 sudo virsh net-start os-ctl
+
+http://www.thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html
+https://unix.stackexchange.com/questions/35409/pxe-boot-chaining-to-hardcoded-tftp-server
 -->
 
 <network>
-  <name>os-ctl</name>
-  <bridge name="br-os-ctl"/>
+  <name>openstack-control-plane</name>
+  <!-- bridge name length should be no longer than 11 -->
+  <bridge name="os-ctlplane"/>
   <forward mode="bridge"/>
 </network>

@@ -20,12 +20,12 @@ ROOT=$(readlink -f "$HERE/../..")
 	set -e
 	GREEN='\033[0;32m'
 	RESET='\033[0m'
-	function m () { echo -e "\$GREEN\$@\$RESET"; }
+	function m () { echo -e "\$GREEN\$1\$RESET"; }
 
 	if [ ! -f "\$HOME/images/centos7.qcow2" ]; then
 		m "[hypervisor] Downloading base image: \"\$HOME/images/centos7.qcow2\""
 		mkdir --parents "\$HOME/images/"
-		wget --output-document="\$HOME/images/centos7.qcow2" $(q "$CENTOS7_IMAGE")
+		wget --output-document="\$HOME/images/centos7.qcow2" $(c "$CENTOS7_IMAGE")
 	fi
 
 	. "\$HOME/stackrc"
@@ -34,7 +34,6 @@ ROOT=$(readlink -f "$HERE/../..")
 	export DIB_YUM_REPO_CONF="/etc/yum.repos.d/delorean.repo /etc/yum.repos.d/delorean-stein-testing.repo /etc/yum.repos.d/tripleo-centos-ceph-luminous.repo"
 	export DIB_LOCAL_IMAGE="\$HOME/images/centos7.qcow2"
 	openstack overcloud image build
-	# overcloud-full.log
 
 	m '[undercloud] Ensuring overcloud images are uploaded'
 	openstack overcloud image upload
@@ -43,12 +42,12 @@ ROOT=$(readlink -f "$HERE/../..")
 	openstack overcloud node import instackenv.yaml
 
 	m '[undercloud] Introspecting'
-	openstack overcloud node introspect --all-manageable
+	#openstack overcloud node introspect --all-manageable
 
 	m '[undercloud] Provisioning'
-	openstack overcloud node provide --all-manageable
+	#openstack overcloud node provide --all-manageable
 
 EOT
 )"
 
-m "Finished $(basename $0)!"
+m "Finished $(q "$(basename "$0")")!"

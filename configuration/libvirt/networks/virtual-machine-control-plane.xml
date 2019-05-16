@@ -6,14 +6,15 @@ for host NAT forwarding in order to allow virtual machines to access the outside
 download packages from the Internet). Virtual machines can communicate with each other on this
 network.
 
-Virtual machines will connect to this on eth0.
+Virtual machines will connect to this network on eth0.
 
 See: https://libvirt.org/formatnetwork.html
 -->
 
 <network>
-  <name>vm-ctl</name>
-  <bridge name="br-vm-ctl"/>
+  <name>virtual-machine-control-plane</name>
+  <!-- bridge name length should be no longer than 11 -->
+  <bridge name="vm-ctlplane"/>
   <forward mode="nat"/>
   <ip address="192.168.122.1" netmask="255.255.255.0">
     <dhcp>

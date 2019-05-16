@@ -20,14 +20,14 @@ ssh "root@$HYPERVISOR_ADDRESS"
 
 "$ROOT/utils/ensure-ssh-config" hypervisor-root "$HYPERVISOR_ADDRESS" root root@hypervisor
 
-PASSWORD="$("$ROOT/utils/get-password" stack@hypervisor)"
+PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 
 "$HERE/ssh" hypervisor-root "$(cat <<- EOT
 
 	set -e
 	GREEN='\033[0;32m'
 	RESET='\033[0m'
-	function m () { echo -e "\$GREEN\$@\$RESET"; }
+	function m () { echo -e "\$GREEN\$1\$RESET"; }
 
 	m '[hypervisor] Ensuring required operating system packages are installed'
 	yum install --assumeyes \
@@ -36,40 +36,13 @@ PASSWORD="$("$ROOT/utils/get-password" stack@hypervisor)"
 		python-pip python-devel gcc git virt-install cloud-utils
 
 	m "[hypervisor] Ensuring timezone is \"$TIMEZONE\""
-	timedatectl set-timezone $(q "$TIMEZONE")
-
-	m '[hypervisor] Ensuring OpenStack control plane bridge is configured'
-	if ! brctl show br-os-ctl > /dev/null; then
-		brctl addbr br-os-ctl
-	fi
-	ip link set br-os-ctl up
-	ip addr add 192.168.24.254/24 dev br-os-ctl || true
-	ip route add 192.168.24.0/24 dev br-os-ctl || true
-
-	m '[hypervisor] Ensuring virtual networks are configured'
-	# Note: Network names work best when <=8 characters
-
-	function virsh_enable_network () {
-		local NETWORK=\$1
-		if ! grep --quiet --line-regexp "allow br-\$NETWORK" /etc/qemu-kvm/bridge.conf; then
-			echo "allow br-\$NETWORK" >> /etc/qemu-kvm/bridge.conf
-		fi
-		if ! virsh net-uuid "\$NETWORK" > /dev/null; then
-			virsh net-define "\$HOME/libvirt/networks/\$NETWORK.xml"
-		fi
-		virsh net-autostart "\$NETWORK"
-		virsh net-start "\$NETWORK" || true
-	}
-
-	virsh_enable_network vm-ctl
-	virsh_enable_network os-ctl
+	timedatectl set-timezone $(c "$TIMEZONE")
 
 	m "[hypervisor] Ensuring user \"stack\" exists and is configured"
 	if ! id --user stack > /dev/null; then
 		useradd stack
 	fi
-
-	echo $(q "$PASSWORD") | passwd --stdin stack
+	echo $(c "$PASSWORD") | passwd --stdin stack
 	echo "stack ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/stack
 
 EOT
@@ -91,42 +64,65 @@ sshpass -p "$PASSWORD" ssh "stack@$HYPERVISOR_ADDRESS"
 	set -e
 	GREEN='\033[0;32m'
 	RESET='\033[0m'
-	function m () { echo -e "\$GREEN\$@\$RESET"; }
+	function m () { echo -e "\$GREEN\$1\$RESET"; }
 
-	m '[hypervisor] Ensuring Python packages are installed'
-	pip install --user \
-		"virtualenv==$PYTHON_VIRTUALENV_VERSION"
-
-	m '[hypervisor] Ensuring libvirt is configured'
+	m '[hypervisor] Ensuring libvirt pool is configured'
 	virsh pool-autostart default
 
-	m '[hypervisor] Ensuring python-tripleoclient is installed'
-	if [ ! -d "\$HOME/.env" ]; then
-		"\$HOME/.local/bin/virtualenv" "\$HOME/.env"
-	fi
-	. "\$HOME/.env/bin/activate"
-		pip install \
-			"python-tripleoclient==$PYTHON_TRIPLEOCLIENT_VERSION"
-		#ansible==2.7.10
-	deactivate
+	# Note: Network names work best when <=8 characters
+	function virsh_enable_network () {
+		local NETWORK=\$1
+		local BRIDGE=\$2
+		if ! grep --quiet --line-regexp "allow \$BRIDGE" /etc/qemu-kvm/bridge.conf; then
+			echo "allow \$BRIDGE" | sudo tee --append /etc/qemu-kvm/bridge.conf > /dev/null
+		fi
+		if ! sudo virsh net-uuid "\$NETWORK" > /dev/null 2>&1; then
+			sudo virsh net-define "\$HOME/libvirt/networks/\$NETWORK.xml"
+		fi
+		sudo virsh net-autostart "\$NETWORK"
+		sudo virsh net-start "\$NETWORK" 2> /dev/null || true
+	}
 
-	m '[hypervisor] Ensuring ceph-ansible is installed'
-	if [ ! -d "\$HOME/ceph-ansible" ]; then
-		git clone \
-			--depth 1 \
-			--branch "v$CEPH_ANSIBLE_VERSION" \
-			https://github.com/ceph/ceph-ansible.git "\$HOME/ceph-ansible"
+	m '[hypervisor] Ensuring libvirt networks and bridges are configured'
+	if ! sudo brctl show os-ctlplane > /dev/null 2>&1; then
+		sudo brctl addbr os-ctlplane
 	fi
-	# ceph-ansible gets its own virtualenv because it requires an older version of Ansible 
-	if [ ! -d "\$HOME/ceph-ansible/.env" ]; then
-		"\$HOME/.local/bin/virtualenv" "\$HOME/ceph-ansible/.env"
-	fi
-	. "\$HOME/ceph-ansible/.env/bin/activate"
-		pip install \
-			--requirement "\$HOME/ceph-ansible/requirements.txt"
-	deactivate
+	sudo ip link set os-ctlplane up
+	sudo ip addr add 192.168.24.254/24 dev os-ctlplane 2> /dev/null || true
+	sudo ip route add 192.168.24.0/24 dev os-ctlplane 2> /dev/null || true
+	virsh_enable_network virtual-machine-control-plane vm-ctlplane
+	virsh_enable_network openstack-control-plane os-ctlplane
+
+	#m '[hypervisor] Ensuring Python packages are installed'
+	#pip install --user \
+	#	virtualenv==$(c "$PYTHON_VIRTUALENV_VERSION")
+
+	# 	m '[hypervisor] Ensuring python-tripleoclient is installed'
+	# 	if [ ! -d "\$HOME/.env" ]; then
+	# 		"\$HOME/.local/bin/virtualenv" "\$HOME/.env"
+	# 	fi
+	# 	. "\$HOME/.env/bin/activate"
+	# 		pip install \
+	# 			python-tripleoclient==$(c "$PYTHON_TRIPLEOCLIENT_VERSION")
+	# 	deactivate
+ 
+	# 	m '[hypervisor] Ensuring ceph-ansible is installed'
+	# 	if [ ! -d "\$HOME/ceph-ansible" ]; then
+	# 		git clone \
+	# 			--depth 1 \
+	# 			--branch $(c "v$CEPH_ANSIBLE_VERSION") \
+	# 			https://github.com/ceph/ceph-ansible.git "\$HOME/ceph-ansible"
+	# 	fi
+	# 	# ceph-ansible gets its own virtualenv because it requires an older version of Ansible 
+	# 	if [ ! -d "\$HOME/ceph-ansible/.env" ]; then
+	# 		"\$HOME/.local/bin/virtualenv" "\$HOME/ceph-ansible/.env"
+	# 	fi
+	# 	. "\$HOME/ceph-ansible/.env/bin/activate"
+	# 		pip install \
+	# 			--requirement "\$HOME/ceph-ansible/requirements.txt"
+	# 	deactivate
 
 EOT
 )"
 
-m "Finished $(basename $0)!"
+m "Finished $(q "$(basename "$0")")!"

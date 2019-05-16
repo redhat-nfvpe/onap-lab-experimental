@@ -11,4 +11,4 @@ ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/utils/functions"
 
 "$ROOT/hypervisor/ssh" -t undercloud-stack \
-"sudo podman $(q "$@")"
+"sudo podman $(c "$@")"

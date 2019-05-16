@@ -20,6 +20,6 @@ m "[orchestrator] Ensuring workspace directories exist"
 mkdir --parents "$WORKSPACE_ROOT"
 mkdir --parents "$PASSWORDS_ROOT"
 
-# sshpass
+# dnf install sshpass
 
 m "Finished $(basename $0)!"

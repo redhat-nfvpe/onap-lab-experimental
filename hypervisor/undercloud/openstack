@@ -11,4 +11,4 @@ ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/utils/functions"
 
 "$ROOT/hypervisor/ssh" undercloud-stack \
-". \$HOME/stackrc && openstack $(q "$@")"
+". \$HOME/stackrc && openstack $(c "$@")"

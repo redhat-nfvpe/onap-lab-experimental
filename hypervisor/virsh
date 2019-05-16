@@ -15,11 +15,11 @@ ROOT=$(readlink -f "$HERE/..")
 if [ "$1" == '-r' ]; then
 
 	"$HERE/ssh" hypervisor-root \
-	"virsh $(q "${@:2}")"
+	"virsh $(c "${@:2}")"
 
 else
 
 	"$HERE/ssh" hypervisor-stack \
-	"virsh $(q "$@")"
+	"virsh $(c "$@")"
 
 fi

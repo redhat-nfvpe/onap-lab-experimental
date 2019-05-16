@@ -11,29 +11,55 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
 
-m '[hypervisor] Ensuring no virtual machines'
-for UUID in $("$HERE/virsh" list --uuid); do
-	"$HERE/virsh" destroy "$UUID"
-done
-for UUID in $("$HERE/virsh" list --all --uuid); do
-	"$HERE/virsh" undefine "$UUID" --managed-save --remove-all-storage --delete-snapshots --snapshots-metadata --nvram  
-done
+"$HERE/ssh" hypervisor-stack "$(cat <<- EOT
 
-m '[hypervisor] Ensuring no volumes'
-for NAME in $("$HERE/virsh" vol-list images 2> /dev/null | tail --lines=+3 | head --line=-1 | cut --fields=2 --delimiter=' '); do
-	"$HERE/virsh" vol-delete "$NAME" --pool oooq_pool
-done
+	set -e
+	GREEN='\033[0;32m'
+	RESET='\033[0m'
+	function m () { echo -e "\$GREEN\$1\$RESET"; }
 
-m '[hypervisor] Ensuring no networks'
-for UUID in $("$HERE/virsh" -r net-list --all --uuid); do
-	"$HERE/virsh" -r net-undefine "$UUID"
-	"$HERE/virsh" -r net-destroy "$UUID"
-done
+	m '[hypervisor] Ensuring no libvirt virtual machines'
+	for UUID in \$(virsh list --uuid); do
+		virsh destroy "\$UUID"
+	done
+	for UUID in \$(virsh list --all --uuid); do
+		virsh undefine "\$UUID" --managed-save --remove-all-storage --delete-snapshots --snapshots-metadata --nvram  
+	done
 
-m '[hypervisor] Ensuring no images'
-"$HERE/ssh" hypervisor-stack "rm --recursive --force libvirt/" 
+	m '[hypervisor] Ensuring no libvirt volumes'
+	for NAME in \$(virsh vol-list images 2> /dev/null | tail --lines=+3 | head --line=-1 | cut --fields=2 --delimiter=' '); do
+		virsh vol-delete "\$NAME" --pool images
+	done
 
-#echo 'Deleting user "stack"...'
-#ssh "root@$HYPERVISOR_ADDRESS" "if id -u stack >/dev/null 2>&1; then userdel --force --remove stack; fi"
+	m '[hypervisor] Ensuring no libvirt images'
+	rm --recursive --force libvirt/ 
 
-m "Finished $(basename $0)!"
+EOT
+)"
+
+"$HERE/ssh" hypervisor-root "$(cat <<- EOT
+
+	set -e
+	GREEN='\033[0;32m'
+	RESET='\033[0m'
+	function m () { echo -e "\$GREEN\$1\$RESET"; }
+
+	m '[hypervisor] Ensuring no libvirt networks'
+	for UUID in \$(virsh -r net-list --all --uuid); do
+		virsh net-undefine "\$UUID"
+		virsh net-destroy "\$UUID"
+	done
+
+	m '[hypervisor] Ensuring no libvirt network bridges'
+	ip link set os-ctlplane down 2> /dev/null || true
+	brctl delbr br-os-ctl 2> /dev/null || true
+
+	#m '[hypervisor] Ensuring no user "stack"...'
+	#if id -u stack > /dev/null; then
+	#	userdel --force --remove stack
+	#fi
+
+EOT
+)"
+
+m "Finished $(q "$(basename "$0")")!"

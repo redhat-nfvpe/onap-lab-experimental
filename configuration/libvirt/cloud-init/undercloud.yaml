@@ -1,0 +1,41 @@
+#cloud-config
+
+output: 
+  all: ">> /var/log/cloud-init.log"
+
+preserve_hostname: false
+hostname: undercloud
+fqdn: undercloud.localdomain
+
+network:
+  version: 1
+  config:
+  - type: nameserver
+    address: $NAMESERVER
+  # Virtual machine control plane
+  - type: physical
+    name: eth0
+    subnets:
+    - type: dhcp
+  # OpenStack control plane
+  - type: physical
+    name: eth1
+    subnets:
+    - type: dhcp
+
+users:
+- name: stack
+  groups: wheel
+  shell: /bin/bash
+  sudo: ALL=(ALL) NOPASSWD:ALL
+  lock_passwd: false
+  passwd: $PASSWORD
+  ssh-authorized-keys:
+  - $KEY
+
+timezone: $TIMEZONE
+
+runcmd:
+- systemctl disable cloud-init.service
+# Note: TripleO needs the interface defined *but unused*
+#- dhclient eth1

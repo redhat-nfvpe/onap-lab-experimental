@@ -15,4 +15,4 @@ fi
 "$HERE/prepare"
 "$HERE/undercloud/prepare"
 "$HERE/undercloud/install"
-#"$HERE/undercloud/initialize"
+"$HERE/overcloud/install"

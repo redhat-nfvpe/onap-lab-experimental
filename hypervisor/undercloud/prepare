@@ -20,14 +20,14 @@ ROOT=$(readlink -f "$HERE/../..")
 	set -e
 	GREEN='\033[0;32m'
 	RESET='\033[0m'
-	function m () { echo -e "\$GREEN\$@\$RESET"; }
+	function m () { echo -e "\$GREEN\$1\$RESET"; }
 
 	m '[hypervisor] Ensuring TripleO operating system packages are installed'
 	sudo yum install --assumeyes \
-		"$TRIPLEO_REPOS" \
+		$(c "$TRIPLEO_REPOS") \
 		deltarpm wget
 	sudo --preserve-env tripleo-repos \
-		-b "$TRIPLEO_VERSION" \
+		-b $(c "$TRIPLEO_VERSION") \
 		-d centos7 \
 		current ceph
 	# "python2-chardet" is workaround for: https://bugs.launchpad.net/tripleo/+bug/1829263
@@ -38,4 +38,4 @@ ROOT=$(readlink -f "$HERE/../..")
 EOT
 )"
 
-m "Finished $(basename $0)!"
+m "Finished $(q "$(basename "$0")")!"
