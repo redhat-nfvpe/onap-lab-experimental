@@ -13,7 +13,10 @@ ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
 
-"$ROOT/hypervisor/rsync" "$ROOT/configuration/tripleo/instackenv.yaml" undercloud-stack:
+"$ROOT/hypervisor/rsync" \
+	"$ROOT/configuration/tripleo/instackenv.yaml" \
+	"$ROOT/configuration/tripleo/overcloud-deploy-answers.yaml" \
+	undercloud-stack:
 
 "$ROOT/hypervisor/ssh" -t undercloud-stack "$(cat <<- EOT
 
@@ -22,33 +25,22 @@ ROOT=$(readlink -f "$HERE/../..")
 	RESET='\033[0m'
 	function m () { echo -e "\$GREEN\$1\$RESET"; }
 
-	if [ ! -f "\$HOME/images/centos7.qcow2" ]; then
-		m "[hypervisor] Downloading base image: \"\$HOME/images/centos7.qcow2\""
-		mkdir --parents "\$HOME/images/"
-		wget --output-document="\$HOME/images/centos7.qcow2" $(c "$CENTOS7_IMAGE")
-	fi
-
-	. "\$HOME/stackrc"
-
-	m '[undercloud] Ensuring overcloud images are built (~ 5 minutes)'
-	export DIB_YUM_REPO_CONF="/etc/yum.repos.d/delorean.repo /etc/yum.repos.d/delorean-stein-testing.repo /etc/yum.repos.d/tripleo-centos-ceph-luminous.repo"
-	export DIB_LOCAL_IMAGE="\$HOME/images/centos7.qcow2"
-	openstack overcloud image build
-
-	m '[undercloud] Ensuring overcloud images are uploaded'
-	openstack overcloud image upload
-
 	m '[undercloud] Ensuring instackenv is uploaded'
-	openstack overcloud node import instackenv.yaml
+	openstack overcloud node import "\$HOME/instackenv.yaml"
 
-	m '[undercloud] Introspecting'
+	#openstack baremetal node list
+
+	m '[undercloud] Introspecting (~ 15 minutes)'
 	#openstack overcloud node introspect --all-manageable
 
-	m '[undercloud] Provisioning'
+	m '[undercloud] Ensuring overcloud nodes are "available"'
 	#openstack overcloud node provide --all-manageable
 
 	m '[undercloud] Deploying'
-	#openstack overcloud deploy --templates
+	#openstack overcloud deploy --templates --answers-file "\$HOME/overcloud-deploy-answers.yaml"
+
+	#openstack stack resource list overcloud
+	#openstack stack resource show overcloud ControllerServiceChain
 
 EOT
 )"

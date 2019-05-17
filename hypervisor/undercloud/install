@@ -22,7 +22,9 @@ ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
 
-UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" | NAMESERVER="$NAMESERVER" envsubst)
+UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" |
+	NAMESERVER=$(eq "$NAMESERVER") \
+	envsubst)
 
 "$ROOT/hypervisor/ssh" undercloud-stack "$(cat <<- EOT
 
@@ -45,14 +47,14 @@ UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" | NAMESERVER
 		import yaml
 
 		with open("\$HOME/containers-prepare-parameter.yaml.original") as f:
-		     y = yaml.load(f)
+		  y = yaml.load(f)
 
 		s = y["parameter_defaults"]["ContainerImagePrepare"][0]["set"]
 		s["tag"] = $(q "$TRIPLEO_TAG")
 		s["ceph_tag"] = $(q "$CEPH_TAG")
 
 		with open("\$HOME/containers-prepare-parameter.yaml", "w") as f:
-		    yaml.dump(y, f, default_flow_style=False)
+		  yaml.dump(y, f, default_flow_style=False)
 	_EOT
 
 	m '[undercloud] Ensuring undercloud is installed (~ 15 minutes)'

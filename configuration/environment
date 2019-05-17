@@ -1,28 +1,44 @@
+#
 # Orchestrator
+#
+
 WORKSPACE_ROOT="$ROOT/workspace"
 PASSWORDS_ROOT="$WORKSPACE_ROOT/passwords"
 KEYS_ROOT="$WORKSPACE_ROOT/keys"
 
+#
 # Hypervisor
+#
+
 HYPERVISOR_ADDRESS=lab1
 
 PYTHON_VIRTUALENV_VERSION==16.5.0
 PYTHON_TRIPLEOCLIENT_VERSION=11.4.0
 CEPH_ANSIBLE_VERSION=3.2.16
 
-# Used for TripleO undercloud VM, TripleO overcloud nodes, and OpenStack images 
-CENTOS7_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1901.qcow2
-
+#
 # TripleO
+#
 
-NAMESERVER=1.0.0.1
-TIMEZONE=America/Chicago
+# OpenStack 14 is "stein" 
+TRIPLEO_VERSION=stein
 
 TRIPLEO_REPOS=https://trunk.rdoproject.org/centos7/current/python2-tripleo-repos-0.0.1-0.20190513071441.ca9796a.el7.noarch.rpm
-TRIPLEO_VERSION=stein
 
 # See: https://hub.docker.com/r/tripleomaster/centos-binary-nova-api/tags
 TRIPLEO_TAG=28588bdaba5dcc57cb3d6ca4e78880aee9817143_df596717
 
 # See: https://hub.docker.com/r/ceph/daemon/tags or "skopeo inspect docker://docker.io/ceph/daemon"
 CEPH_TAG=v4.0.0-stable-4.0-nautilus-centos-7-x86_64
+
+VIRTUALBMC_VERSION=1.5.0
+
+#
+# Operating System Images
+#
+# For OpenStack servers, TripleO overcloud nodes, and hypervisor VMs 
+# 
+
+CENTOS7_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1901.qcow2
+NAMESERVER=1.0.0.1
+TIMEZONE=America/Chicago

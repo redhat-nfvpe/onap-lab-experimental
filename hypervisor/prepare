@@ -34,11 +34,12 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 	RESET='\033[0m'
 	function m () { echo -e "\$GREEN\$1\$RESET"; }
 
-	m '[hypervisor] Ensuring required operating system packages are installed'
+	m '[hypervisor] Ensuring required packages are installed'
 	yum install --assumeyes \
 		epel-release deltarpm
 	yum install --assumeyes \
-		python-pip python-devel gcc git virt-install cloud-utils
+		virt-install cloud-utils \
+		python36-pip python36-devel libvirt-devel openssl-devel gcc
 
 	m "[hypervisor] Ensuring timezone is \"$TIMEZONE\""
 	timedatectl set-timezone $(c "$TIMEZONE")
@@ -65,8 +66,8 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 	}
 
 	m '[hypervisor] Ensuring libvirt networks and bridges are configured (root)'
-	brctl addbr os-ctlplane
-	brctl addif os-ctlplane enp1s0
+	brctl addbr os-ctlplane || true
+	brctl addif os-ctlplane enp1s0 || true
 	brctl stp os-ctlplane on 
 	ip link set os-ctlplane up
 	#ip addr add 192.168.24.254/24 dev os-ctlplane || true
@@ -76,6 +77,53 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 	kvm_enable_bridge os-ctlplane
 	virsh_enable_network openstack-control-plane
 
+	m '[hypervisor] Ensuring VirtualBMC service is installed and configured'
+
+	# Unfortunately we must run vbmcd as root. It cannot run on the "stack" user because SELinux
+	# won't let it delegate to "/usr/libexec/qemu-kvm" from within systemd. However, it is possible
+	# for root to access any user's libvirt session via their socket. The libvirt connection string
+	# would be:
+	#
+	#   qemu:///session?socket=\$XDG_RUNTIME_DIR/libvirt/libvirt-sock
+	#
+	# See: https://libvirt.org/remote.html
+	#
+	# (Side note: CentOS purposely disables systemd user units, so we would need a root systemd unit
+	# even if we use "[Service] User=stack".)
+
+	# VirtualBMC requirements: python36-devel libvirt-devel openssl-devel gcc
+	pip3 install virtualbmc==$(c "$VIRTUALBMC_VERSION")
+
+ 	mkdir --parents /etc/virtualbmc/
+	mkdir --parents /var/log/virtualbmc/
+
+ 	cat > /etc/virtualbmc/virtualbmc.conf <<- _EOT
+		# See: https://github.com/openstack/virtualbmc/blob/master/virtualbmc/config.py
+		[default]
+		config_dir= /etc/virtualbmc/
+
+		[log]
+		logfile = /var/log/virtualbmc/virtualbmc.log
+		debug = true
+	_EOT
+
+	cat > /etc/systemd/system/vbmcd.service <<- _EOT
+		[Unit]
+		AssertPathExists=/usr/local/bin/vbmcd
+
+		[Service]
+		ExecStart=/usr/local/bin/vbmcd --foreground
+		Restart=always
+
+		[Install]
+		WantedBy=default.target
+	_EOT
+
+	chmod 0644 /etc/systemd/system/vbmcd.service
+	systemctl daemon-reload
+ 	systemctl start vbmcd
+ 	systemctl enable vbmcd
+
 EOT
 )"
 
@@ -84,11 +132,6 @@ m "[hypervisor] Ensuring keypair authorization for user \"stack\""
 sshpass -p "$PASSWORD" ssh "stack@$HYPERVISOR_ADDRESS"
 
 "$ROOT/utils/ensure-ssh-config" hypervisor-stack "$HYPERVISOR_ADDRESS" stack stack@hypervisor
-
-#"$HERE/ssh" hypervisor-stack "mkdir --parents libvirt/"
-#"$HERE/rsync" --recursive \
-#	"$ROOT/configuration/libvirt/networks" \
-#	hypervisor-stack:libvirt/
 
 "$HERE/ssh" hypervisor-stack "$(cat <<- EOT
 

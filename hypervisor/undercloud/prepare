@@ -22,7 +22,7 @@ ROOT=$(readlink -f "$HERE/../..")
 	RESET='\033[0m'
 	function m () { echo -e "\$GREEN\$1\$RESET"; }
 
-	m '[hypervisor] Ensuring TripleO operating system packages are installed'
+	m '[hypervisor] Ensuring TripleO packages are installed'
 	sudo yum install --assumeyes \
 		$(c "$TRIPLEO_REPOS") \
 		deltarpm wget
@@ -34,6 +34,21 @@ ROOT=$(readlink -f "$HERE/../..")
 	sudo yum install --assumeyes \
 		python2-tripleoclient python2-chardet \
 		ceph-ansible
+
+	m '[hypervisor] Ensuring OpenStack cliff is configured'
+	sed --in-place "/# OpenStack START/,/# OpenStack END/d" "\$HOME/.bashrc"
+	cat >> "\$HOME/.bashrc" <<- _EOT
+		# OpenStack START
+		# For cliff see: https://docs.openstack.org/cliff/stein/
+		function openstack_cliff () {
+		  export CLIFF_MAX_TERM_WIDTH=\\\$(tput cols)
+		}
+		if [ "\\\$TERM" != dumb ]; then
+		  openstack_cliff
+		  trap openstack_cliff WINCH
+		fi
+		# OpenStack END
+	_EOT
 
 EOT
 )"

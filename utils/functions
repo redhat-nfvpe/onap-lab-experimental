@@ -21,14 +21,14 @@ function c () {
 	echo "${Q:1}"
 }
 
-# Wraps the argument in double-quotes and blackslash-escapes double-quotes 
-function q () {
-	echo "\"$(echo "$1" | sed 's/"/\\"/g')\""
+# Backslash-escapes double quotes in the argument
+function eq () {
+	echo "$1" | sed 's/"/\\"/g'
 }
 
-# q and then c
-function qc () {
-	c "$(echo $(q "$1"))"
+# Wraps the argument in double-quotes and blackslash-escapes double-quotes 
+function q () {
+	echo "\"$(eq "$1")\""
 }
 
 # Turns a file into a command line segment.

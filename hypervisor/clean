@@ -38,7 +38,8 @@ ROOT=$(readlink -f "$HERE/..")
 	done
 
 	m '[hypervisor] Ensuring no libvirt images'
-	rm --recursive --force libvirt/ 
+	rm --recursive --force libvirt/
+	rm --recursive --force .vbmc/
 
 EOT
 )"
@@ -58,7 +59,12 @@ EOT
 
 	m '[hypervisor] Ensuring no libvirt network bridges'
 	ip link set os-ctlplane down || true
-	brctl delbr br-os-ctl || true
+	brctl delbr os-ctlplane || true
+
+ 	systemctl stop vbmcd
+ 	systemctl disable vbmcd
+	rm /etc/systemd/system/vbmcd.service
+	systemctl daemon-reload
 
 	#m '[hypervisor] Ensuring no user "stack"...'
 	#if id -u stack > /dev/null; then

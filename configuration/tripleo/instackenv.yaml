@@ -1,9 +1,14 @@
 # See: https://docs.openstack.org/tripleo-docs/latest/install/environments/baremetal.html#instackenv
 
 nodes:
-- name: compute-0
-  _comment: lab1
+
+- name: overcloud-controller
+  _comment: virtual machine on hypervisor
   capabilities: profile:control,boot_option:local
+
+- name: overcloud-compute-0
+  _comment: baremetal
+  capabilities: profile:compute,boot_option:local
   mac: [ "F8:B1:56:BB:01:7F" ]
   arch: x86_64
   cpu: 6

@@ -7,8 +7,9 @@ if [ "$EUID" == 0 ]; then
 fi
 
 HERE=$(dirname "$(readlink -f "$0")")
-ROOT=$(readlink -f "$HERE/../..")
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
 
-"$ROOT/hypervisor/ssh" undercloud-stack \
-". \$HOME/stackrc && CLIFF_MAX_TERM_WIDTH=$(tput cols) openstack $(c "$@")"
+"$HERE/ssh" hypervisor-stack \
+"vbmc $(c "$@")"
