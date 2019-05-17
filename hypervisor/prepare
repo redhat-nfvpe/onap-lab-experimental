@@ -22,6 +22,11 @@ ssh "root@$HYPERVISOR_ADDRESS"
 
 PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 
+"$HERE/ssh" hypervisor-root "mkdir --parents libvirt/"
+"$HERE/rsync" --recursive \
+	"$ROOT/configuration/libvirt/networks" \
+	hypervisor-root:libvirt/
+
 "$HERE/ssh" hypervisor-root "$(cat <<- EOT
 
 	set -e
@@ -45,6 +50,32 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 	echo $(c "$PASSWORD") | passwd --stdin stack
 	echo "stack ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/stack
 
+	function kvm_enable_bridge () {
+		if ! grep --quiet --line-regexp "allow \$1" /etc/qemu-kvm/bridge.conf; then
+			echo "allow \$1" >> /etc/qemu-kvm/bridge.conf
+		fi
+	}
+
+	function virsh_enable_network () {
+		if ! virsh net-uuid "\$1" > /dev/null 2>&1; then
+			virsh net-define "\$HOME/libvirt/networks/\$1.xml"
+		fi
+		virsh net-autostart "\$1"
+		virsh net-start "\$1" || true
+	}
+
+	m '[hypervisor] Ensuring libvirt networks and bridges are configured (root)'
+	brctl addbr os-ctlplane
+	brctl addif os-ctlplane enp1s0
+	brctl stp os-ctlplane on 
+	ip link set os-ctlplane up
+	#ip addr add 192.168.24.254/24 dev os-ctlplane || true
+	#ip route add 192.168.24.0/24 dev os-ctlplane || true
+	kvm_enable_bridge vm-ctlplane
+	virsh_enable_network virtual-machine-control-plane
+	kvm_enable_bridge os-ctlplane
+	virsh_enable_network openstack-control-plane
+
 EOT
 )"
 
@@ -54,10 +85,10 @@ sshpass -p "$PASSWORD" ssh "stack@$HYPERVISOR_ADDRESS"
 
 "$ROOT/utils/ensure-ssh-config" hypervisor-stack "$HYPERVISOR_ADDRESS" stack stack@hypervisor
 
-"$HERE/ssh" hypervisor-stack "mkdir --parents libvirt/"
-"$HERE/rsync" --recursive \
-	"$ROOT/configuration/libvirt/networks" \
-	hypervisor-stack:libvirt/
+#"$HERE/ssh" hypervisor-stack "mkdir --parents libvirt/"
+#"$HERE/rsync" --recursive \
+#	"$ROOT/configuration/libvirt/networks" \
+#	hypervisor-stack:libvirt/
 
 "$HERE/ssh" hypervisor-stack "$(cat <<- EOT
 
@@ -68,30 +99,6 @@ sshpass -p "$PASSWORD" ssh "stack@$HYPERVISOR_ADDRESS"
 
 	m '[hypervisor] Ensuring libvirt pool is configured'
 	virsh pool-autostart default
-
-	# Note: Network names work best when <=8 characters
-	function virsh_enable_network () {
-		local NETWORK=\$1
-		local BRIDGE=\$2
-		if ! grep --quiet --line-regexp "allow \$BRIDGE" /etc/qemu-kvm/bridge.conf; then
-			echo "allow \$BRIDGE" | sudo tee --append /etc/qemu-kvm/bridge.conf > /dev/null
-		fi
-		if ! sudo virsh net-uuid "\$NETWORK" > /dev/null 2>&1; then
-			sudo virsh net-define "\$HOME/libvirt/networks/\$NETWORK.xml"
-		fi
-		sudo virsh net-autostart "\$NETWORK"
-		sudo virsh net-start "\$NETWORK" 2> /dev/null || true
-	}
-
-	m '[hypervisor] Ensuring libvirt networks and bridges are configured'
-	if ! sudo brctl show os-ctlplane > /dev/null 2>&1; then
-		sudo brctl addbr os-ctlplane
-	fi
-	sudo ip link set os-ctlplane up
-	sudo ip addr add 192.168.24.254/24 dev os-ctlplane 2> /dev/null || true
-	sudo ip route add 192.168.24.0/24 dev os-ctlplane 2> /dev/null || true
-	virsh_enable_network virtual-machine-control-plane vm-ctlplane
-	virsh_enable_network openstack-control-plane os-ctlplane
 
 	#m '[hypervisor] Ensuring Python packages are installed'
 	#pip install --user \

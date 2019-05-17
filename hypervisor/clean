@@ -31,6 +31,12 @@ ROOT=$(readlink -f "$HERE/..")
 		virsh vol-delete "\$NAME" --pool images
 	done
 
+	m '[hypervisor] Ensuring no libvirt networks'
+	for UUID in \$(virsh -r net-list --all --uuid); do
+		virsh net-undefine "\$UUID"
+		virsh net-destroy "\$UUID"
+	done
+
 	m '[hypervisor] Ensuring no libvirt images'
 	rm --recursive --force libvirt/ 
 
@@ -44,15 +50,15 @@ EOT
 	RESET='\033[0m'
 	function m () { echo -e "\$GREEN\$1\$RESET"; }
 
-	m '[hypervisor] Ensuring no libvirt networks'
+	m '[hypervisor] Ensuring no libvirt networks (root)'
 	for UUID in \$(virsh -r net-list --all --uuid); do
 		virsh net-undefine "\$UUID"
 		virsh net-destroy "\$UUID"
 	done
 
 	m '[hypervisor] Ensuring no libvirt network bridges'
-	ip link set os-ctlplane down 2> /dev/null || true
-	brctl delbr br-os-ctl 2> /dev/null || true
+	ip link set os-ctlplane down || true
+	brctl delbr br-os-ctl || true
 
 	#m '[hypervisor] Ensuring no user "stack"...'
 	#if id -u stack > /dev/null; then

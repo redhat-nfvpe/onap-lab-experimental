@@ -47,6 +47,9 @@ ROOT=$(readlink -f "$HERE/../..")
 	m '[undercloud] Provisioning'
 	#openstack overcloud node provide --all-manageable
 
+	m '[undercloud] Deploying'
+	#openstack overcloud deploy --templates
+
 EOT
 )"
 
