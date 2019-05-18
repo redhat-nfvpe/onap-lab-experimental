@@ -11,7 +11,7 @@ NAME=$1
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/../..")
 
-"$ROOT/hypervisor/ssh" -t undercloud-stack "$(cat <<- EOT
+"$ROOT/hypervisor/ssh" -t tripleo-stack "$(cat <<- EOT
 
 	if [ -z "$NAME" ]; then
 		sudo podman ps --all --format '{{.Names}}'

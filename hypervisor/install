@@ -13,7 +13,7 @@ if [ "$1" == '-c' ]; then
 fi
 
 "$HERE/prepare"
-"$HERE/undercloud/prepare"
-"$HERE/undercloud/install"
+"$HERE/tripleo/prepare"
+"$HERE/tripleo/install"
 "$HERE/overcloud/prepare"
 #"$HERE/overcloud/install"

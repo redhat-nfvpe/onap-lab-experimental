@@ -1,256 +1,212 @@
-hypervisor/undercloud/podman container list
-
 Preparing the Hypervisor
 ========================
 
 In production OpenStack environments there's no single hypervisor, but rather there are many
-controllers running on dedicated hardware, with redundancy. For our lab we will converge all these
+controllers running on dedicated hardware with redundancy. For our lab we will converge all these
 roles in a single machine. However, it's important to understand that this machine will be
 fulfilling several roles.
+
+Our Hypervisor will need two NICs, with one NIC on our work LAN and one NIC on a dedicated OpenStack
+control plane LAN.
+
+/diagram/
 
 
 Step 1: Install the operating system
 ------------------------------------
 
 Start with installing [CentOS](https://www.centos.org/). Tested with version 7.6. The minimal
-install is good enough.
+install (with no desktop environment) is good enough. We will need:
 
-The Hypervisor installation process makes certain assumptions about the machine, so be aware of some
-potential conflicts:
+* The root user password
+* Its IP address on the work LAN 
 
-* Do _not_ create a user called `stack`.
-* Do _not_ install the `python-virtualenv` operating system package. InfraRed will be installing it
-  via `pip` and the two installation methods could conflict.
+Our scripts will be making changes to this machine. We will do our best to isolate our work: most of
+it will be under the user "stack", and most of what we run will be inside virtual machines, which we
+will set up with libvirt for the "stack" user session.
 
-Edit `conf/env` and set `HYPERVISOR_ADDRESS` to point to your Hypervisor. You can use a host name.
-
-Ansible on the Orchestrator will be accessing the Hypervisor over ssh as the root user using key
-authentication. This means that you must have a private key for which the paired public key is
-registered with root on the Hypervisor.
-
-(Note that this is true even if the Orchestrator and Hypervisor are the same physical machine, in
-which case Ansible will be ssh-ing to `localhost`.)
-
-We provide a script that makes sure you have a key pair on the Orchestrator and copies the public
-key to the Hypervisor:
-
-    ./install-orchestrator-keypair
-
-You can then ssh with script:
-
-	./ssh-hypervisor
+However, some work will have to be done in root: installing some user packages and setting up
+custom network bridges.
 
 
-Step 2: Provision the virtual resources
----------------------------------------
+Step 2: Prepare the Hypervisor
+------------------------------
 
-Because our Hypervisor will be running several controllers once, we will have the software for each
-controller in its own virtual machine. This separation allows for more isolation and easier
-administration, and also mimics production environments in which controllers would be running on
-dedicated hardware.
+Edit `configuration/environment` and set `HYPERVISOR_ADDRESS` to point to our Hypervisor. We can
+use a host name. Then run:
 
-There's actually yet another level of isolation: within some controller virtual machines we will be
-running individual services as [Docker](https://www.docker.com/) containers. Internally,
-[Puppet](https://puppet.com/) is used to deploy these services.
+    hypervisor/prepare
 
-In this step we will provision all virtual resources at once. On the Orchestrator:
+We will be prompted only once for the root password for the Hypervisor, which we will use to
+authorize a keypair for ssh.
 
-    ./provision-hypervisor-virtual
+What this script does:
 
-It should take just a few minutes. Internally, [virsh](https://libvirt.org/virshcmdref.html) is
-used to provision the virtual resources on top of [libvirt](https://libvirt.org/).
+* Installs [libvirt](https://libvirt.org/) and related tools, such as
+  [VirtualBMC](https://docs.openstack.org/virtualbmc/latest/), which provides an
+  [IPMI](https://en.wikipedia.org/wiki/Intelligent_Platform_Management_Interface) for libvirt
+  virtual machines
+* Sets up network bridges to be used by our libvirt virtual machines, configured by
+  `configuration/libvirt/networks/virtual-machine-control-plane.xml` and
+  `configuration/libvirt/networks/openstack-control-plane.xml`
+* Creates and configures the "stack" user
 
-When finished, you can check out the virtual machines using virsh. We provide a `./virsh-hypervisor`
-as a shortcut to connect remotely. Example: 
+Note that all OpenStack packages and container images, including those for TripleO, are provided
+by the [DLRN (pronounced "Delorean") project](https://dlrn.readthedocs.io/en/latest/).
 
-    ./virsh-hypervisor list
+After it's done we will find some files under our `workspace/` directory:
 
-If you `./ssh-hypervisor` you'll notice:
+* `workspace/keys/root@hypervisor`
+* `workspace/keys/root@hypervisor.pub`
+* `workspace/keys/stack@hypervisor`
+* `workspace/keys/stack@hypervisor.pub`
+* `workspace/passwords/stack@hypervisor`
+* `workspace/ssh.config` is updated for `hypervisor-root` and `hypervisor-stack`
 
-* Many new virtual network interfaces (`ip addr`)
-* Virtual storage is located in `/home/libvirt/`
+Our scripts will later on add more keys and passwords and keep `workspace/ssh.config` updated.
+That last file is especially useful: it configures custom hosts that we can use it to ssh from our
+orchestrator to our lab machines, including virtual machines running inside the Hypervisor (via ssh
+proxying).
+
+Use the `hypervisor/ssh` and `hypervisor/rsync` shortcuts to use this config. Examples:
+
+    hypervisor/ssh hypervisor-stack
+    hypervisor/ssh hypervisor-root "ls -al"
+    hypervisor/rsync myfile.txt hypervisor-stack:/text/
+
+Now that we have libvirt installed we can also use its CLI,
+[virsh](https://libvirt.org/virshcmdref.html), via our shortcut: 
+
+    hypervisor/virsh list
+
+By default this shortcut will use the "stack" user session. Because we haven't created any virtual
+machines yet, the above should result in an empty table. Use `-r` as the first argument to connect
+to to libvirt's system session (as user root):
+
+    hypervisor/virsh -r net-list
+
+You should see the two networks we created in this step. 
+
+(Note that if we have libvirt installed on our orchestrator it would also be possible to connect
+[remotely](https://libvirt.org/remote.html) to the Hypervisor's instance via a "qemu+shh:" or
+similar URI.) 
 
 
-Step 3: Install the infrastructure controller ("undercloud")
-------------------------------------------------------------
+Step 3: Prepare TripleO
+-----------------------
 
-On the Orchestrator:
+Now that our Hypervisor is set up for hosting virtual machines we will prepare a virtual machine
+for installation of our OpenStack infrastructure manager,
+[TripleO](https://docs.openstack.org/tripleo-docs/latest/):
 
-    ./install-undercloud
+    hypervisor/tripleo/prepare
 
-This can take about 20 minutes.
+What this script does:
 
-If you `./ssh-hypervisor` you'll notice:
+* Creates a virtual machine named `tripleo` based on a CentOS image using
+  [cloud-init](https://cloudinit.readthedocs.io/en/latest/) to initialize it and configured by 
+  `configuration/libvirt/virt-install/tripleo.ini` and
+  `configuration/libvirt/cloud-init/tripleo.yaml`
+* Installs TripleO client on it, which we will use in the next step to install TripleO
+  (yes, it's complex enough that it deserves its own step!)
+* Installs Ceph Ansible playbooks on it, which TripleO will use later to install Ceph on cloud
+  nodes 
+* Creates and configures the "stack" user, which will be used by TripleO client to configure TripleO
+  (though note that it does have sudo access, which will be necessary for *installing* TripleO)    
+  
+After it's done we will find some more files under our `workspace/` directory:
 
-* A new `stack` user
-* `/etc/hosts` has domain names for the virtual machines (though only `undercloud-0` has an IP
-  address)
-* The root user now has a keypair (at `/root/.ssh`) that can be used to ssh, either as user `stack`
-  *or* as `root`, to the `undercloud-0` virtual machine (note that user `stack` has sudo access)
+* `workspace/keys/stack@tripleo`
+* `workspace/keys/stack@tripleo.pub`
+* `workspace/ssh.config` is updated for `tripleo-stack`
 
-The `./ssh-controller` can be used to double-ssh from the Orchestrator to the controller virtual
-machines:
+We can now connect to the `tripleo` virtual machine:
 
-    ./ssh-controller undercloud-0
+    hypervisor/ssh tripleo-stack
 
-If you `./ssh-controller undercloud-0` you'll find useful logs and access files for this
-step:
+> You might be wondering why our OpenStack infrastructure manager is called "TripleO". It's actually
+named after the pronunciation of "OoO" which is an acronym for "OpenStack on OpenStack". Wait, what?
 
-    /home/stack/undercloud_install.log
-    /home/stack/undercloud-passwords.conf
-    /var/log/containers/
-    /home/stack/undercloud.conf
-    /home/stack/stackrc
+> The idea is this: our infrastructure, which comprises various computers and storage devices and
+network cards and switches, is itself a bit like a "cloud", though instead of being comprised of
+virtual machines and virtual storage and virtual networks, which is what we mostly associate with
+"cloud", it is (mostly) physical.
 
-> You might be wondering why the infrastructure controller virtual machine is called "undercloud".
-To understand this term, first you must understand that the infrastructure controller software is
-_itself_ implemented as a small all-in-one OpenStack cloud.
+> And OpenStack does support physical resources. This functionality is provides by OpenStack
+component called [Ironic](https://wiki.openstack.org/wiki/Ironic), which is used to manage physical
+machines, or "bare metal". In a typical OpenStack cloud it handles the provisioning of bare metal
+resources in addition to the more typical virtual resources.
 
-> Why use OpenStack to manage OpenStack? First, consider why an infrastructure controller is even
-necessary. After all, you could potentially create an OpenStack cloud manually: take a bunch of
-physical machines, install the necessary OpenStack components on them, and configure them to work
-together. But for a real cloud we need some automation. We need to easily add and remove physical
-machines to and from the cloud, and also need to install and configure the OpenStack components on
-them.
+> You might already guess where this is going: in TripleO we will be using OpenStack itself, relying
+heavily on Ironic, to manage our infrastructure as bare metal resources. The advantage is that we
+can then use all the usual OpenStack tools to manage our infrastructure. This allows us to use the
+same paradigm to manage the infrastructure as we use to manage our cloud workloads.
 
-> Well--guess what?--that's exactly the kind of work that OpenStack itself was designed to do,
-though with a small twist: we usually think of a cloud as comprising virtual machines, but actually
-OpenStack can also manage physical machines via its [Ironic](https://wiki.openstack.org/wiki/Ironic)
-component, which relies on PXE and IPMI technologies to bootstrap the bare metal. Once they're
-provisioned, there is no significant difference between managing virtual machines and managing
-physical machines.
+> The result is a deployment with *two* separate clouds: our infrastructure is called the
+"undercloud", and our "actual" cloud, installed on the infrastructure, is called the "overcloud".
+They could potentially be running different versions of OpenStack!  
 
-> This, then, is what our infrastructure controller does: allows us to add and remove machines to
-and from the cloud. Together, all these machines comprise the "undercloud". The "overcloud"
-comprises our actual cloud resources provisioned on top of these machines. In effect, what we have
-here is one OpenStack cloud running on top another: OpenStack-On-OpenStack, a.k.a.
-[TripleO](https://docs.openstack.org/tripleo-docs/latest/).
-
-> (Actually, adding new machines to the cloud is not just about installing and configuring them but
-may also require configuring the network. At the bare minimum this could mean allocating a secure
-IP address for the machine but it may involve more complex SDN work. For example, a single cloud may
-comprise several separate LANs and indeed be distributed across several data centers. Again, this
-is something that OpenStack can already handle for the "actual" cloud, so it can do the same for our
-undercloud.)
+> TripleO does not require a full-blown OpenStack installation. For our lab we will be using a
+minimal all-in-one installation within our `tripleo` virtual machine. But in production we can
+indeed divide the undercloud OpenStack services between many machines, with full redundancy, high
+availability, and scalability -- all the things that OpenStack already provides.
 
 > Confused? You really don't have to worry about it too much. The fact that our infrastructure
-manager is itself implemented in OpenStack is just that: an implementation detail. Indeed, the
-undercloud and overcloud could each be running on entirely different versions of OpenStack. All you
-need to know is that the virtual machine called "undercloud-0" is your infrastructure controller.
+manager is itself implemented in OpenStack is just that: an implementation detail.
 
-You can connect to the undercloud just like to any other OpenStack deployment. However, note that
-its virtual machine, `undercloud-0`, is not network-accessible outside of the Hypervisor. We provide
-`./openstack-undercloud` as a shortcut to access it from the Orchestrator. For example, let's see
-what networks we have:
-
-    ./openstack-undercloud network list
-
-Note that at this stage `./openstack-undercloud server list` will be empty because have not yet
-on-boarded any infrastructure.
-
-Also note that in TripleO version 13 ("queens") all OpenStack services run as simple executables,
-rather than Docker containers. The other controllers for "queens" all use Docker containers (see
-step 4, below). From version 14 ("rocky") TripleO also uses containers. 
+> Note that in Red Hat OpenStack Platform (RHOSP) TripleO is called "Director".
 
 
-Step 4: Install infrastructure images
--------------------------------------
+Step 4: Install TripleO
+-----------------------
 
-Our infrastructure controller ("undercloud") will be providing operating system images, based on
-CentOS, for bootstrapping the other controllers. On the Orchestrator:
+Now that we have the `tripleo` virtual machine ready with the TripleO client we can use it to
+install TripleO: 
 
-    ./install-overcloud-images
+    hypervisor/tripleo/install
 
-It should take just a few minutes.
+This step is almost entirely handled by the `openstack undercloud install` command. It is configured
+by `configuration/tripleo/undercloud.conf`. Internally it has several steps and takes a while to
+complete, ~ 15 minutes.
 
-By default the ready-made images will be downloaded for you. It's also possible to build these
-images locally, which would take about 15 minutes:
+Internally it will be using [Puppet](https://puppet.com/) to orchestrate the installation and
+orchestration of the various OpenStack undercloud services as containers to be run by
+[Podman](https://podman.io/). Containers allow for better isolation and portability.
 
-    ./install-overcloud-images -b
+After it's done we can access the undercloud's `openstack` command via a shortcut:
 
-To list the installed images:
+    hypervisor/tripleo/openstack
 
-    ./openstack-undercloud image list
+We can also access the individual service containers via the `hypervisor/tripleo/podman`,
+`hypervisor/tripleo/podman-bash`, and `hypervisor/tripleo/podman-restart` shortcuts. Run any of
+those shortcuts without any argument to get a list of available containers. For example, to get
+a shell into the `ironic_conductor` container and see the logs:
 
-If you `./ssh-controller undercloud-0` you'll find useful logs for this step:
+    hypervisor/tripleo/podman-bash ironic_conductor
+    cat /var/log/ironic/ironic-conductor.log
 
-    /home/stack/overcloud-full.log
-    /home/stack/openstack-build-images.log
-    /home/stack/ironic-python-agent.log
+Note that configuration files for the containers are exported from the virtual machine, in the
+`/var/lib/config-data/puppet-generated/` directory. For example, to edit `ironic.conf`:
 
+    hypervisor/ssh tripleo-stack
+    vi /var/lib/config-data/puppet-generated/ironic/etc/ironic/ironic.conf
 
-Step 5: Install other cloud controllers
----------------------------------------
+To use the file we will need to restart the container:
 
-Now that we have an infrastructure controller ("undercloud") we can use it provision and install our
-other controllers ("overcloud"). Internally this is done using Ansible,
-[Heat](https://docs.openstack.org/heat/latest/), and
-[Mistral](https://docs.openstack.org/mistral/latest/) on the undercloud.
-[Kolla](https://docs.openstack.org/kolla/latest/) is used as the source of the Docker container
-images.
-
-Our overcloud installation consists of these controllers:
-
-* `controller-0`: Manages networking ([Neutron](https://docs.openstack.org/neutron/latest/)) as well
-  as virtual machine scheduling
-  ([nova-scheduler](https://docs.openstack.org/nova/latest/cli/nova-scheduler.html)).
-* `ceph-0`: [Ceph](https://ceph.com/) is a powerful distributed storage system with good OpenStack
-  and OKD integration. Ceph will provide our
-  block storage ([Cinder](https://docs.openstack.org/cinder/latest/)),
-  file storage ([Manila](https://docs.openstack.org/manila/latest/)),
-  and object storage ([Swift](https://docs.openstack.org/swift/latest/)).
-  (Actually, some Ceph services will also be running on `controller-0`.)
-
-On the Orchestrator:
-
-    ./install-overcloud
-
-This can take ??? minutes.
-
-If you `./ssh-controller undercloud-0` you'll find useful logs and topology files for this step:
-
-    /home/stack/overcloud_install.log
-    /home/stack/overcloud_deployment_*.log
-    /home/stack/openstack_failures_long.log
-    /var/lib/mistral/overcloud/ansible.log
-    /home/stack/instackenv.json
-    /home/stack/containers-prepare-parameter.yaml
-
-The root user at the Hypervisor (and also in `undercloud-0`) now has a keypair (at `/root/.ssh`)
-that can be used to login as user `heat-admin` to the controller virtual machines. To login, you
-need to find their addresses, which you can see with the `openstack server info` command. The
-`./ssh-controller` will do this for you and double-ssh from the Orchestrator:
-
-    ./ssh-controller controller-0
-
-Once in a controller you can see its running service as containers:
-
-    sudo docker container list
-
-
-Step 6: Configure cloud controllers
------------------------------------
-
-On the Orchestrator:
-
-    ./configure-overcloud
-
-This can take ??? minutes.
-
+    hypervisor/tripleo/podman-restart ironic_conductor
 
 
 How to Reset
 ------------
 
-If you experience any failures in the above or later steps then you can start from scratch. This
-script will delete all the virtual resources:
+You can start from scratch if you experience any failures in the above or later steps. This script
+will delete all the virtual resources from the Hypervisor:
 
-    ./remove-hypervisor-virtual
+    hypervisor/clean
 
-Note that this will still leave the network and the downloaded virtual machine images intact. You
-can make sure to completely remove _all_ virtual resources by using `-f`:
+You may need to run it several times until it completes successfully because some resources might
+be in an indeterminate state when you run it.
 
-    ./remove-hypervisor-virtual -f
+You can also combine `clean` and `prepare`:
 
-You may need to run with `-f` several times until it completes successfully because some resources
-might be in an indeterminate state when you run.
+    hypervisor/prepare -c

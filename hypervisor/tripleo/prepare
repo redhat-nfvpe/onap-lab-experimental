@@ -13,9 +13,9 @@ ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
 
-"$ROOT/hypervisor/create-virtual-machine" undercloud 80G centos7 "$CENTOS7_IMAGE"
+"$ROOT/hypervisor/create-virtual-machine" tripleo 80G centos7 "$CENTOS7_IMAGE"
 
-"$ROOT/hypervisor/ssh" undercloud-stack "$(cat <<- EOT
+"$ROOT/hypervisor/ssh" tripleo-stack "$(cat <<- EOT
 
 	set -e
 	GREEN='\033[0;32m'

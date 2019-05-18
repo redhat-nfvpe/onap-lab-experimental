@@ -11,6 +11,10 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
 
+if [ "$1" == '-c' ]; then
+	"$HERE/clean"
+fi
+
 # See: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/director_installation_and_usage/installing-the-undercloud
 # See: https://libvirt.org/formatnetwork.html
 
@@ -34,48 +38,15 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 	RESET='\033[0m'
 	function m () { echo -e "\$GREEN\$1\$RESET"; }
 
+	m "[hypervisor] Ensuring timezone is \"$TIMEZONE\""
+	timedatectl set-timezone $(c "$TIMEZONE")
+
 	m '[hypervisor] Ensuring required packages are installed'
 	yum install --assumeyes \
 		epel-release deltarpm
 	yum install --assumeyes \
 		virt-install cloud-utils \
 		python36-pip python36-devel libvirt-devel openssl-devel gcc
-
-	m "[hypervisor] Ensuring timezone is \"$TIMEZONE\""
-	timedatectl set-timezone $(c "$TIMEZONE")
-
-	m "[hypervisor] Ensuring user \"stack\" exists and is configured"
-	if ! id --user stack > /dev/null; then
-		useradd stack
-	fi
-	echo $(c "$PASSWORD") | passwd --stdin stack
-	echo "stack ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/stack
-
-	function kvm_enable_bridge () {
-		if ! grep --quiet --line-regexp "allow \$1" /etc/qemu-kvm/bridge.conf; then
-			echo "allow \$1" >> /etc/qemu-kvm/bridge.conf
-		fi
-	}
-
-	function virsh_enable_network () {
-		if ! virsh net-uuid "\$1" > /dev/null 2>&1; then
-			virsh net-define "\$HOME/libvirt/networks/\$1.xml"
-		fi
-		virsh net-autostart "\$1"
-		virsh net-start "\$1" || true
-	}
-
-	m '[hypervisor] Ensuring libvirt networks and bridges are configured (root)'
-	brctl addbr os-ctlplane || true
-	brctl addif os-ctlplane enp1s0 || true
-	brctl stp os-ctlplane on 
-	ip link set os-ctlplane up
-	#ip addr add 192.168.24.254/24 dev os-ctlplane || true
-	#ip route add 192.168.24.0/24 dev os-ctlplane || true
-	kvm_enable_bridge vm-ctlplane
-	virsh_enable_network virtual-machine-control-plane
-	kvm_enable_bridge os-ctlplane
-	virsh_enable_network openstack-control-plane
 
 	m '[hypervisor] Ensuring VirtualBMC service is installed and configured'
 
@@ -123,6 +94,41 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 	systemctl daemon-reload
  	systemctl start vbmcd
  	systemctl enable vbmcd
+
+	m '[hypervisor] Ensuring libvirt networks and bridges are configured (root)'
+
+	function kvm_enable_bridge () {
+		if ! grep --quiet --line-regexp "allow \$1" /etc/qemu-kvm/bridge.conf; then
+			echo "allow \$1" >> /etc/qemu-kvm/bridge.conf
+		fi
+	}
+
+	function virsh_enable_network () {
+		if ! virsh net-uuid "\$1" > /dev/null 2>&1; then
+			virsh net-define "\$HOME/libvirt/networks/\$1.xml"
+		fi
+		virsh net-autostart "\$1"
+		virsh net-start "\$1" || true
+	}
+
+	brctl addbr os-ctlplane || true
+	brctl addif os-ctlplane enp1s0 || true
+	brctl stp os-ctlplane on 
+	ip link set os-ctlplane up
+	#ip addr add 192.168.24.254/24 dev os-ctlplane || true
+	#ip route add 192.168.24.0/24 dev os-ctlplane || true
+	kvm_enable_bridge vm-ctlplane
+	virsh_enable_network virtual-machine-control-plane
+	kvm_enable_bridge os-ctlplane
+	virsh_enable_network openstack-control-plane
+
+	m "[hypervisor] Ensuring user \"stack\" exists and is configured"
+	if ! id --user stack > /dev/null; then
+		useradd stack
+	fi
+	echo $(c "$PASSWORD") | passwd --stdin stack
+	# TODO: do we need this?
+	echo "stack ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/stack
 
 EOT
 )"

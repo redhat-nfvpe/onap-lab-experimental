@@ -8,15 +8,6 @@ fi
 
 # See: https://docs.openstack.org/tripleo-docs/latest/install/installation/installation.html
 
-# To see Ironic logs:
-#   hypervisor/undercloud/podman-bash ironic_conductor
-#   cat /var/log/ironic/ironic-conductor.log
-
-# To change ironic.conf:
-#   hypervisor/ssh undercloud-stack
-#   vi /var/lib/config-data/puppet-generated/ironic/etc/ironic/ironic.conf
-#   sudo podman restart ironic_conductor
-
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
@@ -26,7 +17,7 @@ UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" |
 	NAMESERVER=$(eq "$NAMESERVER") \
 	envsubst)
 
-"$ROOT/hypervisor/ssh" undercloud-stack "$(cat <<- EOT
+"$ROOT/hypervisor/ssh" tripleo-stack "$(cat <<- EOT
 
 	set -e
 	GREEN='\033[0;32m'
