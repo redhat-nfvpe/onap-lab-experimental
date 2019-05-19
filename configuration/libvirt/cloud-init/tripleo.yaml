@@ -12,12 +12,12 @@ network:
   config:
   - type: nameserver
     address: "$NAMESERVER"
-  # Virtual machine control plane
+  # Virtual machine control plane:
   - type: physical
     name: eth0
     subnets:
     - type: dhcp
-  # OpenStack control plane
+  # OpenStack control plane:
   - type: physical
     name: eth1
     subnets:
@@ -36,6 +36,10 @@ users:
 timezone: "$TIMEZONE"
 
 runcmd:
+# We don't need cloud-config anymore:
+- systemctl disable cloud-config.service
+- systemctl disable cloud-final.service
+- systemctl disable cloud-init-local.service
 - systemctl disable cloud-init.service
-# Note: TripleO needs the interface defined *but unused*
+# Note: TripleO needs the interface defined *but unused*, so don't do this:
 #- dhclient eth1

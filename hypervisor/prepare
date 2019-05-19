@@ -6,6 +6,9 @@ if [ "$EUID" == 0 ]; then
 	exit 1
 fi
 
+# See: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/director_installation_and_usage/installing-the-undercloud
+# See: https://libvirt.org/formatnetwork.html
+
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
@@ -15,8 +18,7 @@ if [ "$1" == '-c' ]; then
 	"$HERE/clean"
 fi
 
-# See: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/director_installation_and_usage/installing-the-undercloud
-# See: https://libvirt.org/formatnetwork.html
+C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE")
 
 m '[hypervisor] Ensuring keypair authorization for user "root" (you will be prompted for password if not)'
 "$ROOT/utils/ensure-ssh-key-authorized" root@hypervisor \
@@ -55,7 +57,7 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 	# for root to access any user's libvirt session via their socket. The libvirt connection string
 	# would be:
 	#
-	#   qemu:///session?socket=\$XDG_RUNTIME_DIR/libvirt/libvirt-sock
+	#   qemu:///session?socket=$XDG_RUNTIME_DIR/libvirt/libvirt-sock
 	#
 	# See: https://libvirt.org/remote.html
 	#
@@ -95,9 +97,24 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
  	systemctl start vbmcd
  	systemctl enable vbmcd
 
-	m '[hypervisor] Ensuring libvirt networks and bridges are configured (root)'
+	m '[hypervisor] Ensuring libvirt networks and bridges are configured'
+
+	nmcli connection add \
+		con-name os-ctlplane \
+		type bridge \
+		ifname os-ctlplane
+
+	nmcli connection add \
+		con-name $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE \
+		type ethernet \
+		ifname $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE \
+		master os-ctlplane
+
+	ip address add 192.168.24.254/24 dev os-ctlplane || true
+	ip route add 192.168.24.0/24 dev os-ctlplane || true
 
 	function kvm_enable_bridge () {
+		# Allow the bridge to be used by libvirt
 		if ! grep --quiet --line-regexp "allow \$1" /etc/qemu-kvm/bridge.conf; then
 			echo "allow \$1" >> /etc/qemu-kvm/bridge.conf
 		fi
@@ -111,24 +128,23 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 		virsh net-start "\$1" || true
 	}
 
-	brctl addbr os-ctlplane || true
-	brctl addif os-ctlplane enp1s0 || true
-	brctl stp os-ctlplane on 
-	ip link set os-ctlplane up
-	#ip addr add 192.168.24.254/24 dev os-ctlplane || true
-	#ip route add 192.168.24.0/24 dev os-ctlplane || true
 	kvm_enable_bridge vm-ctlplane
 	virsh_enable_network virtual-machine-control-plane
 	kvm_enable_bridge os-ctlplane
 	virsh_enable_network openstack-control-plane
 
 	m "[hypervisor] Ensuring user \"stack\" exists and is configured"
+
 	if ! id --user stack > /dev/null; then
 		useradd stack
 	fi
+
 	echo $(c "$PASSWORD") | passwd --stdin stack
-	# TODO: do we need this?
+
 	echo "stack ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/stack
+
+	# User "qemu" will need access to our libvirt images
+	chmod a+rx /home/stack/
 
 EOT
 )"
@@ -145,9 +161,6 @@ sshpass -p "$PASSWORD" ssh "stack@$HYPERVISOR_ADDRESS"
 	GREEN='\033[0;32m'
 	RESET='\033[0m'
 	function m () { echo -e "\$GREEN\$1\$RESET"; }
-
-	m '[hypervisor] Ensuring libvirt pool is configured'
-	virsh pool-autostart default
 
 	#m '[hypervisor] Ensuring Python packages are installed'
 	#pip install --user \

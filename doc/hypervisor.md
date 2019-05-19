@@ -51,9 +51,6 @@ What this script does:
   `configuration/libvirt/networks/openstack-control-plane.xml`
 * Creates and configures the "stack" user
 
-Note that all OpenStack packages and container images, including those for TripleO, are provided
-by the [DLRN (pronounced "Delorean") project](https://dlrn.readthedocs.io/en/latest/).
-
 After it's done we will find some files under our `workspace/` directory:
 
 * `workspace/keys/root@hypervisor`
@@ -113,6 +110,10 @@ What this script does:
   nodes 
 * Creates and configures the "stack" user, which will be used by TripleO client to configure TripleO
   (though note that it does have sudo access, which will be necessary for *installing* TripleO)    
+
+Note that all OpenStack packages, including those for TripleO and TripleO client, are provided by
+the [DLRN (pronounced "Delorean") project](https://dlrn.readthedocs.io/en/latest/). Containers
+images, used in the next step, are provided by [Kolla](https://docs.openstack.org/kolla/latest/).
   
 After it's done we will find some more files under our `workspace/` directory:
 
@@ -123,6 +124,8 @@ After it's done we will find some more files under our `workspace/` directory:
 We can now connect to the `tripleo` virtual machine:
 
     hypervisor/ssh tripleo-stack
+
+If you reboot the Hypervisor this virtual machine will also be rebooted.
 
 > You might be wondering why our OpenStack infrastructure manager is called "TripleO". It's actually
 named after the pronunciation of "OoO" which is an acronym for "OpenStack on OpenStack". Wait, what?
@@ -170,12 +173,14 @@ by `configuration/tripleo/undercloud.conf`. Internally it has several steps and 
 complete, ~ 15 minutes.
 
 Internally it will be using [Puppet](https://puppet.com/) to orchestrate the installation and
-orchestration of the various OpenStack undercloud services as containers to be run by
+configuration of the various OpenStack undercloud services as containers to be run by
 [Podman](https://podman.io/). Containers allow for better isolation and portability.
 
-After it's done we can access the undercloud's `openstack` command via a shortcut:
+After it's done we can access the undercloud's `openstack` command via a shortcut, e.g.:
 
-    hypervisor/tripleo/openstack
+    hypervisor/tripleo/openstack network list
+
+This relies on the `stackrc` environment file in the Hypervisor's `stack` user's home directory.
 
 We can also access the individual service containers via the `hypervisor/tripleo/podman`,
 `hypervisor/tripleo/podman-bash`, and `hypervisor/tripleo/podman-restart` shortcuts. Run any of

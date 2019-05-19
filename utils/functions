@@ -35,7 +35,7 @@ function q () {
 # Ignores empty lines and lines beginning with "#".
 # Each other line is appended to the command line. 
 function command_line_ini () {
-	cat "$1" | grep --invert-match '^#\|^$' | tr '\n' ' '
+	 < "$1" grep --invert-match '^#\|^$' | tr '\n' ' '
 }
 
 # See: https://www.rosehosting.com/blog/generate-password-linux-command-line/#2-Generate-a-strong-password-with-urandom

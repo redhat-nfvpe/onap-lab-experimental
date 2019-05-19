@@ -11,7 +11,9 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
 
-"$HERE/ssh" hypervisor-stack "$(cat <<- EOT
+C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE")
+
+"$HERE/ssh" hypervisor-root "$(cat <<- EOT
 
 	set -e
 	GREEN='\033[0;32m'
@@ -37,30 +39,15 @@ ROOT=$(readlink -f "$HERE/..")
 		virsh net-destroy "\$UUID"
 	done
 
-	m '[hypervisor] Ensuring no libvirt images'
-	rm --recursive --force libvirt/
-	rm --recursive --force .vbmc/
-
-EOT
-)"
-
-"$HERE/ssh" hypervisor-root "$(cat <<- EOT
-
-	set -e
-	GREEN='\033[0;32m'
-	RESET='\033[0m'
-	function m () { echo -e "\$GREEN\$1\$RESET"; }
-
-	m '[hypervisor] Ensuring no libvirt networks (root)'
-	for UUID in \$(virsh -r net-list --all --uuid); do
-		virsh net-undefine "\$UUID"
-		virsh net-destroy "\$UUID"
-	done
-
 	m '[hypervisor] Ensuring no libvirt network bridges'
-	ip link set os-ctlplane down || true
-	brctl delbr os-ctlplane || true
+	nmcli connection del os-ctlplane
+	nmcli connection del $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE
 
+	m '[hypervisor] Ensuring no libvirt images'
+	rm --recursive --force /home/stack/libvirt/
+	rm --recursive --force /home/stack/.vbmc/
+
+	m '[hypervisor] Ensuring VirtualBMC service is disabled'
  	systemctl stop vbmcd
  	systemctl disable vbmcd
 	rm /etc/systemd/system/vbmcd.service
