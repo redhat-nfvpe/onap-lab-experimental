@@ -1,10 +1,11 @@
-Preparing the Hypervisor
-========================
+Chapter 2: Prepare the Hypervisor
+=================================
 
-In production OpenStack environments there's no single hypervisor, but rather there are many
-controllers running on dedicated hardware with redundancy. For our lab we will converge all these
-roles in a single machine. However, it's important to understand that this machine will be
-fulfilling several roles.
+In production OpenStack environments there's no single hypervisor, instead there would be many
+controllers of various kinds running on dedicated hardware with redundancy. For our lab we will
+converge all these roles in a single machine. However, it's important to understand that this
+machine will be fulfilling several roles. In order to keep these roles isolated we will be running
+each role in a virtual machine, which will also make it much easier to tear down and rebuild roles. 
 
 Our Hypervisor will need two NICs, with one NIC on our work LAN and one NIC on a dedicated OpenStack
 control plane LAN.
@@ -21,18 +22,18 @@ install (with no desktop environment) is good enough. We will need:
 * The root user password
 * Its IP address on the work LAN 
 
-Our scripts will be making changes to this machine. We will do our best to isolate our work: most of
-it will be under the user "stack", and most of what we run will be inside virtual machines, which we
-will set up with libvirt for the "stack" user session.
+Our scripts in the next steps will be making changes to this machine. They do the best they can to
+isolate our work: most of it will be under the user "stack", and most of what they run will be
+inside virtual machines, which we will set up with libvirt.
 
-However, some work will have to be done in root: installing some user packages and setting up
-custom network bridges.
+However, some work will have to be done in root: installing some utility packages and setting up
+custom network bridges as well as the virtual machines themselves.
 
 
 Step 2: Prepare the Hypervisor
 ------------------------------
 
-Edit `configuration/environment` and set `HYPERVISOR_ADDRESS` to point to our Hypervisor. We can
+Edit `configuration/environment` and set `HYPERVISOR_IP_ADDRESS` to point to our Hypervisor. We can
 use a host name. Then run:
 
     hypervisor/prepare
@@ -50,6 +51,12 @@ What this script does:
   `configuration/libvirt/networks/virtual-machine-control-plane.xml` and
   `configuration/libvirt/networks/openstack-control-plane.xml`
 * Creates and configures the "stack" user
+
+After it's done we will find some useful files on the Hypervisor at the `stack` user's home
+directory:
+
+* `/home/stack/keys/ 
+
 
 After it's done we will find some files under our `workspace/` directory:
 
@@ -76,16 +83,15 @@ Now that we have libvirt installed we can also use its CLI,
 
     hypervisor/virsh list
 
-By default this shortcut will use the "stack" user session. Because we haven't created any virtual
-machines yet, the above should result in an empty table. Use `-r` as the first argument to connect
-to to libvirt's system session (as user root):
+Because we haven't created any virtual machines yet, the above should result in an empty table. But
+this will show results:
 
-    hypervisor/virsh -r net-list
+    hypervisor/virsh net-list
 
 You should see the two networks we created in this step. 
 
 (Note that if we have libvirt installed on our orchestrator it would also be possible to connect
-[remotely](https://libvirt.org/remote.html) to the Hypervisor's instance via a "qemu+shh:" or
+[remotely](https://libvirt.org/remote.html) to the Hypervisor's instance via a "qemu+ssh:" or
 similar URI.) 
 
 
@@ -102,18 +108,18 @@ What this script does:
 
 * Creates a virtual machine named `tripleo` based on a CentOS image using
   [cloud-init](https://cloudinit.readthedocs.io/en/latest/) to initialize it and configured by 
-  `configuration/libvirt/virt-install/tripleo.ini` and
-  `configuration/libvirt/cloud-init/tripleo.yaml`
-* Installs TripleO client on it, which we will use in the next step to install TripleO
-  (yes, it's complex enough that it deserves its own step!)
+  `configuration/libvirt/domains/tripleo/virt-install.ini` and
+  `configuration/libvirt/domains/tripleo/cloud-config.yaml`
+* Installs TripleO-client on it, which we will use in the next step to install TripleO (yes, it's
+  complex enough that it deserves its own step)
 * Installs Ceph Ansible playbooks on it, which TripleO will use later to install Ceph on cloud
   nodes 
 * Creates and configures the "stack" user, which will be used by TripleO client to configure TripleO
   (though note that it does have sudo access, which will be necessary for *installing* TripleO)    
 
-Note that all OpenStack packages, including those for TripleO and TripleO client, are provided by
-the [DLRN (pronounced "Delorean") project](https://dlrn.readthedocs.io/en/latest/). Containers
-images, used in the next step, are provided by [Kolla](https://docs.openstack.org/kolla/latest/).
+Note that OpenStack packages, including those for TripleO and TripleO-client, are provided by the
+[DLRN (pronounced "Delorean") project](https://dlrn.readthedocs.io/en/latest/). We will be
+installing more than 500 packages in this step!
   
 After it's done we will find some more files under our `workspace/` directory:
 
@@ -125,7 +131,13 @@ We can now connect to the `tripleo` virtual machine:
 
     hypervisor/ssh tripleo-stack
 
-If you reboot the Hypervisor this virtual machine will also be rebooted.
+Note that if you reboot the Hypervisor this virtual machine will also be rebooted.
+
+On the Hypervisor, at the `stack` user's home directory, you will find:
+
+* `/home/stack/libvirt/images/` has our virtual machine drive images, base images, and cloud-init
+  images
+* `/home/stack/keys/` has copies of our `workspace/keys/` for all virtual machines
 
 > You might be wondering why our OpenStack infrastructure manager is called "TripleO". It's actually
 named after the pronunciation of "OoO" which is an acronym for "OpenStack on OpenStack". Wait, what?
@@ -174,24 +186,53 @@ complete, ~ 15 minutes.
 
 Internally it will be using [Puppet](https://puppet.com/) to orchestrate the installation and
 configuration of the various OpenStack undercloud services as containers to be run by
-[Podman](https://podman.io/). Containers allow for better isolation and portability.
+[Podman](https://podman.io/). Containers allow for better isolation and portability. The undercloud
+itself is installed using the OpenStack [Heat](https://docs.openstack.org/heat/latest/) and
+[Mistral](https://docs.openstack.org/mistral/latest/) services.
 
-After it's done we can access the undercloud's `openstack` command via a shortcut, e.g.:
+Note that OpenStack container images, including those for TripleO, are provided by the
+[Kolla project](https://docs.openstack.org/kolla/latest/).
+
+After it's done we will find some useful files in the `tripleo` virtual machine at the `stack`
+user's home directory: 
+
+* `/home/stack/install-undercloud.log` is a copy of the output we saw during this step
+* `/home/stack/undercloud.conf` is based on our `configuration/tripleo/undercloud.conf`
+* `/home/stack/containers-prepare-parameter.yaml` was generated by
+   `openstack tripleo container image prepare`
+* `/home/stack/tripleo-config-generated-env-files/undercloud_parameters.yaml` incorporates
+   the above two files
+* `/home/stack/undercloud-passwords.conf`
+* `/home/stack/tripleo-undercloud-passwords.yaml` incorporates the above and also ssh keys
+* `/home/stack/stackrc` sets up a shell environment for accessing the undercloud
+
+We can now access the undercloud's `openstack` command via a shortcut (that uses the `stackrc`
+mentioned above), e.g.:
 
     hypervisor/tripleo/openstack network list
 
-This relies on the `stackrc` environment file in the Hypervisor's `stack` user's home directory.
+The services in the containers write their logs to the `/var/log/containers/` directory shared from
+the host virtual machine, e.g.: 
 
-We can also access the individual service containers via the `hypervisor/tripleo/podman`,
+    hypervisor/ssh tripleo-stack
+    cat /var/log/containers/ironic/ironic-conductor.log
+
+Note especially the Heat and Mistral logs for debugging this step.
+
+We can directly access the individual service containers via the `hypervisor/tripleo/podman`,
 `hypervisor/tripleo/podman-bash`, and `hypervisor/tripleo/podman-restart` shortcuts. Run any of
-those shortcuts without any argument to get a list of available containers. For example, to get
-a shell into the `ironic_conductor` container and see the logs:
+them without arguments to get a list of available service containers. For example, to get a shell
+into the `ironic_conductor` service container and see the same log we saw above from there:
 
     hypervisor/tripleo/podman-bash ironic_conductor
     cat /var/log/ironic/ironic-conductor.log
 
-Note that configuration files for the containers are exported from the virtual machine, in the
-`/var/lib/config-data/puppet-generated/` directory. For example, to edit `ironic.conf`:
+(Note that `podman-bash` does not use ssh, but rather explicitly executes bash within the
+container. These are lightweight containers that are not running ssh servers.)
+
+Unlike logs, which are shared, configuration files for the containers are *imported* from the host
+virtual machine upon startup from its `/var/lib/config-data/puppet-generated/` directory. So,
+to edit `ironic.conf`:
 
     hypervisor/ssh tripleo-stack
     vi /var/lib/config-data/puppet-generated/ironic/etc/ironic/ironic.conf
@@ -215,3 +256,9 @@ be in an indeterminate state when you run it.
 You can also combine `clean` and `prepare`:
 
     hypervisor/prepare -c
+
+
+Next
+----
+
+[Continue to Chapter 3: Install OpenStack](openstack.md)

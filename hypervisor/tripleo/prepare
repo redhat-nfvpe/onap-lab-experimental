@@ -13,19 +13,37 @@ ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
 
+EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
+
 "$ROOT/hypervisor/create-virtual-machine" tripleo 80G centos7 "$CENTOS7_IMAGE"
 
-"$ROOT/hypervisor/ssh" tripleo-stack "$(cat <<- EOT
+"$ROOT/hypervisor/ssh" -t tripleo-stack "$(cat <<- EOT
 
 	set -e
 	GREEN='\033[0;32m'
 	RESET='\033[0m'
 	function m () { echo -e "\$GREEN\$1\$RESET"; }
 
-	m '[hypervisor] Ensuring TripleO packages are installed'
+	m '[tripleo-stack] Ensuring utility packages are installed'
 	sudo yum install --assumeyes \
-		$(c "$TRIPLEO_REPOS") \
-		deltarpm wget
+		deltarpm wget lynx
+
+	if ! rpm --query --quiet python2-tripleo-repos; then
+		m '[tripleo-stack] Ensuring TripleO repository is installed'
+
+		# RDO deletes old packages from the repository when adding new versions, which means we
+		# cannot rely on a stable URL. Instead we will scrape the repository's generated HTML index
+		# using Lynx to find the current URL.
+	
+		TRIPLEO_REPOS=\$(lynx -listonly -nonumbers -dump  "https://trunk.rdoproject.org/centos7-$EQ_TRIPLEO_VERSION/consistent/" |
+			grep '/python2-tripleo-repos-.*\.rpm$')
+
+		# This 	
+		sudo yum install --assumeyes \
+			"\$TRIPLEO_REPOS"
+	fi
+
+	m '[tripleo-stack] Ensuring TripleO-client packages are installed'
 	sudo --preserve-env tripleo-repos \
 		-b $(c "$TRIPLEO_VERSION") \
 		-d centos7 \
@@ -35,11 +53,11 @@ ROOT=$(readlink -f "$HERE/../..")
 		python2-tripleoclient python2-chardet \
 		ceph-ansible
 
-	m '[hypervisor] Ensuring OpenStack cliff is configured'
+	m '[tripleo-stack] Updating OpenStack Cliff configuration'
 	sed --in-place "/# OpenStack START/,/# OpenStack END/d" "\$HOME/.bashrc"
 	cat >> "\$HOME/.bashrc" <<- _EOT
 		# OpenStack START
-		# For cliff see: https://docs.openstack.org/cliff/stein/
+		# For Cliff see: https://docs.openstack.org/cliff/stein/
 		function openstack_cliff () {
 		  export CLIFF_MAX_TERM_WIDTH=\\\$(tput cols)
 		}

@@ -20,16 +20,16 @@ fi
 
 C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE")
 
-m '[hypervisor] Ensuring keypair authorization for user "root" (you will be prompted for password if not)'
+m '[hypervisor-root] Ensuring keypair authorization for user "root" (you will be prompted for password if not)'
 "$ROOT/utils/ensure-ssh-key-authorized" root@hypervisor \
-ssh "root@$HYPERVISOR_ADDRESS"
+ssh "root@$HYPERVISOR_IP_ADDRESS"
 
-"$ROOT/utils/ensure-ssh-config" hypervisor-root "$HYPERVISOR_ADDRESS" root root@hypervisor
+"$ROOT/utils/ensure-ssh-config" hypervisor-root "$HYPERVISOR_IP_ADDRESS" root root@hypervisor
 
 PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 
-"$HERE/ssh" hypervisor-root "mkdir --parents libvirt/"
 "$HERE/rsync" --recursive \
+	--rsync-path='mkdir --parents libvirt/ && rsync' \
 	"$ROOT/configuration/libvirt/networks" \
 	hypervisor-root:libvirt/
 
@@ -40,17 +40,17 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 	RESET='\033[0m'
 	function m () { echo -e "\$GREEN\$1\$RESET"; }
 
-	m "[hypervisor] Ensuring timezone is \"$TIMEZONE\""
+	m "[hypervisor-root] Ensuring timezone is \"$TIMEZONE\""
 	timedatectl set-timezone $(c "$TIMEZONE")
 
-	m '[hypervisor] Ensuring required packages are installed'
+	m '[hypervisor-root] Ensuring libvirt and related packages are installed'
 	yum install --assumeyes \
 		epel-release deltarpm
 	yum install --assumeyes \
-		virt-install cloud-utils \
+		virt-install cloud-utils ipmitool \
 		python36-pip python36-devel libvirt-devel openssl-devel gcc
 
-	m '[hypervisor] Ensuring VirtualBMC service is installed and configured'
+	m '[hypervisor-root] Ensuring VirtualBMC service is installed and configured'
 
 	# Unfortunately we must run vbmcd as root. It cannot run on the "stack" user because SELinux
 	# won't let it delegate to "/usr/libexec/qemu-kvm" from within systemd. However, it is possible
@@ -83,10 +83,19 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 	cat > /etc/systemd/system/vbmcd.service <<- _EOT
 		[Unit]
 		AssertPathExists=/usr/local/bin/vbmcd
+		ProtectSystem=strict
 
 		[Service]
 		ExecStart=/usr/local/bin/vbmcd --foreground
 		Restart=always
+		ProtectKernelModules=true
+		ProtectControlGroup=true
+		ProtectKernelTunables=true
+		ProtectSystem=strict
+		ReadWritePaths=/etc/virtualbmc/
+		ReadWritePaths=/var/log/virtualbmc/
+
+		# Note: CentOS 7 ignores "ProtectSystem=strict"
 
 		[Install]
 		WantedBy=default.target
@@ -97,7 +106,10 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
  	systemctl start vbmcd
  	systemctl enable vbmcd
 
-	m '[hypervisor] Ensuring libvirt networks and bridges are configured'
+	m '[hypervisor-root] Ensuring libvirt networks and bridges are configured'
+
+	nmcli connection delete os-ctlplane || true
+	nmcli connection delete $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE || true
 
 	nmcli connection add \
 		con-name os-ctlplane \
@@ -133,7 +145,7 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 	kvm_enable_bridge os-ctlplane
 	virsh_enable_network openstack-control-plane
 
-	m "[hypervisor] Ensuring user \"stack\" exists and is configured"
+	m "[hypervisor-root] Ensuring user \"stack\" exists and is configured"
 
 	if ! id --user stack > /dev/null; then
 		useradd stack
@@ -151,9 +163,9 @@ EOT
 
 m "[hypervisor] Ensuring keypair authorization for user \"stack\""
 "$ROOT/utils/ensure-ssh-key-authorized" stack@hypervisor \
-sshpass -p "$PASSWORD" ssh "stack@$HYPERVISOR_ADDRESS"
+sshpass -p "$PASSWORD" ssh "stack@$HYPERVISOR_IP_ADDRESS"
 
-"$ROOT/utils/ensure-ssh-config" hypervisor-stack "$HYPERVISOR_ADDRESS" stack stack@hypervisor
+"$ROOT/utils/ensure-ssh-config" hypervisor-stack "$HYPERVISOR_IP_ADDRESS" stack stack@hypervisor
 
 "$HERE/ssh" hypervisor-stack "$(cat <<- EOT
 

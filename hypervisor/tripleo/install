@@ -14,6 +14,7 @@ ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/utils/functions"
 
 UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" |
+	NAME=$(eq 'tripleo') \
 	NAMESERVER=$(eq "$NAMESERVER") \
 	envsubst)
 
@@ -24,17 +25,18 @@ UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" |
 	RESET='\033[0m'
 	function m () { echo -e "\$GREEN\$1\$RESET"; }
 
-	m "[undercloud] Ensuring \"\$HOME/undercloud.conf\" exists"
+	m "[tripleo-stack] Updating \"\$HOME/undercloud.conf\""
 	echo $(c "$UNDERCLOUD_CONF") > "\$HOME/undercloud.conf"
 
-	m "[undercloud] Ensuring \"\$HOME/containers-prepare-parameter.yaml\" exists"
+	m "[tripleo-stack] Updating \"\$HOME/containers-prepare-parameter.yaml\""
+
 	openstack tripleo container image prepare default \
   		--local-push-destination \
   		--output-env-file "\$HOME/containers-prepare-parameter.yaml.original"
 
 	# Annoyingly, TripleO by default locks some container images at specific versions while leaving
 	# others at latest upstream versions, so we must make sure to lock those, too
-	python <<- _EOT
+	python2 <<- _EOT
 		import yaml
 
 		with open("\$HOME/containers-prepare-parameter.yaml.original") as f:
@@ -48,7 +50,7 @@ UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" |
 		  yaml.dump(y, f, default_flow_style=False)
 	_EOT
 
-	m '[undercloud] Ensuring undercloud is installed (~ 15 minutes)'
+	m '[tripleo-stack] Ensuring TripleO is installed (~ 15 minutes)'
 	openstack undercloud install
 
 EOT

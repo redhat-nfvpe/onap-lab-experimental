@@ -14,4 +14,4 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/utils/functions"
 
 "$HERE/ssh" hypervisor-stack \
-"ipmitool -I lanplus -U admin -P password -H 127.0.0.1 -p $(c "$PORT") $(c "${@:2}")"
+"ipmitool -I lanplus -U admin -P password -H 192.168.122.1 -p $(c "$PORT") $(c "${@:2}")"

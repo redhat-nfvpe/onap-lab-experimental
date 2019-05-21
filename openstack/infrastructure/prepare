@@ -1,0 +1,47 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+# See: https://docs.openstack.org/tripleo-docs/latest/install/installation/installation.html
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/../..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+
+EQ_CEPH_VERSION=$(eq "$CEPH_VERSION")
+
+"$ROOT/hypervisor/ssh" -t tripleo-stack "$(cat <<- EOT
+
+	set -e
+	GREEN='\033[0;32m'
+	RESET='\033[0m'
+	function m () { echo -e "\$GREEN\$1\$RESET"; }
+
+	if [ ! -f "\$HOME/images/centos7.qcow2" ]; then
+		m "[tripleo-stack] Downloading base image: \"\$HOME/images/centos7.qcow2\""
+		mkdir --parents "\$HOME/images/"
+		wget --output-document="\$HOME/images/centos7.qcow2" $(c "$CENTOS7_IMAGE")
+	fi
+
+	. "\$HOME/stackrc"
+
+	m '[tripleo-stack] Ensuring overcloud images are built (~ 5 minutes)'
+	DIB_YUM_REPO_CONF="/etc/yum.repos.d/delorean.repo /etc/yum.repos.d/delorean-stein-testing.repo /etc/yum.repos.d/tripleo-centos-ceph-$EQ_CEPH_VERSION.repo" \
+	DIB_LOCAL_IMAGE="\$HOME/images/centos7.qcow2" \
+	openstack overcloud image build
+
+	m '[tripleo-stack] Ensuring overcloud images are uploaded'
+	openstack overcloud image upload
+
+EOT
+)"
+
+"$ROOT/hypervisor/create-virtual-machine" overcloud-controller 80G
+"$ROOT/hypervisor/enable-virtualbmc" overcloud-controller 6230
+
+m "Finished $(q "$(basename "$0")")!"

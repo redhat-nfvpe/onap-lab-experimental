@@ -1,4 +1,112 @@
-TODO
+Chapter 3: Install OpenStack
+============================
+
+As mentioned in chapter 2, OpenStack is modular such that each participating machine may have a
+different role. For the purpose of this lab our "compute" role will have its own dedicated hardware,
+while the "controller" role will live on the Hypervisor as a virtual machine.
+
+> Note that it is technically possible for the "compute" role to also be a virtual machine, such
+that our entire OpenStack deployment would run on a single physical machine. Though it would work,
+it would introduce an unwanted side effect: if we want to deploy virtualized workloads on top of
+OpenStack, such as VNFs, they would be running in *nested virtualization*. This advanced feature has
+various limitations and is often accompanied by a significant hit to performance. Thus, to avoid
+nested virtualization we are installing the "compute" role on dedicated hardware.
+
+
+Step 1: Prepare the infrastructure
+----------------------------------
+
+Before we install the infrastructure for our overcloud we need 
+
+    openstack/infrastructure/prepare
+
+What this script does:
+
+* Creates operating system images that TripleO will use to introspect and provision the
+  infrastructure nodes using PXE,
+* Creates a virtual machine named `overcloud-controller` configured by 
+  `configuration/libvirt/domains/overcloud-controller/virt-install.ini`
+
+The bulk of the work in this step will be handled by `openstack overcloud image build`, which
+can take a while to complete, ~ 5 minutes.
+
+After it's done we will find several new files in the `tripleo` virtual machine at the `stack`
+user's home directory such as:
+
+* `/home/stack/images/` will have the base image for our overcloud images
+* `/home/stack/overcloud-full.qcow2` and `/home/stack/overcloud-full.initrd` are the overcloud
+  images
+* `/home/stack/overcloud-full.log` is the log for building the above
+* `/home/stack/ironic-python-agent.kernel` and `/home/stack/ironic-python-agent.initramfs` are
+  smaller images used by TripleO's Ironic for introspection (a.k.a. the bare metal images);
+  see the next step
+* `/home/stack/ironic-python-agent.log` is the log for building the above
+
+On the Hypervisor, at the `stack` user's home directory, you will find:
+
+* `/home/stack/libvirt/images/overcloud-controller.qcow2` is our virtual machine drive image
+
+Note that when creating the `overcloud-controller` virtual machine we also enable
+[VirtualBMC](https://docs.openstack.org/virtualbmc/latest/) to access it. This is necessary because
+TripleO, our OpenStack infrastructure manager, does not inherently support virtual machines as part
+of the infrastructure due to its reliance on Ironic. VirtualBMC will thus provide an 
+[IPMI](https://en.wikipedia.org/wiki/Intelligent_Platform_Management_Interface) to the virtual
+machine so that it could be remote controlled like a physical machine.
+
+We can test this using [ipmitool](https://github.com/ipmitool/ipmitool), which we installed for this
+purpose on the Hypervisor in the previous chapter. Use this shortcut:
+
+    hypervisor/ipmitool 6230 power status
+
+The first argument is the IPMI port: each virtual machine supported by VirtualBMC gets its own
+dedicated port. 6230 is the port we configured for `overcloud-controller`.
+
+
+Step 2: Introspect the infrastructure
+-------------------------------------
+
+Our infrastructure is not yet ready for installing OpenStack. We must first "introspect" our
+infrastructure nodes, which in our case are the physical "compute" node and the virtual
+"controller" node:
+
+    openstack/infrastructure/introspect
+
+During introspection each node is provisioned a minimal operating system image via PXE, which boots
+up and reports back to TripleO with a detailed profile of its hardware. TripleO will store this
+profile in its database.
+
+Introspection is handled by the `openstack overcloud node introspect` command. It is configured
+by `configuration/tripleo/overcloud-infrastructure.yaml`.
+
+After it's done we will find some useful files in the `tripleo` virtual machine at the `stack`
+user's home directory: 
+
+* `/home/stack/overcloud-infrastructure.yaml` copied from
+  `configuration/tripleo/overcloud-infrastructure.yaml`
+
+
+hypervisor/tripleo/openstack baremetal node list
+
+Logs:
+
+* `/var/log/containers/ironic-inspector/ironic-inspector.log`
+
+
+
+
+Step 3: Install OpenStack
+-------------------------
+
+
+
+
+
+
+
+
+
+
+
 
 Installing the Cloud
 ====================

@@ -10,12 +10,18 @@ KEYS_ROOT="$WORKSPACE_ROOT/keys"
 # Hypervisor
 #
 
-HYPERVISOR_ADDRESS=lab1
+HYPERVISOR_IP_ADDRESS=lab1
 HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=enp1s0
 
 PYTHON_VIRTUALENV_VERSION==16.5.0
 PYTHON_TRIPLEOCLIENT_VERSION=11.4.0
 CEPH_ANSIBLE_VERSION=3.2.16
+
+#
+# Compute
+#
+
+COMPUTE_MAC_ADDRESS=F8:B1:56:BB:01:7F
 
 #
 # TripleO
@@ -24,13 +30,15 @@ CEPH_ANSIBLE_VERSION=3.2.16
 # OpenStack 14 is "stein" 
 TRIPLEO_VERSION=stein
 
-TRIPLEO_REPOS=https://trunk.rdoproject.org/centos7/current/python2-tripleo-repos-0.0.1-0.20190513071441.ca9796a.el7.noarch.rpm
+# Ceph 14 is "nautilus"
+# You do no have a choice here: you must use the Ceph version packaged for the TripleO version
+CEPH_VERSION=nautilus
 
 # See: https://hub.docker.com/r/tripleomaster/centos-binary-nova-api/tags
 TRIPLEO_TAG=28588bdaba5dcc57cb3d6ca4e78880aee9817143_df596717
 
 # See: https://hub.docker.com/r/ceph/daemon/tags or "skopeo inspect docker://docker.io/ceph/daemon"
-CEPH_TAG=v4.0.0-stable-4.0-nautilus-centos-7-x86_64
+CEPH_TAG="v4.0.0-stable-4.0-$CEPH_VERSION-centos-7-x86_64"
 
 VIRTUALBMC_VERSION=1.5.0
 

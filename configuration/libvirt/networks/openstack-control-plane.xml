@@ -17,7 +17,7 @@ There are two main ways to configure this bridge:
    OpenStack manager. Then you'll need to configure your router's DHCP server to forward PXE
    requests to 192.168.24.1, which is the OpenStack manager's TFTP server.
 
-Relevant virtual machines (undercloud and other controllers) will connect to this network on eth1.
+Relevant virtual machines (tripleo and other controllers) will connect to this network on eth1.
 
 See: https://libvirt.org/formatnetwork.html
 Note: bridge name length should be no longer than 11 

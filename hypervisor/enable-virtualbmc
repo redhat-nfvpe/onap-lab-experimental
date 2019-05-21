@@ -1,0 +1,43 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+
+NAME=$1
+PORT=$2
+
+EQ_NAME=$(eq "$NAME")
+C_NAME=$(c "$NAME")
+EQ_PORT=$(eq "$PORT")
+C_PORT=$(c "$PORT")
+
+"$ROOT/hypervisor/ssh" hypervisor-root "$(cat <<- EOT
+
+	set -e
+	GREEN='\033[0;32m'
+	RESET='\033[0m'
+	function m () { echo -e "\$GREEN\$1\$RESET"; }
+
+	m "[hypervisor-root] Ensuring VirtualBMC enabled for virtual machine \"$EQ_NAME\""
+
+	vbmc delete $C_NAME || true
+
+	vbmc add $C_NAME \
+		--address 192.168.122.1 \
+		--port $C_PORT
+
+	vbmc start $C_NAME
+
+	firewall-cmd --permanent --add-port=$C_PORT/udp
+	firewall-cmd --reload
+
+EOT
+)"

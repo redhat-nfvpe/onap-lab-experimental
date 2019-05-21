@@ -56,7 +56,7 @@ The lab comprises 3 physical machines roles:
 
 * Orchestrator: This is the machine we will use to run the scripts to remotely orchestrate the lab.
   We will just be using bash, ssh, and a few extra utilities, so any Unix-like machine should do.
-* Hypervisor: This is the machine that manages and bootstraps our cloud machines. It must run
+* Hypervisor: This is the machine that manages and bootstraps our cloud machines. It must have
   CentOS (or RHEL) and be capable of supporting a few virtual machines.
 * Cloud: One or more machines that will provide the cloud resources for OpenStack to provision and
   manage. Actually, within the cloud role there are various sub-roles, such as compute, storage,
@@ -71,11 +71,11 @@ The lab comprises 3 physical machines roles:
 Chapters
 --------
 
-1. [Preparing the Orchestrator](doc/orchestrator.md)
-2. [Preparing the Hypervisor](doc/hypervisor.md)
-3. [Installing the Cloud](doc/cloud.md)
-4. [Installing Kubernetes](doc/kubernetes.md)
-5. [Installing ONAP](doc/onap.md)
+1. [Prepare the Orchestrator](doc/orchestrator.md)
+2. [Prepare the Hypervisor](doc/hypervisor.md)
+3. [Install OpenStack](doc/openstack.md)
+4. [Install Kubernetes](doc/kubernetes.md)
+5. [Install ONAP](doc/onap.md)
 
 
 Special Thanks

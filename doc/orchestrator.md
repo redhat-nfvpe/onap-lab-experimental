@@ -1,5 +1,5 @@
-Preparing the Orchestrator
-==========================
+Chapter 1: Preparing the Orchestrator
+=====================================
 
 The Orchestrator machine is where we will be running the scripts in this repository.
 
@@ -17,3 +17,9 @@ sshpass. To install it on Fedora:
 Alternatively, we *can* run orchestration on the Hypervisor machine itself, in which case the two
 machine roles would be combined into one physical machine and the Hypervisor address would be
 `localhost`.
+
+
+Next
+----
+
+[Continue to Chapter 2: Prepare the Hypervisor](hypervisor.md)

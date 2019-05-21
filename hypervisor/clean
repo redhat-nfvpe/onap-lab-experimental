@@ -20,7 +20,7 @@ C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$HYPERVISOR_OPENSTACK_CONTRO
 	RESET='\033[0m'
 	function m () { echo -e "\$GREEN\$1\$RESET"; }
 
-	m '[hypervisor] Ensuring no libvirt virtual machines'
+	m '[hypervisor-root] Ensuring no libvirt virtual machines'
 	for UUID in \$(virsh list --uuid); do
 		virsh destroy "\$UUID"
 	done
@@ -28,32 +28,36 @@ C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$HYPERVISOR_OPENSTACK_CONTRO
 		virsh undefine "\$UUID" --managed-save --remove-all-storage --delete-snapshots --snapshots-metadata --nvram  
 	done
 
-	m '[hypervisor] Ensuring no libvirt volumes'
+	m '[hypervisor-root] Ensuring no libvirt volumes'
 	for NAME in \$(virsh vol-list images 2> /dev/null | tail --lines=+3 | head --line=-1 | cut --fields=2 --delimiter=' '); do
 		virsh vol-delete "\$NAME" --pool images
 	done
 
-	m '[hypervisor] Ensuring no libvirt networks'
+	m '[hypervisor-root] Ensuring no libvirt networks'
 	for UUID in \$(virsh -r net-list --all --uuid); do
-		virsh net-undefine "\$UUID"
 		virsh net-destroy "\$UUID"
 	done
+	for UUID in \$(virsh -r net-list --all --uuid); do
+		virsh net-undefine "\$UUID"
+	done
 
-	m '[hypervisor] Ensuring no libvirt network bridges'
-	nmcli connection del os-ctlplane
-	nmcli connection del $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE
-
-	m '[hypervisor] Ensuring no libvirt images'
+	m '[hypervisor-root] Ensuring no libvirt images'
 	rm --recursive --force /home/stack/libvirt/
-	rm --recursive --force /home/stack/.vbmc/
 
-	m '[hypervisor] Ensuring VirtualBMC service is disabled'
- 	systemctl stop vbmcd
- 	systemctl disable vbmcd
-	rm /etc/systemd/system/vbmcd.service
+	m '[hypervisor-root] Ensuring no libvirt network bridges'
+	nmcli connection delete os-ctlplane || true
+	nmcli connection delete $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE || true
+
+	m '[hypervisor-root] Ensuring VirtualBMC service is disabled'
+ 	systemctl stop vbmcd || true
+ 	systemctl disable vbmcd || true
+	rm --force /etc/systemd/system/vbmcd.service
 	systemctl daemon-reload
+	rm --recursive --force /etc/virtualbmc/
+	firewall-cmd --permanent --remove-port=6230/udp
+	firewall-cmd --reload
 
-	#m '[hypervisor] Ensuring no user "stack"...'
+	#m '[hypervisor-root] Ensuring no user "stack"...'
 	#if id -u stack > /dev/null; then
 	#	userdel --force --remove stack
 	#fi
