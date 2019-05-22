@@ -41,7 +41,7 @@ EQ_CEPH_VERSION=$(eq "$CEPH_VERSION")
 EOT
 )"
 
-"$ROOT/hypervisor/create-virtual-machine" overcloud-controller 80G
-"$ROOT/hypervisor/enable-virtualbmc" overcloud-controller 6230
+"$ROOT/hypervisor/create-virtual-machine" openstack-controller 80G
+"$ROOT/hypervisor/enable-virtualbmc" openstack-controller 6230
 
 m "Finished $(q "$(basename "$0")")!"

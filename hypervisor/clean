@@ -45,8 +45,13 @@ C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$HYPERVISOR_OPENSTACK_CONTRO
 	rm --recursive --force /home/stack/libvirt/
 
 	m '[hypervisor-root] Ensuring no libvirt network bridges'
-	nmcli connection delete os-ctlplane || true
-	nmcli connection delete $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE || true
+	rm --force /etc/sysconfig/network-scripts/ifcfg-os-ctlplane
+	rm --force /etc/sysconfig/network-scripts/ifcfg-$C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE
+	systemctl restart network.service
+
+	# TODO: NetworkManager bridge does not work
+	#nmcli connection delete os-ctlplane || true
+	#nmcli connection delete $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE || true
 
 	m '[hypervisor-root] Ensuring VirtualBMC service is disabled'
  	systemctl stop vbmcd || true

@@ -1,0 +1,39 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/../..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+
+OVERCLOUD_DEPLOY_ANSWERS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud-deploy-answers.yaml" |
+	HOME=/home/stack \
+	envsubst)
+
+"$ROOT/hypervisor/ssh" -t tripleo-stack "$(cat <<- EOT
+
+	set -e
+	GREEN='\033[0;32m'
+	RESET='\033[0m'
+	function m () { echo -e "\$GREEN\$1\$RESET"; }
+
+	. "\$HOME/stackrc"
+
+	m '[tripleo-stack] Deploying overcloud'
+	echo $(c "$OVERCLOUD_DEPLOY_ANSWERS_YAML") > "\$HOME/overcloud-deploy-answers.yaml"
+	openstack overcloud deploy \
+		--templates \
+		--answers-file "\$HOME/overcloud-deploy-answers.yaml"
+
+	#openstack stack resource list overcloud
+	#openstack stack resource show overcloud ControllerServiceChain
+
+EOT
+)"
+
+m "Finished $(q "$(basename "$0")")!"

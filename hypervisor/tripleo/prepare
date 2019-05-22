@@ -26,7 +26,10 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 
 	m '[tripleo-stack] Ensuring utility packages are installed'
 	sudo yum install --assumeyes \
-		deltarpm wget lynx
+		deltarpm
+	sudo yum upgrade --assumeyes
+	sudo yum install --assumeyes \
+		wget lynx
 
 	if ! rpm --query --quiet python2-tripleo-repos; then
 		m '[tripleo-stack] Ensuring TripleO repository is installed'
@@ -41,6 +44,7 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 		# This 	
 		sudo yum install --assumeyes \
 			"\$TRIPLEO_REPOS"
+		sudo yum upgrade --assumeyes
 	fi
 
 	m '[tripleo-stack] Ensuring TripleO-client packages are installed'
@@ -49,6 +53,7 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 		-d centos7 \
 		current ceph
 	# "python2-chardet" is workaround for: https://bugs.launchpad.net/tripleo/+bug/1829263
+	sudo yum upgrade --assumeyes
 	sudo yum install --assumeyes \
 		python2-tripleoclient python2-chardet \
 		ceph-ansible
@@ -70,5 +75,8 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 
 EOT
 )"
+
+m '[hypervisor-root] Rebooting virtual machine "tripleo"'
+"$ROOT/hypervisor/virsh" reboot tripleo
 
 m "Finished $(q "$(basename "$0")")!"

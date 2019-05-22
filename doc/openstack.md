@@ -16,37 +16,47 @@ nested virtualization we are installing the "compute" role on dedicated hardware
 Step 1: Prepare the infrastructure
 ----------------------------------
 
-Before we install the infrastructure for our overcloud we need 
+Before we introspect our infrastructure (in the next step) we need to create the extra virtual
+machines that will be part of it and also prepare the operating system images that will used by all
+infrastructure machines during the introspection process, as well as different images that will
+be used to install the OpenStack services on them (in step 3).
 
     openstack/infrastructure/prepare
 
 What this script does:
 
 * Creates operating system images that TripleO will use to introspect and provision the
-  infrastructure nodes using PXE,
-* Creates a virtual machine named `overcloud-controller` configured by 
-  `configuration/libvirt/domains/overcloud-controller/virt-install.ini`
+  infrastructure nodes using PXE
+* Creates a virtual machine named `openstack-controller` configured by 
+  `configuration/libvirt/domains/openstack-controller/virt-install.ini`
 
 The bulk of the work in this step will be handled by `openstack overcloud image build`, which
 can take a while to complete, ~ 5 minutes.
 
-After it's done we will find several new files in the `tripleo` virtual machine at the `stack`
-user's home directory such as:
+After it's done we will find some more files under our `workspace/` directory:
 
-* `/home/stack/images/` will have the base image for our overcloud images
-* `/home/stack/overcloud-full.qcow2` and `/home/stack/overcloud-full.initrd` are the overcloud
-  images
-* `/home/stack/overcloud-full.log` is the log for building the above
+* `workspace/keys/stack@openstack-controller` and `workspace/keys/stack@openstack-controller.pub`
+  are they keypair for the virtual machine
+* `workspace/passwords/stack@openstack-controller` is the password
+* `workspace/ssh.config` is updated for `tripleo-stack`
+
+In the Hypervisor's `stack` user's home directory:
+
+* `/home/stack/keys/stack@openstack-controller` and `/home/stack/stack@openstack-controller.pub`
+* `/home/stack/libvirt/images/openstack-controller.qcow2` is our virtual machine drive image
 * `/home/stack/ironic-python-agent.kernel` and `/home/stack/ironic-python-agent.initramfs` are
-  smaller images used by TripleO's Ironic for introspection (a.k.a. the bare metal images);
-  see the next step
+  small images used by TripleO's Ironic for introspection
 * `/home/stack/ironic-python-agent.log` is the log for building the above
+* `/home/stack/overcloud-full.qcow2` and `/home/stack/overcloud-full.initrd` are the OpenStack
+  installation images
+* `/home/stack/overcloud-full.log` is the log for building the above
 
-On the Hypervisor, at the `stack` user's home directory, you will find:
+Also useful on the Hypervisor:
 
-* `/home/stack/libvirt/images/overcloud-controller.qcow2` is our virtual machine drive image
+* `/var/log/libvirt/qemu/openstack-controller.log`
+* `/var/log/virtualbmc/virtualbmc.log`
 
-Note that when creating the `overcloud-controller` virtual machine we also enable
+Note that when creating the `openstack-controller` virtual machine we also enable
 [VirtualBMC](https://docs.openstack.org/virtualbmc/latest/) to access it. This is necessary because
 TripleO, our OpenStack infrastructure manager, does not inherently support virtual machines as part
 of the infrastructure due to its reliance on Ironic. VirtualBMC will thus provide an 
@@ -59,7 +69,7 @@ purpose on the Hypervisor in the previous chapter. Use this shortcut:
     hypervisor/ipmitool 6230 power status
 
 The first argument is the IPMI port: each virtual machine supported by VirtualBMC gets its own
-dedicated port. 6230 is the port we configured for `overcloud-controller`.
+dedicated port. 6230 is the port we configured for `openstack-controller`.
 
 
 Step 2: Introspect the infrastructure
@@ -71,12 +81,14 @@ infrastructure nodes, which in our case are the physical "compute" node and the 
 
     openstack/infrastructure/introspect
 
-During introspection each node is provisioned a minimal operating system image via PXE, which boots
-up and reports back to TripleO with a detailed profile of its hardware. TripleO will store this
-profile in its database.
+During introspection each node is provisioned a minimal operating system image via PXE (which we
+prepared in the previous step), which boots up and reports back to TripleO with a detailed profile
+of its hardware. TripleO will store this profile in its database.
 
 Introspection is handled by the `openstack overcloud node introspect` command. It is configured
 by `configuration/tripleo/overcloud-infrastructure.yaml`.
+
+> TODO: machines without IPMI
 
 After it's done we will find some useful files in the `tripleo` virtual machine at the `stack`
 user's home directory: 
@@ -84,12 +96,17 @@ user's home directory:
 * `/home/stack/overcloud-infrastructure.yaml` copied from
   `configuration/tripleo/overcloud-infrastructure.yaml`
 
+Relevant logs in the `tripleo` virtual machine:
+
+* `/var/log/containers/ironic/ironic-conductor.log`
+* `/var/log/containers/ironic-inspector/ironic-inspector.log`
+
+Relevant logs on the Hypervisor:
+
+
 
 hypervisor/tripleo/openstack baremetal node list
 
-Logs:
-
-* `/var/log/containers/ironic-inspector/ironic-inspector.log`
 
 
 
@@ -97,7 +114,9 @@ Logs:
 Step 3: Install OpenStack
 -------------------------
 
+We can now finally install OpenStack on our infrastructure:
 
+    openstack/install
 
 
 

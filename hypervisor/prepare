@@ -44,8 +44,12 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 	timedatectl set-timezone $(c "$TIMEZONE")
 
 	m '[hypervisor-root] Ensuring libvirt and related packages are installed'
+	# Note: "centos-release-qemu-ev" provides a repository that will give us a newer version of
+	# qemu, which is required to avoid the "CPU feature arat not found" error with OpenStack images
+	# running in our virtual machines
 	yum install --assumeyes \
-		epel-release deltarpm
+		epel-release centos-release-qemu-ev deltarpm
+	yum upgrade --assumeyes
 	yum install --assumeyes \
 		virt-install cloud-utils ipmitool \
 		python36-pip python36-devel libvirt-devel openssl-devel gcc
@@ -87,13 +91,15 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 
 		[Service]
 		ExecStart=/usr/local/bin/vbmcd --foreground
+		Environment=VIRTUALBMC_CONFIG=/etc/virtualbmc/virtualbmc.conf
+		ReadWritePaths=/etc/virtualbmc/
+		ReadWritePaths=/var/log/virtualbmc/
+
 		Restart=always
 		ProtectKernelModules=true
 		ProtectControlGroup=true
 		ProtectKernelTunables=true
 		ProtectSystem=strict
-		ReadWritePaths=/etc/virtualbmc/
-		ReadWritePaths=/var/log/virtualbmc/
 
 		# Note: CentOS 7 ignores "ProtectSystem=strict"
 
@@ -108,22 +114,46 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 
 	m '[hypervisor-root] Ensuring libvirt networks and bridges are configured'
 
-	nmcli connection delete os-ctlplane || true
-	nmcli connection delete $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE || true
+	cat > /etc/sysconfig/network-scripts/ifcfg-os-ctlplane <<- _EOT
+		DEVICE=os-ctlplane
+		TYPE=Bridge
+		ONBOOT=yes
+		BOOTPROTO=none
+		DELAY=0
+	_EOT
 
-	nmcli connection add \
-		con-name os-ctlplane \
-		type bridge \
-		ifname os-ctlplane
+	cat > /etc/sysconfig/network-scripts/ifcfg-$C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE <<- _EOT
+		DEVICE=$(eq "$HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE")
+		TYPE=Ethernet
+		BRIDGE=os-ctlplane
+		ONBOOT=yes
+		BOOTPROTO=none
+		DELAY=0
+	_EOT
 
-	nmcli connection add \
-		con-name $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE \
-		type ethernet \
-		ifname $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE \
-		master os-ctlplane
+	systemctl restart network.service
 
-	ip address add 192.168.24.254/24 dev os-ctlplane || true
-	ip route add 192.168.24.0/24 dev os-ctlplane || true
+	# TODO: brctl works but won't survive reboots
+	#brctl addbr os-ctlplane || true
+	#brctl addif os-ctlplane $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE || true
+	#brctl stp os-ctlplane on
+	#ip link set os-ctlplane up
+
+	# TODO: NetworkManager bridge does not work
+	#nmcli connection delete os-ctlplane || true
+	#nmcli connection delete $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE || true
+	#nmcli connection add \
+	#	con-name os-ctlplane \
+	#	type bridge \
+	#	ifname os-ctlplane
+	#nmcli connection add \
+	#	con-name $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE \
+	#	type ethernet \
+	#	ifname $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE \
+	#	master os-ctlplane
+
+	#ip address add 192.168.24.254/24 dev os-ctlplane || true
+	#ip route add 192.168.24.0/24 dev os-ctlplane || true
 
 	function kvm_enable_bridge () {
 		# Allow the bridge to be used by libvirt

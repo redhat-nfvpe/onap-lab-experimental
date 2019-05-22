@@ -4,7 +4,7 @@
 
 nodes:
 
-- name: overcloud-controller
+- name: controller
   _comment: virtual machine on hypervisor
   capabilities: profile:control,boot_option:local
   mac: [ "$CONTROLLER_MAC_ADDRESS" ]
@@ -14,12 +14,12 @@ nodes:
   pm_user: admin
   pm_password: password
 
-# - name: overcloud-compute-0
-#   _comment: baremetal
-#   capabilities: profile:compute,boot_option:local
-#   mac: [ "$COMPUTE_MAC_ADDRESS" ]
-#   arch: x86_64
-#   cpu: 6
-#   memory: 4096 # MiB
-#   disk: 40 # GiB
-#   pm_type: manual-management
+- name: compute-0
+  _comment: bare metal
+  capabilities: profile:compute,boot_option:local
+  mac: [ "$COMPUTE_MAC_ADDRESS" ]
+  arch: x86_64
+  cpu: 6
+  memory: 4096 # MiB
+  disk: 40 # GiB
+  pm_type: manual-management

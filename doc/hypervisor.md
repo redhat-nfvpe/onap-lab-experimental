@@ -52,18 +52,10 @@ What this script does:
   `configuration/libvirt/networks/openstack-control-plane.xml`
 * Creates and configures the "stack" user
 
-After it's done we will find some useful files on the Hypervisor at the `stack` user's home
-directory:
+After it's done we will find some more files under our `workspace/` directory:
 
-* `/home/stack/keys/ 
-
-
-After it's done we will find some files under our `workspace/` directory:
-
-* `workspace/keys/root@hypervisor`
-* `workspace/keys/root@hypervisor.pub`
-* `workspace/keys/stack@hypervisor`
-* `workspace/keys/stack@hypervisor.pub`
+* `workspace/keys/root@hypervisor` and `workspace/keys/root@hypervisor.pub`
+* `workspace/keys/stack@hypervisor` and `workspace/keys/stack@hypervisor.pub`
 * `workspace/passwords/stack@hypervisor`
 * `workspace/ssh.config` is updated for `hypervisor-root` and `hypervisor-stack`
 
@@ -92,7 +84,7 @@ You should see the two networks we created in this step.
 
 (Note that if we have libvirt installed on our orchestrator it would also be possible to connect
 [remotely](https://libvirt.org/remote.html) to the Hypervisor's instance via a "qemu+ssh:" or
-similar URI.) 
+similar URI.)
 
 
 Step 3: Prepare TripleO
@@ -123,11 +115,22 @@ installing more than 500 packages in this step!
   
 After it's done we will find some more files under our `workspace/` directory:
 
-* `workspace/keys/stack@tripleo`
-* `workspace/keys/stack@tripleo.pub`
+* `workspace/keys/stack@tripleo` and `workspace/keys/stack@tripleo.pub` are they keypair for the
+  virtual machine
+* `workspace/passwords/stack@tripleo` is the password
 * `workspace/ssh.config` is updated for `tripleo-stack`
 
-We can now connect to the `tripleo` virtual machine:
+In the Hypervisor's `stack` user's home directory:
+
+* `/home/stack/keys/stack@tripleo` and `/home/stack/stack@tripleo.pub`
+* `/home/stack/libvirt/images/tripleo.qcow2` is our virtual machine drive image
+
+Also useful on the Hypervisor:
+
+* `/var/log/libvirt/qemu/tripleo.log`
+
+We'll wait a few seconds for the `tripleo` virtual machine to start up and then we can connect to
+it:
 
     hypervisor/ssh tripleo-stack
 
