@@ -1,0 +1,28 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+. "$ROOT/utils/trap-fetch-results"
+
+"$ROOT/hypervisor/ssh" -t tripleo-stack "$(cat <<- EOT
+
+	set -e
+	CYAN='\033[0;36m'
+	RESET='\033[0m'
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
+
+	. "\$HOME/stackrc"
+
+	m '[tripleo-stack] Deleting overcloud'
+	openstack overcloud delete overcloud --yes
+
+EOT
+)"

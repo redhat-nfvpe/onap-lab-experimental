@@ -9,42 +9,62 @@ fi
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
 
 RESULTS="$WORKSPACE_ROOT/results"
 
-rm --recursive --force "$RESULTS" 
+m "Fetching results to $(q "$RESULTS")"
 
-mkdir --parents "$RESULTS/configuration/hypervisor/"
+if [ "$1" == '-c' ]; then
+	rm --recursive --force "$RESULTS" 
+fi
+
+mkdir --parents "$RESULTS/configuration/tripleo/"
 mkdir --parents "$RESULTS/logs/hypervisor/"
-mkdir --parents "$RESULTS/logs/undercloud/"
+mkdir --parents "$RESULTS/logs/tripleo/"
 
-"$HERE/rsync" --recursive --copy-links --ignore-missing-args --prune-empty-dirs \
-	--exclude=config-download-latest/ \
+function r () {
+	"$HERE/rsync" \
+		--rsync-path="sudo rsync" \
+		--recursive \
+		--copy-links \
+		--ignore-missing-args \
+		--prune-empty-dirs \
+		"$@"
+}
+
+r \
 	--include=*/ \
 	--include=*.sh \
 	--include=*.conf \
 	--include=*.yaml \
 	--include=*.json \
 	--exclude=* \
-	undercloud-root:/home/stack/ \
-	undercloud-root:/var/lib/mistral \
-	"$RESULTS/configuration/hypervisor/"
+	tripleo-stack:/home/stack/ \
+	tripleo-stack:/var/lib/mistral \
+	"$RESULTS/configuration/tripleo/" || true
 
-"$HERE/rsync" --recursive --copy-links --ignore-missing-args --prune-empty-dirs \
+r \
 	--include=*/ \
 	--include=*.log \
 	--exclude=* \
-	undercloud-root:/home/stack/ \
-	undercloud-root:/var/log/dmesg \
-	undercloud-root:/var/log/virtualbmc \
-	undercloud-root:/var/log/openvswitch \
-	undercloud-root:/var/lib/mistral/overcloud/ceph-ansible \
-	"$RESULTS/logs/hypervisor/"
+	hypervisor-stack:/home/stack/ \
+	hypervisor-stack:/var/log/libvirt/qemu \
+	hypervisor-stack:/var/log/virtualbmc \
+	"$RESULTS/logs/hypervisor/" || true
 
-"$HERE/rsync" --recursive --copy-links --ignore-missing-args --prune-empty-dirs \
-	undercloud-root:/var/log/containers/ \
-	"$RESULTS/logs/undercloud/"
+r \
+	--include=*/ \
+	--include=*.log \
+	--include=*.tar.gz \
+	--exclude=* \
+	tripleo-stack:/home/stack/ \
+	tripleo-stack:/var/log/containers/ \
+	"$RESULTS/logs/tripleo/" || true
 
-echo "See: $RESULTS/"
-
-echo "Finished $(basename $0)!"
+find "$RESULTS/logs/tripleo/" -type f -name "*.tar.gz" |
+while read F; do
+	D=${F%.tar.gz}
+	mkdir --parents "$D"
+	tar xf "$F" -C "$D"
+done

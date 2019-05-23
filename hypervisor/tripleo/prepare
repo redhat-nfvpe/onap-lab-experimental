@@ -12,6 +12,7 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
+. "$ROOT/utils/trap-fetch-results"
 
 EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 
@@ -20,9 +21,9 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 "$ROOT/hypervisor/ssh" -t tripleo-stack "$(cat <<- EOT
 
 	set -e
-	GREEN='\033[0;32m'
+	CYAN='\033[0;36m'
 	RESET='\033[0m'
-	function m () { echo -e "\$GREEN\$1\$RESET"; }
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
 	m '[tripleo-stack] Ensuring utility packages are installed'
 	sudo yum install --assumeyes \
@@ -59,6 +60,11 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 		ceph-ansible
 
 	m '[tripleo-stack] Updating OpenStack Cliff configuration'
+
+	# For quality of life we will make sure that the "openstack" command (Cliff) will always limit
+	# its output width to the width of our terminal
+
+	# TODO: CLIFF_FIT_WIDTH=1?
 	sed --in-place "/# OpenStack START/,/# OpenStack END/d" "\$HOME/.bashrc"
 	cat >> "\$HOME/.bashrc" <<- _EOT
 		# OpenStack START
@@ -78,5 +84,3 @@ EOT
 
 m '[hypervisor-root] Rebooting virtual machine "tripleo"'
 "$ROOT/hypervisor/virsh" reboot tripleo
-
-m "Finished $(q "$(basename "$0")")!"

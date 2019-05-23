@@ -12,15 +12,16 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
+. "$ROOT/utils/trap-fetch-results"
 
 EQ_CEPH_VERSION=$(eq "$CEPH_VERSION")
 
 "$ROOT/hypervisor/ssh" -t tripleo-stack "$(cat <<- EOT
 
 	set -e
-	GREEN='\033[0;32m'
+	CYAN='\033[0;36m'
 	RESET='\033[0m'
-	function m () { echo -e "\$GREEN\$1\$RESET"; }
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
 	if [ ! -f "\$HOME/images/centos7.qcow2" ]; then
 		m "[tripleo-stack] Downloading base image: \"\$HOME/images/centos7.qcow2\""
@@ -43,5 +44,3 @@ EOT
 
 "$ROOT/hypervisor/create-virtual-machine" openstack-controller 80G
 "$ROOT/hypervisor/enable-virtualbmc" openstack-controller 6230
-
-m "Finished $(q "$(basename "$0")")!"

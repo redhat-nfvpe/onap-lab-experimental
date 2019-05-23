@@ -7,8 +7,14 @@ if [ "$EUID" == 0 ]; then
 fi
 
 PROJECT_NAME=$1
+Q_PROJECT_NAME=$(q "$PROJECT_NAME")
 
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/utils/functions"
 
-"$ROOT/hypervisor/ssh" undercloud ". /home/stack/overcloudrc && OS_PROJECT_NAME=\"$PROJECT_NAME\" openstack $(printf ' %q' "${@:2}")"
+# For quality of life we will make sure that the "openstack" command (Cliff) will limit
+# its output width to the width of our terminal
+
+"$ROOT/hypervisor/ssh" tripleo-stack \
+". \$HOME/overcloudrc && CLIFF_MAX_TERM_WIDTH=$(tput cols) OS_PROJECT_NAME=$Q_PROJECT_NAME openstack $(c "${@:2}")"

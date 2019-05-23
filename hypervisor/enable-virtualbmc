@@ -22,9 +22,9 @@ C_PORT=$(c "$PORT")
 "$ROOT/hypervisor/ssh" hypervisor-root "$(cat <<- EOT
 
 	set -e
-	GREEN='\033[0;32m'
+	CYAN='\033[0;36m'
 	RESET='\033[0m'
-	function m () { echo -e "\$GREEN\$1\$RESET"; }
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
 	m "[hypervisor-root] Ensuring VirtualBMC enabled for virtual machine \"$EQ_NAME\""
 

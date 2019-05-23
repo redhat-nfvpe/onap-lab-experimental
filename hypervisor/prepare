@@ -13,6 +13,7 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
+. "$ROOT/utils/trap-fetch-results"
 
 if [ "$1" == '-c' ]; then
 	"$HERE/clean"
@@ -36,9 +37,9 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 "$HERE/ssh" hypervisor-root "$(cat <<- EOT
 
 	set -e
-	GREEN='\033[0;32m'
+	CYAN='\033[0;36m'
 	RESET='\033[0m'
-	function m () { echo -e "\$GREEN\$1\$RESET"; }
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
 	m "[hypervisor-root] Ensuring timezone is \"$TIMEZONE\""
 	timedatectl set-timezone $(c "$TIMEZONE")
@@ -196,44 +197,3 @@ m "[hypervisor] Ensuring keypair authorization for user \"stack\""
 sshpass -p "$PASSWORD" ssh "stack@$HYPERVISOR_IP_ADDRESS"
 
 "$ROOT/utils/ensure-ssh-config" hypervisor-stack "$HYPERVISOR_IP_ADDRESS" stack stack@hypervisor
-
-"$HERE/ssh" hypervisor-stack "$(cat <<- EOT
-
-	set -e
-	GREEN='\033[0;32m'
-	RESET='\033[0m'
-	function m () { echo -e "\$GREEN\$1\$RESET"; }
-
-	#m '[hypervisor] Ensuring Python packages are installed'
-	#pip install --user \
-	#	virtualenv==$(c "$PYTHON_VIRTUALENV_VERSION")
-
-	# 	m '[hypervisor] Ensuring python-tripleoclient is installed'
-	# 	if [ ! -d "\$HOME/.env" ]; then
-	# 		"\$HOME/.local/bin/virtualenv" "\$HOME/.env"
-	# 	fi
-	# 	. "\$HOME/.env/bin/activate"
-	# 		pip install \
-	# 			python-tripleoclient==$(c "$PYTHON_TRIPLEOCLIENT_VERSION")
-	# 	deactivate
- 
-	# 	m '[hypervisor] Ensuring ceph-ansible is installed'
-	# 	if [ ! -d "\$HOME/ceph-ansible" ]; then
-	# 		git clone \
-	# 			--depth 1 \
-	# 			--branch $(c "v$CEPH_ANSIBLE_VERSION") \
-	# 			https://github.com/ceph/ceph-ansible.git "\$HOME/ceph-ansible"
-	# 	fi
-	# 	# ceph-ansible gets its own virtualenv because it requires an older version of Ansible 
-	# 	if [ ! -d "\$HOME/ceph-ansible/.env" ]; then
-	# 		"\$HOME/.local/bin/virtualenv" "\$HOME/ceph-ansible/.env"
-	# 	fi
-	# 	. "\$HOME/ceph-ansible/.env/bin/activate"
-	# 		pip install \
-	# 			--requirement "\$HOME/ceph-ansible/requirements.txt"
-	# 	deactivate
-
-EOT
-)"
-
-m "Finished $(q "$(basename "$0")")!"

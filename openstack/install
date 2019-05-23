@@ -7,9 +7,10 @@ if [ "$EUID" == 0 ]; then
 fi
 
 HERE=$(dirname "$(readlink -f "$0")")
-ROOT=$(readlink -f "$HERE/../..")
+ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
+. "$ROOT/utils/trap-fetch-results"
 
 OVERCLOUD_DEPLOY_ANSWERS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud-deploy-answers.yaml" |
 	HOME=/home/stack \
@@ -18,9 +19,9 @@ OVERCLOUD_DEPLOY_ANSWERS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud-deplo
 "$ROOT/hypervisor/ssh" -t tripleo-stack "$(cat <<- EOT
 
 	set -e
-	GREEN='\033[0;32m'
+	CYAN='\033[0;36m'
 	RESET='\033[0m'
-	function m () { echo -e "\$GREEN\$1\$RESET"; }
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
 	. "\$HOME/stackrc"
 
@@ -28,12 +29,11 @@ OVERCLOUD_DEPLOY_ANSWERS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud-deplo
 	echo $(c "$OVERCLOUD_DEPLOY_ANSWERS_YAML") > "\$HOME/overcloud-deploy-answers.yaml"
 	openstack overcloud deploy \
 		--templates \
-		--answers-file "\$HOME/overcloud-deploy-answers.yaml"
+		--answers-file "\$HOME/overcloud-deploy-answers.yaml" \
+		-vvv
 
 	#openstack stack resource list overcloud
 	#openstack stack resource show overcloud ControllerServiceChain
 
 EOT
 )"
-
-m "Finished $(q "$(basename "$0")")!"

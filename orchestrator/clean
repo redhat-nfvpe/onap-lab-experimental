@@ -9,8 +9,8 @@ fi
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+. "$ROOT/utils/trap"
 
 rm --recursive --force \
 	"$WORKSPACE_ROOT"
-
-m "Finished $(q "$(basename "$0")")!"

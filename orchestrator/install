@@ -10,6 +10,7 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
+. "$ROOT/utils/trap"
 
 if [ "$1" == '-c' ]; then
 	"$HERE/clean"
@@ -19,5 +20,3 @@ fi
 
 m '[orchestrator] Ensuring required packages are installed'
 sudo dnf install sshpass
-
-m "Finished $(q "$(basename "$0")")!"

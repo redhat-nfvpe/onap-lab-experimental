@@ -12,6 +12,7 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
+. "$ROOT/utils/trap-fetch-results"
 
 MAC_ADDRESSES=$("$ROOT/hypervisor/ssh" hypervisor-root "$(cat <<- EOT
 	set -e
@@ -36,17 +37,17 @@ OVERCLOUD_INFRASTRUCTURE_YAML=$(cat "$ROOT/configuration/tripleo/overcloud-infra
 "$ROOT/hypervisor/ssh" -t tripleo-stack "$(cat <<- EOT
 
 	set -e
-	GREEN='\033[0;32m'
+	CYAN='\033[0;36m'
 	RESET='\033[0m'
-	function m () { echo -e "\$GREEN\$1\$RESET"; }
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
 	. "\$HOME/stackrc"
 
 	# Note: Existing baremetal nodes will be updated, but nodes missing from the file  will *not*
 	# be deleted. To manually delete, e.g.:
 	#
-	#   openstack baremetal node maintenance set openstack-controller
-	#   openstack baremetal node delete openstack-controller
+	#   openstack baremetal node maintenance set controller
+	#   openstack baremetal node delete controller
 
 	m '[tripleo-stack] Updating overcloud infrastructure configuration'
 	echo $(c "$OVERCLOUD_INFRASTRUCTURE_YAML") > "\$HOME/overcloud-infrastructure.yaml"
@@ -55,12 +56,13 @@ OVERCLOUD_INFRASTRUCTURE_YAML=$(cat "$ROOT/configuration/tripleo/overcloud-infra
 	#openstack baremetal node list
 
 	m '[tripleo-stack] Introspecting overcloud infrastructure nodes (~ 15 minutes)'
-	openstack overcloud node introspect --all-manageable -vvv
+	openstack overcloud node introspect \
+		--all-manageable \
+		-vvv
 
 	m '[tripleo-stack] Ensuring overcloud infrastructure nodes are "available"'
-	openstack overcloud node provide --all-manageable
+	openstack overcloud node provide \
+		--all-manageable
 
 EOT
 )"
-
-m "Finished $(q "$(basename "$0")")!"

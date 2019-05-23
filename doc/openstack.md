@@ -40,21 +40,25 @@ After it's done we will find some more files under our `workspace/` directory:
 * `workspace/passwords/stack@openstack-controller` is the password
 * `workspace/ssh.config` is updated for `tripleo-stack`
 
+Logs and configuration files have been fetched to the `workspace/results/` directory. Some useful
+ones are from:
+
+* Hypervisor: `/var/log/libvirt/qemu/openstack-controller.log`
+* Hypervisor: `/var/log/virtualbmc/virtualbmc.log`
+
 In the Hypervisor's `stack` user's home directory:
 
 * `/home/stack/keys/stack@openstack-controller` and `/home/stack/stack@openstack-controller.pub`
 * `/home/stack/libvirt/images/openstack-controller.qcow2` is our virtual machine drive image
+
+In TripleO's `stack` user's home directory:
+
 * `/home/stack/ironic-python-agent.kernel` and `/home/stack/ironic-python-agent.initramfs` are
   small images used by TripleO's Ironic for introspection
 * `/home/stack/ironic-python-agent.log` is the log for building the above
 * `/home/stack/overcloud-full.qcow2` and `/home/stack/overcloud-full.initrd` are the OpenStack
   installation images
 * `/home/stack/overcloud-full.log` is the log for building the above
-
-Also useful on the Hypervisor:
-
-* `/var/log/libvirt/qemu/openstack-controller.log`
-* `/var/log/virtualbmc/virtualbmc.log`
 
 Note that when creating the `openstack-controller` virtual machine we also enable
 [VirtualBMC](https://docs.openstack.org/virtualbmc/latest/) to access it. This is necessary because
@@ -85,30 +89,35 @@ During introspection each node is provisioned a minimal operating system image v
 prepared in the previous step), which boots up and reports back to TripleO with a detailed profile
 of its hardware. TripleO will store this profile in its database.
 
+This can take a while, 15 minutes and more. How long exactly depends on your hardware.
+
+While it runs it could be useful to see the changing state of the infrastructure nodes. We can
+set up a `watch` like so:
+
+    watch hypervisor/tripleo/openstack baremetal node list
+
+We should see the nodes powering on, then changing their provisioning state from "enroll", to
+"manageable", and finally "available".
+
 Introspection is handled by the `openstack overcloud node introspect` command. It is configured
 by `configuration/tripleo/overcloud-infrastructure.yaml`.
 
-> TODO: machines without IPMI
+> TODO: machines without IPMI. "pm_type: manual-management". need monitor-keyboard-mouse.
 
-After it's done we will find some useful files in the `tripleo` virtual machine at the `stack`
-user's home directory: 
+Logs and configuration files have been fetched to the `workspace/results/` directory. Some useful
+ones are from:
+
+* TripleO: `/var/log/containers/ironic/ironic-conductor.log`
+* TripleO: `/var/log/containers/ironic-inspector/ironic-inspector.log`
+* TripleO: `/var/log/containers/ironic-inspector/ramdisk/` contains `tar.gz` files for each
+  infrastructure node workflow, which internally contain the `journal` of the introspection process
+* TripleO: `/var/log/containers/mistral/engine.log`
+* TripleO: `/var/log/containers/heat/heat-engine.log`
+
+In TripleO's `stack` user's home directory:
 
 * `/home/stack/overcloud-infrastructure.yaml` copied from
   `configuration/tripleo/overcloud-infrastructure.yaml`
-
-Relevant logs in the `tripleo` virtual machine:
-
-* `/var/log/containers/ironic/ironic-conductor.log`
-* `/var/log/containers/ironic-inspector/ironic-inspector.log`
-
-Relevant logs on the Hypervisor:
-
-
-
-hypervisor/tripleo/openstack baremetal node list
-
-
-
 
 
 Step 3: Install OpenStack
@@ -117,6 +126,42 @@ Step 3: Install OpenStack
 We can now finally install OpenStack on our infrastructure:
 
     openstack/install
+
+As in the previous step, while it runs it could be useful to see the changing state of the
+infrastructure nodes. We can set up a `watch` like so:
+
+    watch hypervisor/tripleo/openstack baremetal node list
+
+We should see the nodes powering on, then changing their provisioning state from "available", to
+"wait call-back", to "deploying", and finally "active".
+
+After it's done we will find some useful files in the `tripleo` virtual machine at the `stack`
+user's home directory: 
+
+*
+
+Useful service logs on the `tripleo` virtual machine:
+
+* `/var/log/containers/ironic/deploy/` contains `tar.gz` files for each infrastructure node
+  workflow, which internally contain the `journal` of the installation process
+
+TODO
+
+hypervisor/tripleo/openstack baremetal node undeploy compute-0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

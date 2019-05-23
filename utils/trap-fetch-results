@@ -1,0 +1,12 @@
+function the_end () {
+	local ERR=$?
+	if [ "$ERR" == 0 ]; then
+		m "Succeeded $(realpath --relative-to="$ROOT" "$0")!" "$GREEN"
+	else
+		m "Failed $(realpath --relative-to="$ROOT" "$0")!" "$RED"
+	fi
+	"$ROOT/hypervisor/fetch-results"
+	exit "$ERR"
+}
+
+trap the_end EXIT

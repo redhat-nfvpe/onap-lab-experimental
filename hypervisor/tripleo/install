@@ -12,6 +12,7 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
+. "$ROOT/utils/trap-fetch-results"
 
 UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" |
 	NAME=$(eq 'tripleo') \
@@ -21,15 +22,16 @@ UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" |
 "$ROOT/hypervisor/ssh" tripleo-stack "$(cat <<- EOT
 
 	set -e
-	GREEN='\033[0;32m'
+	CYAN='\033[0;36m'
 	RESET='\033[0m'
-	function m () { echo -e "\$GREEN\$1\$RESET"; }
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
 	m "[tripleo-stack] Updating \"\$HOME/undercloud.conf\""
 	echo $(c "$UNDERCLOUD_CONF") > "\$HOME/undercloud.conf"
 
 	m "[tripleo-stack] Updating \"\$HOME/containers-prepare-parameter.yaml\""
 
+	# TODO: is this just for overcloud maybe???
 	openstack tripleo container image prepare default \
   		--local-push-destination \
   		--output-env-file "\$HOME/containers-prepare-parameter.yaml.original"
@@ -55,5 +57,3 @@ UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" |
 
 EOT
 )"
-
-m "Finished $(q "$(basename "$0")")!"

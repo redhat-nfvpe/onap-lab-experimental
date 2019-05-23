@@ -10,15 +10,16 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
+. "$ROOT/utils/trap"
 
 C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE")
 
 "$HERE/ssh" hypervisor-root "$(cat <<- EOT
 
 	set -e
-	GREEN='\033[0;32m'
+	CYAN='\033[0;36m'
 	RESET='\033[0m'
-	function m () { echo -e "\$GREEN\$1\$RESET"; }
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
 	m '[hypervisor-root] Ensuring no libvirt virtual machines'
 	for UUID in \$(virsh list --uuid); do
@@ -69,5 +70,3 @@ C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$HYPERVISOR_OPENSTACK_CONTRO
 
 EOT
 )"
-
-m "Finished $(q "$(basename "$0")")!"
