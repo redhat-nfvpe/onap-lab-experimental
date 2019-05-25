@@ -56,14 +56,15 @@ m "[hypervisor-root] Ensuring keypair for virtual machine \"$NAME\" installed"
 "$HERE/ssh" -t hypervisor-root "$(cat <<- EOT
 
 	set -e
-	GREEN='\033[0;32m'
+	CYAN='\033[0;36m'
 	RESET='\033[0m'
-	function m () { echo -e "\$GREEN\$1\$RESET"; }
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
 	# Protect keys
 	chmod --recursive go-rwx /home/stack/keys/
 
 	if virsh domstate $C_NAME 2> /dev/null; then
+		m "[hypervisor-root] Virtual machine \"$EQ_NAME\" already exists"
 		exit
 	fi
 
@@ -125,37 +126,24 @@ EOT
 )"
 
 if [ -z "$BASE" ]; then
-	# Without a base image we won't yet have an IP address
+	# Without an operating system we we won't have an IP address
 	exit
 fi
 
 while true; do
 	m "[hypervisor-root] Waiting for virtual machine \"$EQ_NAME\" to get an IP address on vm-ctlplane..."
-
-	IP_ADDRESSES=$("$HERE/ssh" hypervisor-root "$(cat <<- EOT
-		set -e
-		virsh domifaddr $C_NAME --interface eth0 --source agent 2> /dev/null |
-			tail --lines=+3 |
-			head --lines=-1 |
-			awk '{ split(\$4,a,"/"); print \$3 "=" a[1] }'
-	EOT
-	)")
-
-	if [ "$IP_ADDRESSES" != 'N/A=N' ]; then
-		eval "$IP_ADDRESSES"
-		if [ -n "$ipv4" ]; then
-			break
-		fi
+	IP_ADDRESS=$("$HERE/get-ipv4-address" $C_NAME eth0)
+	if [ -n "$IP_ADDRESS" ]; then
+		break
 	fi
-
 	sleep 1
 done
 
-m "[$NAME-stack] IP address on vm-ctlplane is $ipv4"
+m "[$NAME-stack] IP address on vm-ctlplane is $IP_ADDRESS"
 
 # Give it some time to fully come up
 m "[$NAME-stack] Waiting 5 seconds to ensure we are ready for ssh connections..."
 sleep 5
 
 m "[$NAME-stack] Ensuring keypair authorization for user \"stack\""
-"$ROOT/utils/ensure-ssh-config" "$NAME-stack" "$ipv4" stack "stack@$NAME" hypervisor-stack
+"$ROOT/utils/ensure-ssh-config" "$NAME-stack" "$IP_ADDRESS" stack "stack@$NAME" hypervisor-stack

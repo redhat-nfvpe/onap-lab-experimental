@@ -25,6 +25,29 @@ OVERCLOUD_DEPLOY_ANSWERS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud-deplo
 
 	. "\$HOME/stackrc"
 
+	m "[tripleo-stack] Updating \"\$HOME/overcloud-container-images.yaml\""
+
+	# Note: This file is often created as "containers-prepare-parameter.yaml" in the documentation
+	openstack tripleo container image prepare default \
+  		--local-push-destination \
+  		--output-env-file "\$HOME/overcloud-container-images-default.yaml"
+
+	# Annoyingly, the TripleO default locks some container images at specific versions while leaving
+	# others at latest upstream versions, so we will make sure to manually lock those, too
+	python2 <<- _EOT
+		import yaml
+
+		with open("\$HOME/overcloud-container-images-default.yaml") as f:
+		  y = yaml.load(f)
+
+		s = y["parameter_defaults"]["ContainerImagePrepare"][0]["set"]
+		s["tag"] = $(q "$TRIPLEO_TAG")
+		s["ceph_tag"] = $(q "$CEPH_TAG")
+
+		with open("\$HOME/overcloud-container-images.yaml", "w") as f:
+		  yaml.dump(y, f, default_flow_style=False)
+	_EOT
+
 	m '[tripleo-stack] Deploying overcloud'
 	echo $(c "$OVERCLOUD_DEPLOY_ANSWERS_YAML") > "\$HOME/overcloud-deploy-answers.yaml"
 	openstack overcloud deploy \

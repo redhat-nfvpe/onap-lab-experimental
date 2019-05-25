@@ -1,4 +1,4 @@
-function the_end () {
+function EXIT_trap () {
 	local ERR=$?
 	if [ "$ERR" == 0 ]; then
 		m "Succeeded $(realpath --relative-to="$ROOT" "$0")!" "$GREEN"
@@ -8,4 +8,11 @@ function the_end () {
 	exit "$ERR"
 }
 
-trap the_end EXIT
+trap EXIT_trap EXIT
+
+function INT_trap () {
+	m "Aborted $(realpath --relative-to="$ROOT" "$0")!" "$RED"
+	trap - EXIT
+}
+
+trap INT_trap INT

@@ -14,7 +14,7 @@ ROOT=$(readlink -f "$HERE/..")
 
 C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE")
 
-"$HERE/ssh" hypervisor-root "$(cat <<- EOT
+ssh "root@$HYPERVISOR_IP_ADDRESS" "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'
@@ -60,8 +60,11 @@ C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$HYPERVISOR_OPENSTACK_CONTRO
 	rm --force /etc/systemd/system/vbmcd.service
 	systemctl daemon-reload
 	rm --recursive --force /etc/virtualbmc/
-	firewall-cmd --permanent --remove-port=6230/udp
-	firewall-cmd --reload
+
+	if [ -n "$CONTROLLER_IPMI_PORT" ]; then
+		firewall-cmd --permanent --remove-port="$CONTROLLER_IPMI_PORT/udp"
+		firewall-cmd --reload
+	fi
 
 	#m '[hypervisor-root] Ensuring no user "stack"...'
 	#if id -u stack > /dev/null; then

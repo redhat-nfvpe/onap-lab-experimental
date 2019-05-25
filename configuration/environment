@@ -17,11 +17,19 @@ PYTHON_VIRTUALENV_VERSION==16.5.0
 PYTHON_TRIPLEOCLIENT_VERSION=11.4.0
 CEPH_ANSIBLE_VERSION=3.2.16
 
-#
-# Compute
-#
+VIRTUALBMC_VERSION=1.5.0
+VIRTUALBMC_USERNAME=admin
+VIRTUALBMC_PASSWORD=password
 
-COMPUTE_MAC_ADDRESS=F8:B1:56:BB:01:7F
+#
+# Operating system images
+#
+# For OpenStack servers, OpenStack infrastructure nodes, and hypervisor VMs 
+# 
+
+CENTOS7_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1901.qcow2
+NAMESERVER=1.0.0.1
+TIMEZONE=America/Chicago
 
 #
 # TripleO
@@ -40,14 +48,12 @@ TRIPLEO_TAG=e7e5a7fc1b915f285751418d2ad3f157cc2bd287_24ce03e4
 # See: https://hub.docker.com/r/ceph/daemon/tags or "skopeo inspect docker://docker.io/ceph/daemon"
 CEPH_TAG="v4.0.0-stable-4.0-$CEPH_VERSION-centos-7-x86_64"
 
-VIRTUALBMC_VERSION=1.5.0
-
 #
-# Operating System Images
+# OpenStack infrastructure nodes
 #
-# For OpenStack servers, TripleO overcloud nodes, and hypervisor VMs 
-# 
 
-CENTOS7_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1901.qcow2
-NAMESERVER=1.0.0.1
-TIMEZONE=America/Chicago
+CONTROLLER_VIRTUALBMC_PORT=6230
+COMPUTE_VIRTUALBMC_PORT=6231
+
+# This will be ignored if COMPUTE_VIRTUALBMC_PORT has been set 
+COMPUTE_MAC_ADDRESS=F8:B1:56:BB:01:7F

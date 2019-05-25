@@ -22,7 +22,7 @@ ROOT=$(readlink -f "$HERE/..")
 	. "\$HOME/stackrc"
 
 	m '[tripleo-stack] Deleting overcloud'
-	openstack overcloud delete overcloud --yes
+	openstack overcloud delete overcloud --yes -vvv
 
 EOT
 )"

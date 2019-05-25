@@ -13,7 +13,7 @@ ROOT=$(readlink -f "$HERE/..")
 
 RESULTS="$WORKSPACE_ROOT/results"
 
-m "Fetching results to $(q "$RESULTS")"
+echo "Fetching results to $(q "$RESULTS")"
 
 if [ "$1" == '-c' ]; then
 	rm --recursive --force "$RESULTS" 
@@ -30,7 +30,7 @@ function r () {
 		--copy-links \
 		--ignore-missing-args \
 		--prune-empty-dirs \
-		"$@"
+		"$@" 2> /dev/null
 }
 
 r \
