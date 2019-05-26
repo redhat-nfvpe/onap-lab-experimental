@@ -27,7 +27,7 @@ ssh "root@$HYPERVISOR_IP_ADDRESS"
 
 "$ROOT/utils/ensure-ssh-config" hypervisor-root "$HYPERVISOR_IP_ADDRESS" root root@hypervisor
 
-PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
+PASSWORD=$("$ROOT/utils/get-password" hypervisor@hypervisor)
 
 "$HERE/rsync" --recursive \
 	--rsync-path='mkdir --parents libvirt/ && rsync' \
@@ -57,17 +57,17 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 
 	m '[hypervisor-root] Ensuring VirtualBMC service is installed and configured'
 
-	# Unfortunately we must run vbmcd as root. It cannot run on the "stack" user because SELinux
-	# won't let it delegate to "/usr/libexec/qemu-kvm" from within systemd. However, it is possible
-	# for root to access any user's libvirt session via their socket. The libvirt connection string
-	# would be:
+	# Unfortunately we must run vbmcd as root. It cannot run on the "hypervisor" user because
+	# SELinux won't let it delegate to "/usr/libexec/qemu-kvm" from within systemd. However, it is
+	# possible for root to access any user's libvirt session via their socket. The libvirt
+	# connection string would be:
 	#
 	#   qemu:///session?socket=$XDG_RUNTIME_DIR/libvirt/libvirt-sock
 	#
 	# See: https://libvirt.org/remote.html
 	#
 	# (Side note: CentOS purposely disables systemd user units, so we would need a root systemd unit
-	# even if we use "[Service] User=stack".)
+	# even if we use "[Service] User=hypervisor".)
 
 	# VirtualBMC requirements: python36-devel libvirt-devel openssl-devel gcc
 	pip3 install virtualbmc==$(c "$VIRTUALBMC_VERSION")
@@ -176,24 +176,24 @@ PASSWORD=$("$ROOT/utils/get-password" stack@hypervisor)
 	kvm_enable_bridge os-ctlplane
 	virsh_enable_network openstack-control-plane
 
-	m "[hypervisor-root] Ensuring user \"stack\" exists and is configured"
+	m "[hypervisor-root] Ensuring user \"hypervisor\" exists and is configured"
 
-	if ! id --user stack > /dev/null; then
-		useradd stack
+	if ! id --user hypervisor > /dev/null; then
+		useradd hypervisor
 	fi
 
-	echo $(c "$PASSWORD") | passwd --stdin stack
+	echo $(c "$PASSWORD") | passwd --stdin hypervisor
 
-	echo "stack ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/stack
+	echo "hypervisor ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/hypervisor
 
 	# User "qemu" will need access to our libvirt images
-	chmod a+rx /home/stack/
+	chmod a+rx /home/hypervisor/
 
 EOT
 )"
 
-m "[hypervisor] Ensuring keypair authorization for user \"stack\""
-"$ROOT/utils/ensure-ssh-key-authorized" stack@hypervisor \
-sshpass -p "$PASSWORD" ssh "stack@$HYPERVISOR_IP_ADDRESS"
+m "[hypervisor] Ensuring keypair authorization for user \"hypervisor\""
+"$ROOT/utils/ensure-ssh-key-authorized" hypervisor@hypervisor \
+sshpass -p "$PASSWORD" ssh "hypervisor@$HYPERVISOR_IP_ADDRESS"
 
-"$ROOT/utils/ensure-ssh-config" hypervisor-stack "$HYPERVISOR_IP_ADDRESS" stack stack@hypervisor
+"$ROOT/utils/ensure-ssh-config" hypervisor-hypervisor "$HYPERVISOR_IP_ADDRESS" hypervisor hypervisor@hypervisor

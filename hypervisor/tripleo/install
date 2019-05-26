@@ -29,6 +29,9 @@ UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" |
 	m "[tripleo-stack] Updating \"\$HOME/undercloud.conf\""
 	echo $(c "$UNDERCLOUD_CONF") > "\$HOME/undercloud.conf"
 
+	# TODO: is there a way to use our own container-image-prepare.yaml?
+	# See: /var/log/tripleo-container-image-prepare.log
+
 	m '[tripleo-stack] Ensuring TripleO is installed (~ 15 minutes)'
 	openstack undercloud install
 

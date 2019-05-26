@@ -23,7 +23,7 @@ install (with no desktop environment) is good enough. We will need:
 * Its IP address on the work LAN 
 
 Our scripts in the next steps will be making changes to this machine. They do the best they can to
-isolate our work: most of it will be under the user "stack", and most of what they run will be
+isolate our work: most of it will be under the user "hypervisor", and most of what they run will be
 inside virtual machines, which we will set up with libvirt.
 
 However, some work will have to be done in root: installing some utility packages and setting up
@@ -50,14 +50,14 @@ What this script does:
 * Sets up network bridges to be used by our libvirt virtual machines, configured by
   `configuration/libvirt/networks/virtual-machine-control-plane.xml` and
   `configuration/libvirt/networks/openstack-control-plane.xml`
-* Creates and configures the "stack" user
+* Creates and configures the "hypervisor" user
 
 After it's done we will find some files under our `workspace/` directory:
 
 * `workspace/keys/root@hypervisor` and `workspace/keys/root@hypervisor.pub`
-* `workspace/keys/stack@hypervisor` and `workspace/keys/stack@hypervisor.pub`
-* `workspace/passwords/stack@hypervisor`
-* `workspace/ssh.config` is updated for `hypervisor-root` and `hypervisor-stack`
+* `workspace/keys/hypervisor@hypervisor` and `workspace/keys/hypervisor@hypervisor.pub`
+* `workspace/passwords/hypervisor@hypervisor`
+* `workspace/ssh.config` is updated for `hypervisor-root` and `hypervisor-hypervisor`
 
 Our scripts will later on add more keys and passwords and keep `workspace/ssh.config` updated.
 That `ssh.config` file is especially useful: it configures custom hosts that we can use it to ssh
@@ -65,9 +65,9 @@ from our orchestrator to our lab machines, including virtual machines running in
 (via ssh proxying). Use the `hypervisor/ssh` and `hypervisor/rsync` shortcuts to use this config.
 Examples:
 
-    hypervisor/ssh hypervisor-stack
+    hypervisor/ssh hypervisor-hypervisor
     hypervisor/ssh hypervisor-root "ls -al"
-    hypervisor/rsync myfile.txt hypervisor-stack:/text/
+    hypervisor/rsync myfile.txt hypervisor-hypervisor:/text/
 
 Now that we have libvirt installed we can also use its CLI,
 [virsh](https://libvirt.org/virshcmdref.html), via our shortcut: 
@@ -124,10 +124,10 @@ ones are from:
 
 * Hypervisor: `/var/log/libvirt/qemu/tripleo.log`
 
-In the Hypervisor's `stack` user's home directory:
+In the Hypervisor's `hypervisor` user's home directory:
 
-* `/home/stack/keys/stack@tripleo` and `/home/stack/stack@tripleo.pub`
-* `/home/stack/libvirt/images/tripleo.qcow2` is our virtual machine drive image
+* `/home/hypervisor/keys/stack@tripleo` and `/home/hypervisor/stack@tripleo.pub`
+* `/home/hypervisor/libvirt/images/tripleo.qcow2` is our virtual machine drive image
 
 We'll wait a few seconds for the `tripleo` virtual machine to start up and then we can connect to
 it:

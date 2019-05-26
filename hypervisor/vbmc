@@ -11,5 +11,5 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
 
-"$HERE/ssh" hypervisor-stack \
+"$HERE/ssh" hypervisor-hypervisor \
 "vbmc $(c "$@")"

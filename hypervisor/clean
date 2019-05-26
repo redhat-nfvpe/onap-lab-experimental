@@ -66,10 +66,10 @@ ssh "root@$HYPERVISOR_IP_ADDRESS" "$(cat <<- EOT
 		firewall-cmd --reload
 	fi
 
-	#m '[hypervisor-root] Ensuring no user "stack"...'
-	#if id -u stack > /dev/null; then
-	#	userdel --force --remove stack
-	#fi
+	m '[hypervisor-root] Ensuring no user "hypervisor"...'
+	if id -u hypervisor > /dev/null; then
+		userdel --force --remove hypervisor
+	fi
 
 EOT
 )"

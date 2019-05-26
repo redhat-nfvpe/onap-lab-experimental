@@ -7,8 +7,13 @@
 
 # eth0 on virtual machine control plane
 --network bridge=vm-ctlplane,model=virtio
+
 # eth1 on OpenStack control plane
 --network bridge=os-ctlplane,model=virtio
+
+# Note that we are setting the virtual machine control plane to be on the *first* interface, eth0.
+# The reason is to save time: eth0 is initialized immediately upon boot for the CentOS GenericCloud
+# image, while eth1 has to be explicitly initialized by cloud-init, which may take a few minutes.
 
 --os-type linux
 --os-variant centos7.0

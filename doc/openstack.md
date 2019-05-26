@@ -33,7 +33,14 @@ What this script does:
 The bulk of the work in this step will be handled by `openstack overcloud image build`, which
 can take a while to complete, ~ 5 minutes.
 
-After it's done we will find some more files under our `workspace/` directory:
+> It's also possible to download ready-made images from the RDO project. From our experience the
+repository is rather slow and does not offer an advantage over building them locally.
+
+After it's done we can see that the images have been uploaded into TripleO:
+
+	hypervisor/tripleo/openstack image list
+
+We will also find some more files under our `workspace/` directory:
 
 * `workspace/keys/stack@openstack-controller` and `workspace/keys/stack@openstack-controller.pub`
   are they keypair for the virtual machine
@@ -46,10 +53,11 @@ ones are from:
 * Hypervisor: `/var/log/libvirt/qemu/openstack-controller.log`
 * Hypervisor: `/var/log/virtualbmc/virtualbmc.log`
 
-In the Hypervisor's `stack` user's home directory:
+In the Hypervisor's `hypervisor` user's home directory:
 
-* `/home/stack/keys/stack@openstack-controller` and `/home/stack/stack@openstack-controller.pub`
-* `/home/stack/libvirt/images/openstack-controller.qcow2` is our virtual machine drive image
+* `/home/hypervisor/keys/stack@openstack-controller` and
+  `/home/stack/stack@openstack-controller.pub`
+* `/home/hypervisor/libvirt/images/openstack-controller.qcow2` is our virtual machine drive image
 
 In TripleO's `stack` user's home directory:
 
@@ -108,6 +116,7 @@ once to "available".
 Logs and configuration files have been fetched to the `workspace/results/` directory. Some useful
 ones are from:
 
+* TripleO: `/home/stack/introspection/` has the introspection results in JSON
 * TripleO: `/var/log/containers/ironic/ironic-conductor.log`
 * TripleO: `/var/log/containers/ironic-inspector/ironic-inspector.log`
 * TripleO: `/var/log/containers/ironic-inspector/ramdisk/` contains `tar.gz` files for each
@@ -148,12 +157,15 @@ user's home directory:
 
 *
 
-Useful service logs on the `tripleo` virtual machine:
+Logs and configuration files have been fetched to the `workspace/results/` directory. Some useful
+ones are from:
 
-* `/var/log/containers/ironic/deploy/` contains `tar.gz` files for each infrastructure node
+* TripleO: `/var/log/containers/ironic/deploy/` contains `tar.gz` files for each infrastructure node
   workflow, which internally contain the `journal` of the installation process
 
 TODO
+
+/var/lib/mistral/overcloud/ansible.log
 
 hypervisor/tripleo/openstack baremetal node undeploy compute-0
 

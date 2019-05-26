@@ -14,6 +14,7 @@ ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/utils/functions"
 . "$ROOT/utils/trap-fetch-results"
 
+EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 EQ_CEPH_VERSION=$(eq "$CEPH_VERSION")
 
 "$ROOT/hypervisor/ssh" -t tripleo-stack "$(cat <<- EOT
@@ -32,7 +33,7 @@ EQ_CEPH_VERSION=$(eq "$CEPH_VERSION")
 	. "\$HOME/stackrc"
 
 	m '[tripleo-stack] Ensuring infrastructure images are built (~ 5 minutes)'
-	DIB_YUM_REPO_CONF="/etc/yum.repos.d/delorean.repo /etc/yum.repos.d/delorean-stein-testing.repo /etc/yum.repos.d/tripleo-centos-ceph-$EQ_CEPH_VERSION.repo" \
+	DIB_YUM_REPO_CONF="/etc/yum.repos.d/delorean.repo /etc/yum.repos.d/delorean-$EQ_TRIPLEO_VERSION-testing.repo /etc/yum.repos.d/tripleo-centos-ceph-$EQ_CEPH_VERSION.repo" \
 	DIB_LOCAL_IMAGE="\$HOME/images/centos7.qcow2" \
 	openstack overcloud image build
 
@@ -44,10 +45,10 @@ EOT
 
 if [ -n "$CONTROLLER_VIRTUALBMC_PORT" ]; then
 	"$ROOT/hypervisor/create-virtual-machine" openstack-controller 80G
-	"$ROOT/hypervisor/enable-virtualbmc" openstack-controller "$CONTROLLER_VIRTUALBMC_PORT"
+	"$ROOT/hypervisor/enable-virtual-machine-virtualbmc" openstack-controller "$CONTROLLER_VIRTUALBMC_PORT"
 fi
 
 if [ -n "$COMPUTE_VIRTUALBMC_PORT" ]; then
 	"$ROOT/hypervisor/create-virtual-machine" openstack-compute 200G
-	"$ROOT/hypervisor/enable-virtualbmc" openstack-compute "$COMPUTE_VIRTUALBMC_PORT"
+	"$ROOT/hypervisor/enable-virtual-machine-virtualbmc" openstack-compute "$COMPUTE_VIRTUALBMC_PORT"
 fi

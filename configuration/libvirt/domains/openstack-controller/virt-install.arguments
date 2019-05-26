@@ -5,10 +5,15 @@
 --graphics none
 --noautoconsole
 --pxe
---boot network
 
 # eth0 on OpenStack control plane
 --network bridge=os-ctlplane,model=virtio
+
+# eth1 on virtual machine control plane
+--network bridge=vm-ctlplane,model=virtio
+
+# Note that we are setting the OpenStack control plane to be on the *first* interface, eth0,
+# because PXE is enabled for eth0 only.
 
 --os-type linux
 --os-variant centos7.0

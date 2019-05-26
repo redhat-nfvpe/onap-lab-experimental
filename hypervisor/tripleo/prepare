@@ -17,6 +17,7 @@ ROOT=$(readlink -f "$HERE/../..")
 EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 
 "$ROOT/hypervisor/create-virtual-machine" tripleo 80G centos7 "$CENTOS7_IMAGE"
+"$ROOT/hypervisor/enable-virtual-machine-control-plane" tripleo eth0 stack
 
 "$ROOT/hypervisor/ssh" -t tripleo-stack "$(cat <<- EOT
 
@@ -68,13 +69,12 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 	cat >> "\$HOME/.bashrc" <<- _EOT
 		# OpenStack START
 		# For Cliff see: https://docs.openstack.org/cliff/stein/
-		CLIFF_FIT_WIDTH=1
 		function openstack_cliff () {
 		  export CLIFF_MAX_TERM_WIDTH=\\\$(tput cols)
 		}
 		if [ "\\\$TERM" != dumb ]; then
-		  openstack_cliff
 		  trap openstack_cliff WINCH
+		  openstack_cliff
 		fi
 		# OpenStack END
 	_EOT

@@ -10,15 +10,15 @@ fi
 # See: https://github.com/giovtorres/kvm-install-vm/blob/master/kvm-install-vm
 # See: https://cloudinit.readthedocs.io/en/latest/index.html
 
-HERE=$(dirname "$(readlink -f "$0")")
-ROOT=$(readlink -f "$HERE/..")
-. "$ROOT/configuration/environment"
-. "$ROOT/utils/functions"
-
 NAME=$1
 DISK_SIZE=$2
 BASE=$3
 BASE_IMAGE=$4
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
 
 Q_NAME=$(q "$NAME")
 EQ_NAME=$(eq "$NAME")
@@ -33,7 +33,7 @@ PASSWORD=$("$ROOT/utils/get-password" "stack@$NAME")
 "$ROOT/utils/ensure-ssh-key-exists" "stack@$NAME"
 KEY=$(< "$KEYS_ROOT/stack@$NAME.pub")
 
-VIRT_INSTALL_ARGUMENTS=$(command_line_ini "$ROOT/configuration/libvirt/domains/$NAME/virt-install.ini" |
+VIRT_INSTALL_ARGUMENTS=$(command_line_ini "$ROOT/configuration/libvirt/domains/$NAME/virt-install.arguments" |
 	HOME=/home/stack \
 	NAME=$EQ_NAME \
 	envsubst)
@@ -46,12 +46,12 @@ CLOUD_CONFIG=$(cat "$ROOT/configuration/libvirt/domains/$NAME/cloud-config.yaml"
 	KEY=$(eq "$KEY") \
 	envsubst)
 
-m "[hypervisor-root] Ensuring keypair for virtual machine \"$NAME\" installed"
+m "[hypervisor-hypervisor] Ensuring keypair for virtual machine \"$NAME\" installed"
 "$HERE/rsync" \
 	--rsync-path='mkdir --parents keys/ && rsync' \
 	"$KEYS_ROOT/stack@$NAME" \
 	"$KEYS_ROOT/stack@$NAME.pub" \
-	hypervisor-stack:keys/
+	hypervisor-hypervisor:keys/
 
 "$HERE/ssh" -t hypervisor-root "$(cat <<- EOT
 
@@ -61,7 +61,7 @@ m "[hypervisor-root] Ensuring keypair for virtual machine \"$NAME\" installed"
 	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
 	# Protect keys
-	chmod --recursive go-rwx /home/stack/keys/
+	chmod --recursive go-rwx /home/hypervisor/keys/
 
 	if virsh domstate $C_NAME 2> /dev/null; then
 		m "[hypervisor-root] Virtual machine \"$EQ_NAME\" already exists"
@@ -124,26 +124,3 @@ m "[hypervisor-root] Ensuring keypair for virtual machine \"$NAME\" installed"
 
 EOT
 )"
-
-if [ -z "$BASE" ]; then
-	# Without an operating system we we won't have an IP address
-	exit
-fi
-
-while true; do
-	m "[hypervisor-root] Waiting for virtual machine \"$EQ_NAME\" to get an IP address on vm-ctlplane..."
-	IP_ADDRESS=$("$HERE/get-ipv4-address" $C_NAME eth0)
-	if [ -n "$IP_ADDRESS" ]; then
-		break
-	fi
-	sleep 1
-done
-
-m "[$NAME-stack] IP address on vm-ctlplane is $IP_ADDRESS"
-
-# Give it some time to fully come up
-m "[$NAME-stack] Waiting 5 seconds to ensure we are ready for ssh connections..."
-sleep 5
-
-m "[$NAME-stack] Ensuring keypair authorization for user \"stack\""
-"$ROOT/utils/ensure-ssh-config" "$NAME-stack" "$IP_ADDRESS" stack "stack@$NAME" hypervisor-stack

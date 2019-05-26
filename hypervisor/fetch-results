@@ -48,18 +48,21 @@ r \
 	--include=*/ \
 	--include=*.log \
 	--exclude=* \
-	hypervisor-stack:/home/stack/ \
-	hypervisor-stack:/var/log/libvirt/qemu \
-	hypervisor-stack:/var/log/virtualbmc \
+	hypervisor-hypervisor:/home/hypervisor/ \
+	hypervisor-hypervisor:/var/log/libvirt/qemu \
+	hypervisor-hypervisor:/var/log/virtualbmc \
 	"$RESULTS/logs/hypervisor/" || true
 
 r \
 	--include=*/ \
+	--exclude=overcloud-config.tar.gz \
 	--include=*.log \
 	--include=*.tar.gz \
 	--exclude=* \
 	tripleo-stack:/home/stack/ \
 	tripleo-stack:/var/log/containers/ \
+	tripleo-stack:/var/log/tripleo-container-image-prepare.log \
+	tripleo-stack:/var/lib/mistral \
 	"$RESULTS/logs/tripleo/" || true
 
 find "$RESULTS/logs/tripleo/" -type f -name "*.tar.gz" |

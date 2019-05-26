@@ -13,6 +13,7 @@ trap EXIT_trap EXIT
 function INT_trap () {
 	m "Aborted $(realpath --relative-to="$ROOT" "$0")!" "$RED"
 	trap - EXIT
+	exit 1
 }
 
 trap INT_trap INT
