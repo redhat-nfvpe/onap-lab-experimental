@@ -6,8 +6,6 @@ if [ "$EUID" == 0 ]; then
 	exit 1
 fi
 
-# See: https://docs.openstack.org/tripleo-docs/latest/install/installation/installation.html
-
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
@@ -19,20 +17,20 @@ UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" |
 	NAMESERVER=$(eq "$NAMESERVER") \
 	envsubst)
 
-"$ROOT/hypervisor/ssh" tripleo-stack "$(cat <<- EOT
+"$ROOT/ssh" tripleo "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'
 	RESET='\033[0m'
 	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
-	m "[tripleo-stack] Updating \"\$HOME/undercloud.conf\""
+	m "[tripleo] Updating \"\$HOME/undercloud.conf\""
 	echo $(c "$UNDERCLOUD_CONF") > "\$HOME/undercloud.conf"
 
 	# TODO: is there a way to use our own container-image-prepare.yaml?
 	# See: /var/log/tripleo-container-image-prepare.log
 
-	m '[tripleo-stack] Ensuring TripleO is installed (~ 15 minutes)'
+	m '[tripleo] Ensuring TripleO is installed (~ 15 minutes)'
 	openstack undercloud install
 
 EOT

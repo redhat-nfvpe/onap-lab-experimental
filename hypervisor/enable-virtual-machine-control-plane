@@ -33,5 +33,5 @@ m "Virtual machine \"$EQ_NAME\" has IP address on vm-ctlplane: $IP_ADDRESS"
 m "Waiting 5 seconds to ensure that virtual machine \"$EQ_NAME\" is ready for ssh connections..."
 sleep 5
 
-m "[hypervisor-hypervisor] Ensuring keypair authorization for user \"$EQ_USERNAME\" on virtual machine \"$EQ_NAME\""
-"$ROOT/utils/ensure-ssh-config" "$NAME-$USERNAME" "$IP_ADDRESS" "$USERNAME" "$USERNAME@$NAME" hypervisor-hypervisor
+m "[hypervisor] Ensuring keypair authorization for user \"$EQ_USERNAME\" on virtual machine \"$EQ_NAME\""
+"$ROOT/utils/ensure-ssh-config" "$NAME" "$IP_ADDRESS" "$USERNAME" "$USERNAME@$NAME" hypervisor

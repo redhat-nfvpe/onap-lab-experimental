@@ -1,0 +1,31 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+. "$ROOT/utils/trap"
+
+m "[tripleo] Fetching keypair"
+
+"$ROOT/rsync" \
+	tripleo:/home/stack/.ssh/id_rsa \
+	"$KEYS_ROOT/tripleo"
+
+"$ROOT/rsync" \
+	tripleo:/home/stack/.ssh/id_rsa.pub \
+	"$KEYS_ROOT/tripleo.pub"
+
+for NAME in $("$ROOT/hypervisor/tripleo/openstack" server list --format value --column Name); do
+	EQ_NAME=$(eq "$NAME")
+	ADDRESSES=$("$ROOT/hypervisor/tripleo/openstack" server show "$NAME" --format value --column addresses)
+	eval "$ADDRESSES"
+	m "[tripleo] Server \"$EQ_NAME\" has IP address on ctlplane: $ctlplane"
+	"$ROOT/utils/ensure-ssh-config" "$NAME" "$ctlplane" heat-admin tripleo tripleo
+done

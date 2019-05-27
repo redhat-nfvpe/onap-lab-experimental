@@ -24,7 +24,7 @@ mkdir --parents "$RESULTS/logs/hypervisor/"
 mkdir --parents "$RESULTS/logs/tripleo/"
 
 function r () {
-	"$HERE/rsync" \
+	"$ROOT/rsync" \
 		--rsync-path="sudo rsync" \
 		--recursive \
 		--copy-links \
@@ -40,17 +40,17 @@ r \
 	--include=*.yaml \
 	--include=*.json \
 	--exclude=* \
-	tripleo-stack:/home/stack/ \
-	tripleo-stack:/var/lib/mistral \
+	tripleo:/home/stack/ \
+	tripleo:/var/lib/mistral \
 	"$RESULTS/configuration/tripleo/" || true
 
 r \
 	--include=*/ \
 	--include=*.log \
 	--exclude=* \
-	hypervisor-hypervisor:/home/hypervisor/ \
-	hypervisor-hypervisor:/var/log/libvirt/qemu \
-	hypervisor-hypervisor:/var/log/virtualbmc \
+	hypervisor:/home/hypervisor/ \
+	hypervisor:/var/log/libvirt/qemu \
+	hypervisor:/var/log/virtualbmc \
 	"$RESULTS/logs/hypervisor/" || true
 
 r \
@@ -59,10 +59,10 @@ r \
 	--include=*.log \
 	--include=*.tar.gz \
 	--exclude=* \
-	tripleo-stack:/home/stack/ \
-	tripleo-stack:/var/log/containers/ \
-	tripleo-stack:/var/log/tripleo-container-image-prepare.log \
-	tripleo-stack:/var/lib/mistral \
+	tripleo:/home/stack/ \
+	tripleo:/var/log/containers/ \
+	tripleo:/var/log/tripleo-container-image-prepare.log \
+	tripleo:/var/lib/mistral \
 	"$RESULTS/logs/tripleo/" || true
 
 find "$RESULTS/logs/tripleo/" -type f -name "*.tar.gz" |

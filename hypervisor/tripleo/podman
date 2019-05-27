@@ -10,5 +10,5 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/utils/functions"
 
-"$ROOT/hypervisor/ssh" -t tripleo-stack \
+"$ROOT/ssh" -t tripleo \
 "sudo podman $(c "$@")"

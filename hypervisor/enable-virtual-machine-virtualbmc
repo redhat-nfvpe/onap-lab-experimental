@@ -20,7 +20,7 @@ C_PORT=$(c "$PORT")
 C_VIRTUALBMC_USERNAME=$(c "$VIRTUALBMC_USERNAME")
 C_VIRTUALBMC_PASSWORD=$(c "$VIRTUALBMC_PASSWORD")
 
-"$ROOT/hypervisor/ssh" hypervisor-root "$(cat <<- EOT
+"$ROOT/ssh" hypervisor-root "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'

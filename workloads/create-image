@@ -22,7 +22,7 @@ ROOT=$(readlink -f "$HERE/..")
 if ! "$HERE/openstack" image show "$PROJECT.$NAME" >/dev/null 2>&1; then
 	FILENAME="$OPENSTACK_IMAGES/$(basename "$URL")"
 
-	"$ROOT/hypervisor/ssh" undercloud "
+	"$ROOT/ssh" undercloud "
 mkdir --parents \"$OPENSTACK_IMAGES\";
 if [ ! -f \"$FILENAME\" ]; then
 	curl --output \"$FILENAME\" \"$URL\";

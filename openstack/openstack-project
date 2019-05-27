@@ -16,5 +16,5 @@ ROOT=$(readlink -f "$HERE/..")
 # For quality of life we will make sure that the "openstack" command (Cliff) will limit
 # its output width to the width of our terminal
 
-"$ROOT/hypervisor/ssh" tripleo-stack \
+"$ROOT/ssh" tripleo \
 ". \$HOME/overcloudrc && CLIFF_MAX_TERM_WIDTH=$(tput cols) OS_PROJECT_NAME=$Q_PROJECT_NAME openstack $(c "${@:2}")"

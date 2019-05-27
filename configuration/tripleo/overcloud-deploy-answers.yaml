@@ -2,5 +2,10 @@
 
 environments:
 - $HOME/overcloud-container-images.yaml
-- /usr/share/openstack-tripleo-heat-templates/environments/hyperconverged-ceph.yaml
-- /usr/share/openstack-tripleo-heat-templates/environments/ceph-ansible/ceph-ansible.yaml
+
+# Enables network isolation (without it nodes can't access outside world)
+- /usr/share/openstack-tripleo-heat-templates/environments/network-environment.yaml
+
+# Ceph:
+#- /usr/share/openstack-tripleo-heat-templates/environments/hyperconverged-ceph.yaml
+#- /usr/share/openstack-tripleo-heat-templates/environments/ceph-ansible/ceph-ansible.yaml

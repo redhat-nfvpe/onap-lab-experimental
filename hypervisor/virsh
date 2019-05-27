@@ -10,5 +10,5 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/utils/functions"
 
-"$HERE/ssh" hypervisor-root \
+"$ROOT/ssh" hypervisor-root \
 "virsh $(c "$@")"

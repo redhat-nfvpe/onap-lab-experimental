@@ -12,7 +12,7 @@ ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/utils/functions"
 . "$ROOT/utils/trap-fetch-results"
 
-"$ROOT/hypervisor/ssh" -t tripleo-stack "$(cat <<- EOT
+"$ROOT/ssh" tripleo "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'
@@ -22,7 +22,7 @@ ROOT=$(readlink -f "$HERE/../..")
 	. "\$HOME/stackrc"
 
 	for UUID in \$(openstack baremetal node list --format value --column UUID); do
-		m "[tripleo-stack] Deleting infrastructure node \"\$UUID\""
+		m "[tripleo] Deleting infrastructure node \"\$UUID\""
 		openstack baremetal node maintenance set "\$UUID" || true
 		openstack baremetal node delete "\$UUID"
 	done

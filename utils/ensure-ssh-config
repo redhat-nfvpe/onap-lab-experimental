@@ -3,7 +3,7 @@ set -e
 
 NAME=$1
 HOST=$2
-THE_USER=$3
+USERNAME=$3
 KEY=$4
 PROXY=$5
 
@@ -17,29 +17,36 @@ CONFIG="$WORKSPACE_ROOT/ssh.config"
 if [ -f "$CONFIG" ]; then
 	sed --in-place "/Host \"$NAME\"/,/^$/d" "$CONFIG"
 fi
-	
+
 if [ -z "$PROXY" ]; then
 
-cat >> "$CONFIG" <<- EOT
-	Host "$NAME"
-	  HostName "$HOST"
-	  User "$THE_USER"
-	  IdentityFile "$KEYS_ROOT/$KEY"
-
-	EOT
+	cat >> "$CONFIG" <<- EOT
+		Host "$NAME"
+		  HostName "$HOST"
+		  User "$USERNAME"
+		  IdentityFile "$KEYS_ROOT/$KEY"
+	
+		EOT
 
 else
 
-cat >> "$CONFIG" <<- EOT
-	Host "$NAME"
-	  HostName "$HOST"
-	  User "$THE_USER"
-	  IdentityFile "$KEYS_ROOT/$KEY"
-	  StrictHostKeyChecking no
-	  UserKnownHostsFile /dev/null
-	  LogLevel ERROR
-	  ProxyCommand ssh -F "$CONFIG" "$PROXY" "nc %h %p"
+	# Since OpenSSH 7.3 ("-J"):
+	#   ProxyJump "$PROXY"
+	# Which is equivalent to:
+	#   ProxyCommand ssh -F "$CONFIG" "$PROXY" -W %h:%p
+	# Oldest way (requires "nc" on proxy):
+	#   ProxyCommand ssh -F "$CONFIG" "$PROXY" "nc %h %p"
 
-	EOT
+	cat >> "$CONFIG" <<- EOT
+		Host "$NAME"
+		  HostName "$HOST"
+		  User "$USERNAME"
+		  IdentityFile "$KEYS_ROOT/$KEY"
+		  StrictHostKeyChecking no
+		  UserKnownHostsFile /dev/null
+		  LogLevel ERROR
+		  ProxyJump "$PROXY"
+	
+		EOT
 
 fi

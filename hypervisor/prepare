@@ -6,9 +6,6 @@ if [ "$EUID" == 0 ]; then
 	exit 1
 fi
 
-# See: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/director_installation_and_usage/installing-the-undercloud
-# See: https://libvirt.org/formatnetwork.html
-
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
@@ -29,12 +26,12 @@ ssh "root@$HYPERVISOR_IP_ADDRESS"
 
 PASSWORD=$("$ROOT/utils/get-password" hypervisor@hypervisor)
 
-"$HERE/rsync" --recursive \
+"$ROOT/rsync" --recursive \
 	--rsync-path='mkdir --parents libvirt/ && rsync' \
 	"$ROOT/configuration/libvirt/networks" \
 	hypervisor-root:libvirt/
 
-"$HERE/ssh" hypervisor-root "$(cat <<- EOT
+"$ROOT/ssh" hypervisor-root "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'
@@ -196,4 +193,4 @@ m "[hypervisor] Ensuring keypair authorization for user \"hypervisor\""
 "$ROOT/utils/ensure-ssh-key-authorized" hypervisor@hypervisor \
 sshpass -p "$PASSWORD" ssh "hypervisor@$HYPERVISOR_IP_ADDRESS"
 
-"$ROOT/utils/ensure-ssh-config" hypervisor-hypervisor "$HYPERVISOR_IP_ADDRESS" hypervisor hypervisor@hypervisor
+"$ROOT/utils/ensure-ssh-config" hypervisor "$HYPERVISOR_IP_ADDRESS" hypervisor hypervisor@hypervisor

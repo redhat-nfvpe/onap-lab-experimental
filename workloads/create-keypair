@@ -18,7 +18,7 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 
 
-"$ROOT/hypervisor/ssh" undercloud "
+"$ROOT/ssh" undercloud "
 mkdir --parents \"$OPENSTACK_KEYPAIRS\";
 if [ ! -f \"$OPENSTACK_KEYPAIRS/$NAME\" ]; then
 	ssh-keygen -f \"$OPENSTACK_KEYPAIRS/$NAME\" -t rsa -N '';
@@ -30,7 +30,7 @@ fi
 if ! "$HERE/openstack" keypair show "$NAME" >/dev/null 2>&1; then
 	echo "Creating keypair \"$NAME\"..."
 
-"$ROOT/hypervisor/ssh" undercloud "
+"$ROOT/ssh" undercloud "
 . /home/stack/overcloudrc;
 openstack keypair create \"$NAME\" --public-key \"$OPENSTACK_KEYPAIRS/$NAME.pub\" > /dev/null
 "

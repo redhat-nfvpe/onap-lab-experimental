@@ -16,7 +16,7 @@ OVERCLOUD_DEPLOY_ANSWERS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud-deplo
 	HOME=/home/stack \
 	envsubst)
 
-"$ROOT/hypervisor/ssh" -t tripleo-stack "$(cat <<- EOT
+"$ROOT/ssh" tripleo "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'
@@ -25,12 +25,16 @@ OVERCLOUD_DEPLOY_ANSWERS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud-deplo
 
 	. "\$HOME/stackrc"
 
-	m "[tripleo-stack] Updating \"\$HOME/overcloud-container-images.yaml\""
+	m "[tripleo] Updating \"\$HOME/overcloud-container-images.yaml\""
 
 	# Note: This file is often created as "containers-prepare-parameter.yaml" in the documentation
 	openstack tripleo container image prepare default \
-  		--local-push-destination \
   		--output-env-file "\$HOME/overcloud-container-images-default.yaml"
+
+	# BUG: using "--local-push-destination" for the above will result in a failure to pull the
+	# images during "overcloud deploy". See possibly:
+	# https://bugzilla.redhat.com/show_bug.cgi?id=1704838
+	# https://bugzilla.redhat.com/show_bug.cgi?id=1696393
 
 	# Annoyingly, the TripleO default locks some container images at specific versions while leaving
 	# others at latest upstream versions, so we will make sure to manually lock those, too
@@ -48,7 +52,7 @@ OVERCLOUD_DEPLOY_ANSWERS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud-deplo
 		  yaml.dump(y, f, default_flow_style=False)
 	_EOT
 
-	m '[tripleo-stack] Deploying overcloud'
+	m '[tripleo] Deploying overcloud'
 	echo $(c "$OVERCLOUD_DEPLOY_ANSWERS_YAML") > "\$HOME/overcloud-deploy-answers.yaml"
 	openstack overcloud deploy \
 		--templates \
@@ -60,3 +64,5 @@ OVERCLOUD_DEPLOY_ANSWERS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud-deplo
 
 EOT
 )"
+
+"$HERE/fetch-infrastructure-ssh-config"

@@ -57,17 +57,16 @@ After it's done we will find some files under our `workspace/` directory:
 * `workspace/keys/root@hypervisor` and `workspace/keys/root@hypervisor.pub`
 * `workspace/keys/hypervisor@hypervisor` and `workspace/keys/hypervisor@hypervisor.pub`
 * `workspace/passwords/hypervisor@hypervisor`
-* `workspace/ssh.config` is updated for `hypervisor-root` and `hypervisor-hypervisor`
+* `workspace/ssh.config` is updated for `hypervisor-root` and `hypervisor`
 
 Our scripts will later on add more keys and passwords and keep `workspace/ssh.config` updated.
 That `ssh.config` file is especially useful: it configures custom hosts that we can use it to ssh
 from our orchestrator to our lab machines, including virtual machines running inside the Hypervisor
-(via ssh proxying). Use the `hypervisor/ssh` and `hypervisor/rsync` shortcuts to use this config.
-Examples:
+and OpenStack infrastructure nodes. The `./ssh` and `./rsync` shortcuts use this config. Examples:
 
-    hypervisor/ssh hypervisor-hypervisor
-    hypervisor/ssh hypervisor-root "ls -al"
-    hypervisor/rsync myfile.txt hypervisor-hypervisor:/text/
+    ./ssh hypervisor
+    ./ssh hypervisor-root "ls -al"
+    ./rsync myfile.txt hypervisor:/text/
 
 Now that we have libvirt installed we can also use its CLI,
 [virsh](https://libvirt.org/virshcmdref.html), via our shortcut: 
@@ -117,7 +116,7 @@ After it's done we will find some more files under our `workspace/` directory:
 * `workspace/keys/stack@tripleo` and `workspace/keys/stack@tripleo.pub` are they keypair for the
   virtual machine
 * `workspace/passwords/stack@tripleo` is the password
-* `workspace/ssh.config` is updated for `tripleo-stack`
+* `workspace/ssh.config` is updated for `tripleo`
 
 Logs and configuration files have been fetched to the `workspace/results/` directory. Some useful
 ones are from:
@@ -132,7 +131,7 @@ In the Hypervisor's `hypervisor` user's home directory:
 We'll wait a few seconds for the `tripleo` virtual machine to start up and then we can connect to
 it:
 
-    hypervisor/ssh tripleo-stack
+    ./ssh tripleo
 
 Note that if you reboot the Hypervisor this virtual machine will also be rebooted.
 
@@ -222,18 +221,21 @@ into the `mistral_engine` service container:
 (Note that `podman-bash` does not use ssh, but rather explicitly executes bash within the
 container. These are lightweight containers that are not running ssh servers.)
 
+Podman's CLI intentionally mimics Docker's, so if you're familiar with commands like `docker ps`
+just replace the command with `podman`: `podman ps`.
+
 We don't actually have to access the containers to get to the logs, because the log directories
 are shared from the host virtual machine at `/var/log/containers/`, for example the log we saw
 above is also here:
 
-    hypervisor/ssh tripleo-stack
+    ./ssh tripleo
     cat /var/log/containers/mistral/engine.log
 
 Unlike logs, which are shared from the host, configuration files for the containers are *imported*
 from the host when they start up, from its `/var/lib/config-data/puppet-generated/` directory. So,
 to edit `ironic.conf`:
 
-    hypervisor/ssh tripleo-stack
+    ./ssh tripleo
     vi /var/lib/config-data/puppet-generated/ironic/etc/ironic/ironic.conf
 
 To use the file we will need to restart the service container:

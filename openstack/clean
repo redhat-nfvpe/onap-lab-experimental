@@ -12,7 +12,7 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/utils/functions"
 . "$ROOT/utils/trap-fetch-results"
 
-"$ROOT/hypervisor/ssh" -t tripleo-stack "$(cat <<- EOT
+"$ROOT/ssh" tripleo "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'
@@ -21,8 +21,8 @@ ROOT=$(readlink -f "$HERE/..")
 
 	. "\$HOME/stackrc"
 
-	m '[tripleo-stack] Deleting overcloud'
-	openstack overcloud delete overcloud --yes -vvv
+	m '[tripleo] Deleting overcloud'
+	openstack overcloud delete overcloud --yes
 
 EOT
 )"

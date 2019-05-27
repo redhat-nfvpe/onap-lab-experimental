@@ -6,8 +6,6 @@ if [ "$EUID" == 0 ]; then
 	exit 1
 fi
 
-# See: https://docs.openstack.org/tripleo-docs/latest/install/installation/installation.html
-
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
@@ -19,14 +17,14 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 "$ROOT/hypervisor/create-virtual-machine" tripleo 80G centos7 "$CENTOS7_IMAGE"
 "$ROOT/hypervisor/enable-virtual-machine-control-plane" tripleo eth0 stack
 
-"$ROOT/hypervisor/ssh" -t tripleo-stack "$(cat <<- EOT
+"$ROOT/ssh" tripleo "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'
 	RESET='\033[0m'
 	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
-	m '[tripleo-stack] Ensuring utility packages are installed'
+	m '[tripleo] Ensuring utility packages are installed'
 	sudo yum install --assumeyes \
 		deltarpm
 	sudo yum upgrade --assumeyes
@@ -34,7 +32,7 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 		wget lynx
 
 	if ! rpm --query --quiet python2-tripleo-repos; then
-		m '[tripleo-stack] Ensuring TripleO repository is installed'
+		m '[tripleo] Ensuring TripleO repository is installed'
 
 		# RDO deletes old packages from the repository when adding new versions, which means we
 		# cannot rely on a stable URL. Instead we will scrape the repository's generated HTML index
@@ -49,7 +47,7 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 		sudo yum upgrade --assumeyes
 	fi
 
-	m '[tripleo-stack] Ensuring TripleO-client packages are installed'
+	m '[tripleo] Ensuring TripleO-client packages are installed'
 	sudo --preserve-env tripleo-repos \
 		-b $(c "$TRIPLEO_VERSION") \
 		-d centos7 \
@@ -60,7 +58,7 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 		python2-tripleoclient python2-chardet \
 		ceph-ansible
 
-	m '[tripleo-stack] Updating OpenStack Cliff configuration'
+	m '[tripleo] Updating OpenStack Cliff configuration'
 
 	# For quality of life we will make sure that the "openstack" command (Cliff) will always limit
 	# its output width to the width of our terminal ("CLIFF_FIT_WIDTH=1" doesn't seem to work)

@@ -6,8 +6,6 @@ if [ "$EUID" == 0 ]; then
 	exit 1
 fi
 
-# See: https://docs.openstack.org/tripleo-docs/latest/install/installation/installation.html
-
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
@@ -17,7 +15,8 @@ ROOT=$(readlink -f "$HERE/../..")
 EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 EQ_CEPH_VERSION=$(eq "$CEPH_VERSION")
 
-"$ROOT/hypervisor/ssh" -t tripleo-stack "$(cat <<- EOT
+# Using "-t" to improve wget display
+"$ROOT/ssh" -t tripleo "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'
@@ -25,19 +24,19 @@ EQ_CEPH_VERSION=$(eq "$CEPH_VERSION")
 	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
 	if [ ! -f "\$HOME/images/centos7.qcow2" ]; then
-		m "[tripleo-stack] Downloading base image: \"\$HOME/images/centos7.qcow2\""
+		m "[tripleo] Downloading base image: \"\$HOME/images/centos7.qcow2\""
 		mkdir --parents "\$HOME/images/"
 		wget --output-document="\$HOME/images/centos7.qcow2" $(c "$CENTOS7_IMAGE")
 	fi
 
 	. "\$HOME/stackrc"
 
-	m '[tripleo-stack] Ensuring infrastructure images are built (~ 5 minutes)'
+	m '[tripleo] Ensuring infrastructure images are built (~ 5 minutes)'
 	DIB_YUM_REPO_CONF="/etc/yum.repos.d/delorean.repo /etc/yum.repos.d/delorean-$EQ_TRIPLEO_VERSION-testing.repo /etc/yum.repos.d/tripleo-centos-ceph-$EQ_CEPH_VERSION.repo" \
 	DIB_LOCAL_IMAGE="\$HOME/images/centos7.qcow2" \
 	openstack overcloud image build
 
-	m '[tripleo-stack] Ensuring infrastructure images are uploaded'
+	m '[tripleo] Ensuring infrastructure images are uploaded'
 	openstack overcloud image upload
 
 EOT
