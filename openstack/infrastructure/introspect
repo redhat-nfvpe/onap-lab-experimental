@@ -38,25 +38,28 @@ INFRASTRUCTURE_NODES_YAML=$(cat "$ROOT/configuration/tripleo/infrastructure-node
 
 	. "\$HOME/stackrc"
 
-	# Note: Existing baremetal nodes will be updated, but nodes missing from the file  will *not*
+	# Note: Existing baremetal nodes will be updated, but nodes missing from the file will *not*
 	# be deleted. To manually delete, e.g.:
 	#
 	#   openstack baremetal node maintenance set controller
 	#   openstack baremetal node delete controller
 
+	INFRASTRUCTURE="\$HOME/overcloud/infrastructure"
+	mkdir --parents "\$INFRASTRUCTURE/"
+
 	m '[tripleo] Updating infrastructure node definitions'
-	echo $(c "$INFRASTRUCTURE_NODES_YAML") > "\$HOME/infrastructure-nodes.yaml"
-	openstack overcloud node import "\$HOME/infrastructure-nodes.yaml"
+	echo $(c "$INFRASTRUCTURE_NODES_YAML") > "\$INFRASTRUCTURE/infrastructure-nodes.yaml"
+	openstack overcloud node import "\$INFRASTRUCTURE/infrastructure-nodes.yaml"
 
 	m '[tripleo] Introspecting infrastructure nodes (~ 15 minutes)'
 	openstack overcloud node introspect \
 		--all-manageable
 
-	mkdir --parents "\$HOME/introspection"
+	mkdir --parents "\$INFRASTRUCTURE/introspection"
 	for NAME in \$(openstack baremetal node list --format value --column Name); do
 		m "[tripleo] Retrieving introspection results for infrastructure node \"\$NAME\""
 		openstack baremetal introspection data save "\$NAME" | \
-			jq -M . > "\$HOME/introspection/\$NAME.json"
+			jq -M . > "\$INFRASTRUCTURE/\$NAME.json"
 	done
 
 	m '[tripleo] Ensuring infrastructure nodes are "available"'

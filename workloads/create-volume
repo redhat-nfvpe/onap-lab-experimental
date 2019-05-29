@@ -16,18 +16,23 @@ if [ -z "$PROJECT" ] || [ -z "$NAME" ] || [ -z "$SIZE" ]; then
 fi
 
 HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/..")
 
-if ! "$HERE/openstack" volume list --project "$PROJECT" | grep --quiet --line-regexp --fixed-strings "$PROJECT.$NAME"; then
+if ! "$ROOT/openstack/openstack" volume list --project "$PROJECT" | grep --quiet --line-regexp --fixed-strings "$PROJECT.$NAME"; then
+
 	echo "Creating volume \"$PROJECT.$NAME\"..."
 	# NOTE: "volume create" has a "--project" switch, but it seems to be ignored
-	VOLUME_ID=$("$HERE/openstack-project" "$PROJECT" volume create "$PROJECT.$NAME" \
+	VOLUME_ID=$("$ROOT/openstack-project" "$PROJECT" volume create "$PROJECT.$NAME" \
 		--size "$SIZE" \
 		--column id \
 		--format value)
 
 	echo "Adding volume \"$PROJECT.$NAME\" to server \"$NAME\"..."
-	"$HERE/openstack-project" "$PROJECT" server add volume "$NAME" "$PROJECT.$NAME"
+	"$ROOT/openstack-project" "$PROJECT" server add volume "$NAME" "$PROJECT.$NAME"
+
 else
+
         echo "Volume \"$PROJECT.$NAME\" already exists"
         exit 1
+
 fi

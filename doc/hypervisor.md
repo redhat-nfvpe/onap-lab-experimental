@@ -168,11 +168,11 @@ manager is itself implemented in OpenStack is just that: an implementation detai
 > Note that in Red Hat OpenStack Platform (RHOSP) TripleO is called "Director".
 
 
-Step 4: Install TripleO
------------------------
+Step 4: Deploy TripleO
+----------------------
 
 Now that we have the `tripleo` virtual machine ready with the TripleO client we can use it to
-install TripleO: 
+deploy TripleO:
 
     hypervisor/tripleo/install
 
@@ -184,7 +184,8 @@ Internally it will be using [Puppet](https://puppet.com/) to orchestrate the ins
 configuration of the various OpenStack undercloud services as containers to be run by
 [Podman](https://podman.io/). Containers allow for better isolation and portability. The undercloud
 itself is installed using the OpenStack [Heat](https://docs.openstack.org/heat/latest/)
-orchestration and [Mistral](https://docs.openstack.org/mistral/latest/) workflow services.
+orchestration and [Mistral](https://docs.openstack.org/mistral/latest/) workflow services, which
+internally uses [Ansible](https://www.ansible.com/).
 
 Note that OpenStack container images, including those for TripleO, are provided by the
 [Kolla project](https://docs.openstack.org/kolla/latest/).
@@ -209,6 +210,10 @@ We can now access the undercloud's `openstack` command via a shortcut (that uses
 mentioned above), e.g.:
 
     hypervisor/tripleo/openstack network list
+
+The `openstack` command is mostly documented
+[here](https://docs.openstack.org/python-openstackclient/stein/cli/), though note that it itself
+extensible and indeed TripleO adds extra commands to manage the undercloud and the overcloud.
 
 We can directly access the individual service containers via the `hypervisor/tripleo/podman`,
 `hypervisor/tripleo/podman-bash`, and `hypervisor/tripleo/podman-restart` shortcuts. Run any of

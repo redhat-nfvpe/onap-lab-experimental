@@ -17,7 +17,6 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 
-
 "$ROOT/ssh" undercloud "
 mkdir --parents \"$OPENSTACK_KEYPAIRS\";
 if [ ! -f \"$OPENSTACK_KEYPAIRS/$NAME\" ]; then
@@ -27,7 +26,7 @@ else
 fi
 "
 
-if ! "$HERE/openstack" keypair show "$NAME" >/dev/null 2>&1; then
+if ! "$ROOT/openstack/openstack" keypair show "$NAME" >/dev/null 2>&1; then
 	echo "Creating keypair \"$NAME\"..."
 
 "$ROOT/ssh" undercloud "
@@ -36,6 +35,8 @@ openstack keypair create \"$NAME\" --public-key \"$OPENSTACK_KEYPAIRS/$NAME.pub\
 "
 
 else
+
 	echo "Keypair \"$NAME\" already exists"
 	exit 1
+
 fi

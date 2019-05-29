@@ -19,19 +19,17 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 
 # Create keypair (not associated with a project)
-set +e
-"$HERE/create-keypair" "$PROJECT"
-set -e
+#"$HERE/create-keypair" "$PROJECT"
 
 # Create project
 echo "Creating project \"$PROJECT\"..."
-"$HERE/openstack" project create "$PROJECT" \
+"$ROOT/openstack/openstack" project create "$PROJECT" \
 	--parent common \
 	--description "$PROJECT" > /dev/null
 
 echo "Adding admin role for user \"admin\" on project \"$PROJECT\"..."
 # This will allow us to login with user admin
-"$HERE/openstack" role add admin \
+"$ROOT/openstack/openstack" role add admin \
 	--project "$PROJECT" \
 	--user admin
 
@@ -40,15 +38,15 @@ echo "Adding admin role for user \"admin\" on project \"$PROJECT\"..."
 
 echo "Creating security group rules for ICMP and ssh for ports of project \"$PROJECT\"..."
 # Projects are created with a security group named "default", we'll just update it
-SECURITY_GROUP_ID=$("$HERE/openstack" security group list --project "$PROJECT" --column ID --format value | tail -n1)
-"$HERE/openstack" security group rule create "$SECURITY_GROUP_ID" --remote-ip 0.0.0.0/0 --protocol tcp --dst-port 22:22 > /dev/null
-"$HERE/openstack" security group rule create "$SECURITY_GROUP_ID" --remote-ip 0.0.0.0/0 --protocol icmp --icmp-type -1 --icmp-code -1 > /dev/null
+SECURITY_GROUP_ID=$("$ROOT/openstack/openstack" security group list --project "$PROJECT" --column ID --format value | tail -n1)
+"$ROOT/openstack/openstack" security group rule create "$SECURITY_GROUP_ID" --remote-ip 0.0.0.0/0 --protocol tcp --dst-port 22:22 > /dev/null
+"$ROOT/openstack/openstack" security group rule create "$SECURITY_GROUP_ID" --remote-ip 0.0.0.0/0 --protocol icmp --icmp-type -1 --icmp-code -1 > /dev/null
 
 # Create server
 # NOTE: "server create" does not support a "--project" switch, so we'll have to use "openstack-project"
 echo "Creating server \"$NAME\"..."
 # NOTE: "--wait" causes an empty line to be printed before id
-SERVER_ID=$("$HERE/openstack-project" "$PROJECT" server create "$NAME" \
+SERVER_ID=$("$ROOT/openstack-project" "$PROJECT" server create "$NAME" \
 	--column id \
 	--format value \
 	--wait \
@@ -62,18 +60,18 @@ SERVER_ID=$("$HERE/openstack-project" "$PROJECT" server create "$NAME" \
 
 # Create floating IP
 echo "Creating floating IP on \"public\"..."
-FLOATING_IP_ID=$("$HERE/openstack" floating ip create public \
+FLOATING_IP_ID=$("$ROOT/openstack/openstack" floating ip create public \
 	--project "$PROJECT" \
 	--column id \
 	--format value)
 
-FLOATING_IP=$("$HERE/openstack" floating ip show "$FLOATING_IP_ID" \
+FLOATING_IP=$("$ROOT/openstack/openstack" floating ip show "$FLOATING_IP_ID" \
 	--column floating_ip_address \
 	--format value)
 
 # Add floating IP to server
 echo "Adding floating IP to server \"$NAME\"..."
-"$HERE/openstack-project" "$PROJECT" server add floating ip "$SERVER_ID" "$FLOATING_IP_ID"
+"$ROOT/openstack-project" "$PROJECT" server add floating ip "$SERVER_ID" "$FLOATING_IP_ID"
 
 echo 'Done! To login:'
 echo "\"$HERE/ssh-virtual\" -i \"$OPENSTACK_KEYPAIRS/$PROJECT\" centos@$FLOATING_IP"

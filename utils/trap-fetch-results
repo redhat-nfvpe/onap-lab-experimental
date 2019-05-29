@@ -5,7 +5,7 @@ function EXIT_trap () {
 	else
 		m "Failed $(realpath --relative-to="$ROOT" "$0")!" "$RED"
 	fi
-	"$ROOT/hypervisor/fetch-results"
+	"$ROOT/hypervisor/fetch-results" -c
 	exit "$ERR"
 }
 

@@ -1,0 +1,17 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HOST=$1
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$HERE
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+
+"$HERE/ssh" "$HOST" \
+"sudo ovs-vsctl $(c "${@:2}")"

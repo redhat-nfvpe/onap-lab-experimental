@@ -37,11 +37,14 @@ r \
 	--include=*/ \
 	--include=*.sh \
 	--include=*.conf \
+	--include=*.ini \
 	--include=*.yaml \
 	--include=*.json \
 	--exclude=* \
 	tripleo:/home/stack/ \
+	tripleo:/var/lib/config-data/puppet-generated/ \
 	tripleo:/var/lib/mistral \
+	tripleo:/usr/share/openstack-tripleo-heat-templates \
 	"$RESULTS/configuration/tripleo/" || true
 
 r \

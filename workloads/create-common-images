@@ -17,4 +17,4 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 
-"$HERE/create-image" "$PROJECT" centos7 "$CENTOS7_IMAGE"
+"$HERE/create-image" "$PROJECT" centos7 /home/stack/images/centos7.qcow2

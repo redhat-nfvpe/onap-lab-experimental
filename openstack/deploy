@@ -1,0 +1,107 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+. "$ROOT/utils/trap-fetch-results"
+
+OVERCLOUD_DEPLOY_ANSWERS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/deploy-answers.yaml" |
+	HOME=/home/stack \
+	ENVIRONMENTS=/home/stack/overcloud/deploy/templates/environments \
+	envsubst)
+
+OVERCLOUD_NETWORKS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/networks.yaml")
+
+"$ROOT/ssh" tripleo "$(cat <<- EOT
+
+	set -e
+	CYAN='\033[0;36m'
+	RESET='\033[0m'
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
+
+	. "\$HOME/stackrc"
+
+	DEPLOY="\$HOME/overcloud/deploy"
+	rm --recursive --force "\$DEPLOY/"
+	mkdir --parents "\$DEPLOY/"
+
+	m '[tripleo] Updating networks configuration'
+	echo $(c "$OVERCLOUD_NETWORKS_YAML") > "\$DEPLOY/networks.yaml"
+
+	m '[tripleo] Updating roles configuration'
+	openstack overcloud roles generate \
+		-o "\$DEPLOY/roles.yaml" \
+		Controller ComputeHCI
+
+	m '[tripleo] Rendering Heat templates for deployment'
+
+# 	mkdir --parents "\$DEPLOY/templates/"
+# 
+# 	# process-templates.py skips copying a few YAML files 
+# 	rsync --recursive \
+# 		--exclude=*.j2.yaml \
+# 		--include=*.yaml \
+# 		/usr/share/openstack-tripleo-heat-templates/* \
+# 		"\$DEPLOY/templates/"
+
+	/usr/share/openstack-tripleo-heat-templates/tools/process-templates.py \
+		--safe \
+		--base_path /usr/share/openstack-tripleo-heat-templates/ \
+		--output-dir "\$DEPLOY/templates/" \
+		--network-data "\$DEPLOY/networks.yaml" \
+		--roles-data "\$DEPLOY/roles.yaml"
+
+	m '[tripleo] Updating Heat environment for container images'
+
+	# Note: This file is often created as "containers-prepare-parameter.yaml" in the documentation
+	mkdir --parents "\$DEPLOY/templates/environments/"
+	openstack tripleo container image prepare default \
+  		--output-env-file "\$DEPLOY/templates/environments/container-images.default.yaml"
+
+	# BUG: using "--local-push-destination" for the above will result in a failure to pull the
+	# images during "overcloud deploy". See possibly:
+	# https://bugzilla.redhat.com/show_bug.cgi?id=1704838
+	# https://bugzilla.redhat.com/show_bug.cgi?id=1696393
+
+	# Annoyingly, the TripleO default locks some container images at specific versions while leaving
+	# others at latest upstream versions, so we will make sure to manually lock those, too
+	python2 <<- _EOT
+		import yaml
+
+		with open("\$DEPLOY/templates/environments/container-images.default.yaml") as f:
+		  y = yaml.load(f)
+
+		s = y["parameter_defaults"]["ContainerImagePrepare"][0]["set"]
+		s["tag"] = $(q "$TRIPLEO_TAG")
+		s["ceph_tag"] = $(q "$CEPH_TAG")
+
+		with open("\$DEPLOY/templates/environments/container-images.yaml", "w") as f:
+		  yaml.dump(y, f, default_flow_style=False)
+	_EOT
+
+	m '[tripleo] Deploying OpenStack'
+	echo $(c "$OVERCLOUD_DEPLOY_ANSWERS_YAML") > "\$DEPLOY/answers.yaml"
+	openstack overcloud deploy \
+		--templates "\$DEPLOY/templates/" \
+		--networks-file "\$DEPLOY/networks.yaml" \
+		--roles-file "\$DEPLOY/roles.yaml" \
+		--answers-file "\$DEPLOY/answers.yaml" \
+		-vvv
+
+	#	--templates "\$DEPLOY/templates/" \
+	#	--environment-directory "\$DEPLOY/templates/environments/"
+
+	#openstack stack resource list overcloud
+	#openstack stack resource show overcloud ControllerServiceChain
+
+EOT
+)"
+
+"$HERE/fetch-infrastructure-ssh-config"

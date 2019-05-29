@@ -107,7 +107,7 @@ set up a `watch` like so:
 
 We should see the nodes powering on, then changing their provisioning state from "enroll" to
 "verifying" to "manageable". When introspection finishes successfully for all nodes they will be
-cycled from "clean wait" to "clean" and finally to "available".
+cycled from "cleaning" to "clean wait" and finally to "available".
 
 > TODO: machines without IPMI. "pm_type: manual-management". need monitor-keyboard-mouse.
 
@@ -128,23 +128,33 @@ In TripleO's `stack` user's home directory:
   `configuration/tripleo/infrastructure-nodes.yaml`
 
 
-Step 3: Install OpenStack
--------------------------
+Step 3: Deploy OpenStack
+------------------------
 
-We can now finally install OpenStack on our infrastructure:
+We can now finally deploy OpenStack on our infrastructure:
 
-    openstack/install
+    openstack/deploy
 
-Installation is handled by the `openstack overcloud deploy` command. It is configured by
-`configuration/overcloud-deploy-answers.yaml`, which relies on
-`overcloud-container-images-default.yaml`, which is in turn initialized by calling
-`openstack tripleo container image prepare`.
+Deployment is handled by the `openstack overcloud deploy` command. It is configured by
+`configuration/overcloud/`.
 
-During installation each infratructure node is provisioned with an operating system image via PXE
-(which we prepared in step 1). Internally Mistral via [Ansible](https://www.ansible.com/) will be
-using [Puppet](https://puppet.com/) to orchestrate the installation and configuration of the various
-OpenStack overcloud services as containers to be run by [Podman](https://podman.io/). While it runs
-it could be useful to follow Mistral's Ansible log:
+During installation each infrastructure node is provisioned with an operating system image via PXE
+(which we prepared in step 1). After the operating systems boots, the process continues similarly to
+how it worked with TripleO (the undercloud) in the previous chapter. The main difference is that our
+undercloud is an all-in-one OpenStack installation while our overcloud assigns different roles,
+and thus a different set of OpenStack services, to different machines. In more detail: 
+
+Internally it will be using [Puppet](https://puppet.com/) to orchestrate the installation and
+configuration of the various OpenStack undercloud services as containers to be run by
+[Podman](https://podman.io/). Containers allow for better isolation and portability. The undercloud
+itself is installed using the OpenStack [Heat](https://docs.openstack.org/heat/latest/)
+orchestration and [Mistral](https://docs.openstack.org/mistral/latest/) workflow services, which
+internally uses [Ansible](https://www.ansible.com/).
+
+Note that OpenStack container images, including those for TripleO, are provided by the
+[Kolla project](https://docs.openstack.org/kolla/latest/).
+
+While it runs it could be useful to follow Mistral's Ansible log:
 
     ./ssh tripleo
     tail -F /var/lib/mistral/overcloud/ansible.log
@@ -188,24 +198,33 @@ TODO tail this file:
 
 hypervisor/tripleo/openstack baremetal node undeploy compute-0
 
+openstack/openstack user list
+
+openstack/openstack stack failures list
+
+The `openstack` command is documented
+[here](https://docs.openstack.org/python-openstackclient/stein/cli/).
 
 
+MISSING PIECES FROM ABAYS
+
+tripleo:
+sudo ip r add 10.0.0.0/24 dev br-ctlplane
+
+controller:
+sudo ovs-vsctl remove port vlan10 tag 10
+
+hypervisor:
+sudo ip a add 10.0.0.69/24 dev os-ctlplane
 
 
+https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/8/html/ipv6_networking_for_the_overcloud/configuring_the_overcloud_before_creation
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+tripleo
+sudo ovs-vsctl add-port br-ctlplane vlan10 tag=10 -- set interface vlan10 type=internal
+sudo ip l set dev vlan10 up
+...
+sudo ovs-vsctl del-port vlan10
 
 
 

@@ -20,16 +20,17 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 
 # Create network, subnet, and router
-if ! "$HERE/openstack" network list --project "$PROJECT" | grep --quiet --line-regexp --fixed-strings "$PROJECT.$NAME"; then
+if ! "$ROOT/openstack/openstack" network list --project "$PROJECT" | grep --quiet --line-regexp --fixed-strings "$PROJECT.$NAME"; then
+
 	echo "Creating network \"$PROJECT.$NAME\"..."
-	NETWORK_ID=$("$HERE/openstack" network create "$PROJECT.$NAME" \
+	NETWORK_ID=$("$ROOT/openstack/openstack" network create "$PROJECT.$NAME" \
 		--project "$PROJECT" \
 		--provider-network-type vxlan \
 		--column id \
 		--format value)
 
 	echo "Creating subnet \"$PROJECT.$NAME\"..."
-	SUBNET_ID=$("$HERE/openstack" subnet create "$PROJECT.$NAME" \
+	SUBNET_ID=$("$ROOT/openstack/openstack" subnet create "$PROJECT.$NAME" \
 		--project "$PROJECT" \
 		--network "$PROJECT.$NAME" \
 		--subnet-range "$SUBNET_RANGE" \
@@ -37,20 +38,23 @@ if ! "$HERE/openstack" network list --project "$PROJECT" | grep --quiet --line-r
 		--format value)
 
 	echo "Setting DNS nameserver on subnet \"$PROJECT.$NAME\"..."
-	"$HERE/openstack" subnet set "$PROJECT.$NAME" --dns-nameserver "$NAMESERVER"
+	"$ROOT/openstack/openstack" subnet set "$PROJECT.$NAME" --dns-nameserver "$NAMESERVER"
 
 	echo "Creating router \"$PROJECT.$NAME\"..."
-	ROUTER_ID=$("$HERE/openstack" router create "$PROJECT.$NAME" \
+	ROUTER_ID=$("$ROOT/openstack/openstack" router create "$PROJECT.$NAME" \
 		--project "$PROJECT" \
 		--column id \
 		--format value)
 
 	echo "Adding subnet \"$PROJECT.$NAME\" to router \"$PROJECT.$NAME\"..."
-	"$HERE/openstack" router add subnet "$ROUTER_ID" "$SUBNET_ID"
+	"$ROOT/openstack/openstack" router add subnet "$ROUTER_ID" "$SUBNET_ID"
 
 	echo "Setting external gateway for router \"$PROJECT.$NAME\"..."
-	"$HERE/openstack" router set "$ROUTER_ID" --external-gateway public 
+	"$ROOT/openstack/openstack" router set "$ROUTER_ID" --external-gateway public 
+
 else
+
 	echo "Network \"$PROJECT.$NAME\" already exists"
 	exit 1
+
 fi

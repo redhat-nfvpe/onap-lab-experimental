@@ -8,35 +8,31 @@ fi
 
 PROJECT=$1
 NAME=$2
-URL=$3
+IMAGE=$3
 
-if [ -z "$PROJECT" ] || [ -z "$NAME" ] || [ -z "$URL" ]; then
-	echo 'Provide project name, image name, and image URL'
+if [ -z "$PROJECT" ] || [ -z "$NAME" ] || [ -z "$IMAGE" ]; then
+	echo 'Provide project name, image name, and image path'
 	exit 1
 fi
 
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
 
-if ! "$HERE/openstack" image show "$PROJECT.$NAME" >/dev/null 2>&1; then
-	FILENAME="$OPENSTACK_IMAGES/$(basename "$URL")"
+if ! "$ROOT/openstack/openstack" image show "$PROJECT.$NAME" > /dev/null 2>&1; then
 
-	"$ROOT/ssh" undercloud "
-mkdir --parents \"$OPENSTACK_IMAGES\";
-if [ ! -f \"$FILENAME\" ]; then
-	curl --output \"$FILENAME\" \"$URL\";
-fi
-"
-
-	echo "Creating image \"$PROJECT.$NAME\"..."
-	"$HERE/openstack" image create "$PROJECT.$NAME" \
+	m "Creating image \"$PROJECT.$NAME\"..."
+	"$ROOT/openstack/openstack" image create "$PROJECT.$NAME" \
 		--project "$PROJECT" \
-		--file "$FILENAME" \
+		--file "$IMAGE" \
 		--disk-format qcow2 \
 		--container-format bare \
 		--public
+
 else
-	echo "Image \"$PROJECT.$NAME\" already exists"
+
+	m "Image \"$PROJECT.$NAME\" already exists"
 	exit 1
+
 fi

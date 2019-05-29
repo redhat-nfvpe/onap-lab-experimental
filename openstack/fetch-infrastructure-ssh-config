@@ -26,6 +26,10 @@ for NAME in $("$ROOT/hypervisor/tripleo/openstack" server list --format value --
 	EQ_NAME=$(eq "$NAME")
 	ADDRESSES=$("$ROOT/hypervisor/tripleo/openstack" server show "$NAME" --format value --column addresses)
 	eval "$ADDRESSES"
-	m "[tripleo] Server \"$EQ_NAME\" has IP address on ctlplane: $ctlplane"
-	"$ROOT/utils/ensure-ssh-config" "$NAME" "$ctlplane" heat-admin tripleo tripleo
+	if [ -n "$ctlplane" ]; then
+		m "[tripleo] Server \"$EQ_NAME\" has IP address on ctlplane: $ctlplane"
+		"$ROOT/utils/ensure-ssh-config" "$NAME" "$ctlplane" heat-admin tripleo tripleo
+	else
+		m "[tripleo] Server \"$EQ_NAME\" does not have an IP address on ctlplane"
+	fi
 done
