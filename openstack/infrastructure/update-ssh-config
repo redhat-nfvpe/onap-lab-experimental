@@ -7,7 +7,7 @@ if [ "$EUID" == 0 ]; then
 fi
 
 HERE=$(dirname "$(readlink -f "$0")")
-ROOT=$(readlink -f "$HERE/..")
+ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
 . "$ROOT/utils/trap"
@@ -24,11 +24,10 @@ m "[tripleo] Fetching keypair"
 
 for NAME in $("$ROOT/hypervisor/tripleo/openstack" server list --format value --column Name); do
 	EQ_NAME=$(eq "$NAME")
-	ADDRESSES=$("$ROOT/hypervisor/tripleo/openstack" server show "$NAME" --format value --column addresses)
-	eval "$ADDRESSES"
-	if [ -n "$ctlplane" ]; then
-		m "[tripleo] Server \"$EQ_NAME\" has IP address on ctlplane: $ctlplane"
-		"$ROOT/utils/ensure-ssh-config" "$NAME" "$ctlplane" heat-admin tripleo tripleo
+	IP_ADDRESS=$("$HERE/get-ipv4-address" "$NAME" ctlplane)
+	if [ -n "$IP_ADDRESS" ]; then
+		m "[tripleo] Server \"$EQ_NAME\" has IP address on ctlplane: $IP_ADDRESS"
+		"$ROOT/utils/ensure-ssh-config" "$NAME" "$IP_ADDRESS" heat-admin tripleo tripleo
 	else
 		m "[tripleo] Server \"$EQ_NAME\" does not have an IP address on ctlplane"
 	fi

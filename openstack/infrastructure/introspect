@@ -53,7 +53,7 @@ INFRASTRUCTURE_NODES_YAML=$(cat "$ROOT/configuration/tripleo/infrastructure-node
 
 	m '[tripleo] Introspecting infrastructure nodes (~ 15 minutes)'
 	openstack overcloud node introspect \
-		--all-manageable
+		--all-manageable -v
 
 	mkdir --parents "\$INFRASTRUCTURE/introspection"
 	for NAME in \$(openstack baremetal node list --format value --column Name); do

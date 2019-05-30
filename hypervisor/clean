@@ -42,9 +42,6 @@ ssh "root@$HYPERVISOR_IP_ADDRESS" "$(cat <<- EOT
 		virsh net-undefine "\$UUID"
 	done
 
-	m '[hypervisor-root] Ensuring no libvirt images'
-	rm --recursive --force /home/stack/libvirt/
-
 	m '[hypervisor-root] Ensuring no libvirt network bridges'
 	rm --force /etc/sysconfig/network-scripts/ifcfg-os-ctlplane
 	rm --force /etc/sysconfig/network-scripts/ifcfg-$C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE

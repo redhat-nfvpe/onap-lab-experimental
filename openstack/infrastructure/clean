@@ -29,3 +29,19 @@ ROOT=$(readlink -f "$HERE/../..")
 
 EOT
 )"
+
+"$ROOT/ssh" hypervisor-root "$(cat <<- EOT
+
+	m '[hypervisor-root] Ensuring no virtual machines'
+
+	function d () {
+		virsh destroy "\$1" || true
+		virsh undefine "\$1" || true
+		rm --force "/home/hypervisor/libvirt/images/\$1.qcow2"
+	}
+
+	d openstack-controller
+	d openstack-compute
+
+EOT
+)"

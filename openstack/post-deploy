@@ -1,0 +1,46 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+. "$ROOT/utils/trap"
+
+"$HERE/infrastructure/update-ssh-config"
+
+"$ROOT/rsync" \
+	tripleo:/home/stack/overcloudrc \
+	"$WORKSPACE_ROOT/openstackrc"
+
+"$ROOT/rsync" \
+	"$WORKSPACE_ROOT/openstackrc" \
+	hypervisor:/home/hypervisor/openstackrc
+
+CONTROLLER_IP_ADDRESS=$("$ROOT/hypervisor/get-ipv4-address" openstack-controller eth1)
+
+if [ -z "$CONTROLLER_IP_ADDRESS" ]; then
+	m '[hypervisor] Controller does not have an IP address on vm-ctlplane' "$RED"
+	exit 1
+fi
+
+"$ROOT/ssh" hypervisor-root "$(cat <<- EOT
+
+	set -e
+	CYAN='\033[0;36m'
+	RESET='\033[0m'
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
+
+	m '[hypervisor] Enabling route to External network via controller'
+
+	# TODO make permanent
+	ip route del 10.0.0.0/24 || true
+	ip route add 10.0.0.0/24 via $(c "$CONTROLLER_IP_ADDRESS") || true
+
+EOT
+)"

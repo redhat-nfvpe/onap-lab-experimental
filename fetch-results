@@ -7,7 +7,7 @@ if [ "$EUID" == 0 ]; then
 fi
 
 HERE=$(dirname "$(readlink -f "$0")")
-ROOT=$(readlink -f "$HERE/..")
+ROOT=$HERE
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
 
@@ -28,7 +28,7 @@ function r () {
 		--rsync-path="sudo rsync" \
 		--recursive \
 		--copy-links \
-		--ignore-missing-args \
+		--delete --delete-excluded --ignore-errors \
 		--prune-empty-dirs \
 		"$@" 2> /dev/null
 }

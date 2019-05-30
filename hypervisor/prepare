@@ -16,6 +16,7 @@ if [ "$1" == '-c' ]; then
 	"$HERE/clean"
 fi
 
+EQ_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=$(eq "$HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE")
 C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE")
 
 m '[hypervisor-root] Ensuring keypair authorization for user "root" (you will be prompted for password if not)'
@@ -49,6 +50,7 @@ PASSWORD=$("$ROOT/utils/get-password" hypervisor@hypervisor)
 		epel-release centos-release-qemu-ev deltarpm
 	yum upgrade --assumeyes
 	yum install --assumeyes \
+		bash-completion \
 		virt-install cloud-utils ipmitool \
 		python36-pip python36-devel libvirt-devel openssl-devel gcc
 
@@ -69,67 +71,73 @@ PASSWORD=$("$ROOT/utils/get-password" hypervisor@hypervisor)
 	# VirtualBMC requirements: python36-devel libvirt-devel openssl-devel gcc
 	pip3 install virtualbmc==$(c "$VIRTUALBMC_VERSION")
 
- 	mkdir --parents /etc/virtualbmc/
-	mkdir --parents /var/log/virtualbmc/
+	if [ ! -f /etc/virtualbmc/virtualbmc.conf ]; then
+	 	mkdir --parents /etc/virtualbmc/
+		mkdir --parents /var/log/virtualbmc/
 
- 	cat > /etc/virtualbmc/virtualbmc.conf <<- _EOT
-		# See: https://github.com/openstack/virtualbmc/blob/master/virtualbmc/config.py
-		[default]
-		config_dir= /etc/virtualbmc/
+	 	cat > /etc/virtualbmc/virtualbmc.conf <<- _EOT
+			# See: https://github.com/openstack/virtualbmc/blob/master/virtualbmc/config.py
+			[default]
+			config_dir= /etc/virtualbmc/
+	
+			[log]
+			logfile = /var/log/virtualbmc/virtualbmc.log
+			debug = true
+		_EOT
+	fi
 
-		[log]
-		logfile = /var/log/virtualbmc/virtualbmc.log
-		debug = true
-	_EOT
+	if [ ! -f /etc/systemd/system/vbmcd.service ]; then
+		cat > /etc/systemd/system/vbmcd.service <<- _EOT
+			[Unit]
+			AssertPathExists=/usr/local/bin/vbmcd
+			ProtectSystem=strict
+	
+			[Service]
+			ExecStart=/usr/local/bin/vbmcd --foreground
+			Environment=VIRTUALBMC_CONFIG=/etc/virtualbmc/virtualbmc.conf
+			ReadWritePaths=/etc/virtualbmc/
+			ReadWritePaths=/var/log/virtualbmc/
+	
+			Restart=always
+			ProtectKernelModules=true
+			ProtectControlGroup=true
+			ProtectKernelTunables=true
+			ProtectSystem=strict
+	
+			# Note: CentOS 7 ignores "ProtectSystem=strict"
+	
+			[Install]
+			WantedBy=default.target
+		_EOT
 
-	cat > /etc/systemd/system/vbmcd.service <<- _EOT
-		[Unit]
-		AssertPathExists=/usr/local/bin/vbmcd
-		ProtectSystem=strict
-
-		[Service]
-		ExecStart=/usr/local/bin/vbmcd --foreground
-		Environment=VIRTUALBMC_CONFIG=/etc/virtualbmc/virtualbmc.conf
-		ReadWritePaths=/etc/virtualbmc/
-		ReadWritePaths=/var/log/virtualbmc/
-
-		Restart=always
-		ProtectKernelModules=true
-		ProtectControlGroup=true
-		ProtectKernelTunables=true
-		ProtectSystem=strict
-
-		# Note: CentOS 7 ignores "ProtectSystem=strict"
-
-		[Install]
-		WantedBy=default.target
-	_EOT
-
-	chmod 0644 /etc/systemd/system/vbmcd.service
-	systemctl daemon-reload
- 	systemctl start vbmcd
- 	systemctl enable vbmcd
+		chmod 0644 /etc/systemd/system/vbmcd.service
+		systemctl daemon-reload
+	 	systemctl start vbmcd
+	 	systemctl enable vbmcd
+	 fi
 
 	m '[hypervisor-root] Ensuring libvirt networks and bridges are configured'
 
-	cat > /etc/sysconfig/network-scripts/ifcfg-os-ctlplane <<- _EOT
-		DEVICE=os-ctlplane
-		TYPE=Bridge
-		ONBOOT=yes
-		BOOTPROTO=none
-		DELAY=0
-	_EOT
+	if [ ! -f /etc/sysconfig/network-scripts/ifcfg-os-ctlplane ]; then
+		cat > /etc/sysconfig/network-scripts/ifcfg-os-ctlplane <<- _EOT
+			DEVICE=os-ctlplane
+			TYPE=Bridge
+			ONBOOT=yes
+			BOOTPROTO=none
+			DELAY=0
+		_EOT
 
-	cat > /etc/sysconfig/network-scripts/ifcfg-$C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE <<- _EOT
-		DEVICE=$(eq "$HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE")
-		TYPE=Ethernet
-		BRIDGE=os-ctlplane
-		ONBOOT=yes
-		BOOTPROTO=none
-		DELAY=0
-	_EOT
+		cat > /etc/sysconfig/network-scripts/ifcfg-$C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE <<- _EOT
+			DEVICE=$EQ_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE
+			TYPE=Ethernet
+			BRIDGE=os-ctlplane
+			ONBOOT=yes
+			BOOTPROTO=none
+			DELAY=0
+		_EOT
 
-	systemctl restart network.service
+		systemctl restart network.service
+	fi
 
 	# TODO: brctl works but won't survive reboots
 	#brctl addbr os-ctlplane || true
@@ -149,9 +157,6 @@ PASSWORD=$("$ROOT/utils/get-password" hypervisor@hypervisor)
 	#	type ethernet \
 	#	ifname $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE \
 	#	master os-ctlplane
-
-	#ip address add 192.168.24.254/24 dev os-ctlplane || true
-	#ip route add 192.168.24.0/24 dev os-ctlplane || true
 
 	function kvm_enable_bridge () {
 		# Allow the bridge to be used by libvirt
@@ -190,7 +195,22 @@ EOT
 )"
 
 m "[hypervisor] Ensuring keypair authorization for user \"hypervisor\""
+
 "$ROOT/utils/ensure-ssh-key-authorized" hypervisor@hypervisor \
 sshpass -p "$PASSWORD" ssh "hypervisor@$HYPERVISOR_IP_ADDRESS"
 
 "$ROOT/utils/ensure-ssh-config" hypervisor "$HYPERVISOR_IP_ADDRESS" hypervisor hypervisor@hypervisor
+
+"$ROOT/ssh" hypervisor "$(cat <<- EOT
+
+	set -e
+	CYAN='\033[0;36m'
+	RESET='\033[0m'
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
+
+	m '[hypervisor] Ensuring OpenStack client is installed'
+	pip3 install --user \
+		python-openstackclient==$(c "$PYTHON_OPENSTACKCLIENT_VERSION")
+
+EOT
+)"

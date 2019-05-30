@@ -95,13 +95,8 @@ OVERCLOUD_NETWORKS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/networks.ya
 		--answers-file "\$DEPLOY/answers.yaml" \
 		-vvv
 
-	#	--templates "\$DEPLOY/templates/" \
-	#	--environment-directory "\$DEPLOY/templates/environments/"
-
 	#openstack stack resource list overcloud
 	#openstack stack resource show overcloud ControllerServiceChain
 
 EOT
 )"
-
-"$HERE/fetch-infrastructure-ssh-config"

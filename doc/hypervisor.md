@@ -1,7 +1,7 @@
 Chapter 2: Prepare the Hypervisor
 =================================
 
-In production OpenStack environments there's no single hypervisor, instead there would be many
+In production OpenStack environments there's no single controller, instead there would be many
 controllers of various kinds running on dedicated hardware with redundancy. For our lab we will
 converge all these roles in a single machine. However, it's important to understand that this
 machine will be fulfilling several roles. In order to keep these roles isolated we will be running
@@ -215,19 +215,19 @@ The `openstack` command is mostly documented
 [here](https://docs.openstack.org/python-openstackclient/stein/cli/), though note that it itself
 extensible and indeed TripleO adds extra commands to manage the undercloud and the overcloud.
 
-We can directly access the individual service containers via the `hypervisor/tripleo/podman`,
-`hypervisor/tripleo/podman-bash`, and `hypervisor/tripleo/podman-restart` shortcuts. Run any of
-them without arguments to get a list of available service containers. For example, to get a shell
-into the `mistral_engine` service container:
+We can directly access the individual service containers on any machine via the `./podman`,
+`./podman-bash`, and `./podman-restart` shortcuts. Run any of them without arguments to get a list
+of available service containers. For example, to get a shell into the `mistral_engine` service
+container:
 
-    hypervisor/tripleo/podman-bash mistral_engine
+    ./podman-bash tripleo mistral_engine
     cat /var/log/mistral/engine.log
 
-(Note that `podman-bash` does not use ssh, but rather explicitly executes bash within the
-container. These are lightweight containers that are not running ssh servers.)
+(Note that `podman-bash` does not ssh into the container, but rather explicitly executes bash within
+the container. These are lightweight containers that are not running ssh servers.)
 
 Podman's CLI intentionally mimics Docker's, so if you're familiar with commands like `docker ps`
-just replace the command with `podman`: `podman ps`.
+just replace the command with `podman`: `./podman tripleo ps`.
 
 We don't actually have to access the containers to get to the logs, because the log directories
 are shared from the host virtual machine at `/var/log/containers/`, for example the log we saw
@@ -238,14 +238,14 @@ above is also here:
 
 Unlike logs, which are shared from the host, configuration files for the containers are *imported*
 from the host when they start up, from its `/var/lib/config-data/puppet-generated/` directory. So,
-to edit `ironic.conf`:
+to manually edit `ironic.conf`:
 
     ./ssh tripleo
     vi /var/lib/config-data/puppet-generated/ironic/etc/ironic/ironic.conf
 
 To use the file we will need to restart the service container:
 
-    hypervisor/tripleo/podman-restart ironic_conductor
+    ./podman-restart ironic_conductor
 
 
 How to Reset

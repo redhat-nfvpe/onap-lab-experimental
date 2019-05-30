@@ -29,6 +29,7 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 		deltarpm
 	sudo yum upgrade --assumeyes
 	sudo yum install --assumeyes \
+		bash-completion \
 		wget lynx
 
 	if ! rpm --query --quiet python2-tripleo-repos; then
