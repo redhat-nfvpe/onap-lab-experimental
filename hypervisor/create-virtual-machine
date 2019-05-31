@@ -6,14 +6,7 @@ if [ "$EUID" == 0 ]; then
 	exit 1
 fi
 
-# See: https://stafwag.github.io/blog/blog/2019/03/03/howto-use-centos-cloud-images-with-cloud-init/
-# See: https://github.com/giovtorres/kvm-install-vm/blob/master/kvm-install-vm
-# See: https://cloudinit.readthedocs.io/en/latest/index.html
-
 NAME=$1
-DISK_SIZE=$2
-BASE=$3
-BASE_IMAGE=$4
 
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
@@ -23,108 +16,72 @@ ROOT=$(readlink -f "$HERE/..")
 Q_NAME=$(q "$NAME")
 EQ_NAME=$(eq "$NAME")
 C_NAME=$(c "$NAME")
-EQ_DISK_SIZE=$(eq "$DISK_SIZE")
-C_DISK_SIZE=$(c "$DISK_SIZE")
-EQ_BASE=$(eq "$BASE")
-C_BASE_IMAGE=$(c "$BASE_IMAGE")
+
+# Create images
+while IFS= read -r LINE; do
+	LINE=$(echo "$LINE" |
+		IMAGES=/home/hypervisor/libvirt/images \
+		NAME=$EQ_NAME \
+		envsubst)
+
+	# Parse line (IMAGE_NAME=V)
+	IMAGE_NAME=${LINE%=*}
+	V=${LINE#*=}
+
+	# See: https://stackoverflow.com/a/35208546
+	if [ "$V" == 'cloud-init' ]; then
+		CLOUD_INIT=true
+		echo '' | "$HERE/create-virtual-machine-cloud-init-image" "$IMAGE_NAME" "$NAME"
+	elif [ "${V:0:5}" == 'base,' ]; then
+		echo '' | "$HERE/create-virtual-machine-image-from-base" "$IMAGE_NAME" "${V:5}"
+	else
+		echo '' | "$HERE/create-virtual-machine-image" "$IMAGE_NAME" "$V"
+	fi
+done < "$ROOT/configuration/libvirt/domains/$NAME/images"
 
 VIRT_INSTALL_ARGUMENTS=$(command_line_ini "$ROOT/configuration/libvirt/domains/$NAME/virt-install.arguments" |
-	HOME=/home/hypervisor \
+	IMAGES=/home/hypervisor/libvirt/images \
 	NAME=$EQ_NAME \
 	envsubst)
 
-if [ -f "$ROOT/configuration/libvirt/domains/$NAME/cloud-config.yaml" ]; then
-
-	"$ROOT/utils/ensure-ssh-key-exists" "stack@$NAME"
-
+if [ "$CLOUD_INIT" == 'true' ]; then
 	m "[hypervisor] Ensuring keypair for virtual machine \"$NAME\" installed"
-
+	
 	"$ROOT/rsync" \
 		--rsync-path='mkdir --parents /home/hypervisor/keys/ && rsync' \
 		"$KEYS_ROOT/stack@$NAME" \
 		"$KEYS_ROOT/stack@$NAME.pub" \
 		hypervisor:/home/hypervisor/keys/
 
-	PASSWORD=$("$ROOT/utils/get-password" "stack@$NAME")
-	KEY=$(< "$KEYS_ROOT/stack@$NAME.pub")
-
-	CLOUD_CONFIG=$(cat "$ROOT/configuration/libvirt/domains/$NAME/cloud-config.yaml" | 
-		NAME=$EQ_NAME \
-		NAMESERVER=$(eq "$NAMESERVER") \
-		TIMEZONE=$(eq "$TIMEZONE") \
-		PASSWORD=$(eq "$PASSWORD") \
-		KEY=$(eq "$KEY") \
-		envsubst)
+	# Protect keys
+	"$ROOT/ssh" hypervisor \
+		chmod --recursive go-rwx /home/hypervisor/keys/
 
 fi
 
-"$ROOT/ssh" -t hypervisor-root "$(cat <<- EOT
+"$ROOT/ssh" hypervisor-root "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'
 	RESET='\033[0m'
 	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
-	# Protect keys
-	chmod --recursive go-rwx /home/hypervisor/keys/
-
 	if virsh domstate $C_NAME 2> /dev/null; then
 		m "[hypervisor-root] Virtual machine \"$EQ_NAME\" already exists"
 		exit
 	fi
 
-	if [ "$BASE" != '' ]; then
+	m "[hypervisor-root] Creating virtual machine \"$EQ_NAME\""
+	sudo virt-install \
+		$VIRT_INSTALL_ARGUMENTS \
+		--name $C_NAME
 
-		# Use base image with cloud-init
+	m "[hypervisor-root] Ensuring virtual machine \"$EQ_NAME\" will autostart"
+	virsh autostart --domain $C_NAME
 
-		if [ ! -f "/home/hypervisor/libvirt/images/$EQ_NAME.qcow2" ]; then
-			if [ ! -f "/home/hypervisor/libvirt/images/$EQ_BASE.qcow2" ]; then
-				m "[hypervisor-root] Downloading base image: \"/home/hypervisor/libvirt/images/$EQ_BASE.qcow2\""
-				mkdir --parents /home/hypervisor/libvirt/images/
-				wget --output-document="/home/hypervisor/libvirt/images/$EQ_BASE.qcow2" $C_BASE_IMAGE
-			fi
-
-			m "[hypervisor-root] Creating virtual machine disk image: \"/home/hypervisor/libvirt/images/$EQ_NAME.qcow2\" ($EQ_DISK_SIZE)"
-			cp "/home/hypervisor/libvirt/images/$EQ_BASE.qcow2" "/home/hypervisor/libvirt/images/$EQ_NAME.qcow2"
-			qemu-img resize "/home/hypervisor/libvirt/images/$EQ_NAME.qcow2" $C_DISK_SIZE
-		fi
-
-		if [ ! -f "/home/hypervisor/libvirt/images/$EQ_NAME-cloud-init.iso" ]; then
-			m "[hypervisor-root] Creating cloud-init configuration disk image: \"/home/hypervisor/libvirt/images/$EQ_NAME-cloud-init.iso\""
-			CLOUD_INIT="/home/hypervisor/libvirt/images/.${EQ_NAME}_cloud-init.yaml"
-
-			echo $(c "$CLOUD_CONFIG") > "\$CLOUD_INIT"
-
-			cloud-localds "/home/hypervisor/libvirt/images/$EQ_NAME-cloud-init.iso" "\$CLOUD_INIT"
-		fi
-
-		m "[hypervisor-root] Creating virtual machine \"$EQ_NAME\""
-		sudo virt-install \
-			$VIRT_INSTALL_ARGUMENTS \
-			--name $C_NAME \
-			--disk "/home/hypervisor/libvirt/images/$EQ_NAME-cloud-init.iso,device=cdrom"
-
-		m "[hypervisor-root] Ensuring virtual machine \"$EQ_NAME\" will autostart"
-		virsh autostart --domain $C_NAME
-	
+	if [ "$CLOUD_INIT" == 'true' ]; then
 		m "[hypervisor-root] Ejecting cloud-init configuration disk from virtual machine \"$EQ_NAME\""
 		virsh change-media $C_NAME hda --eject --config || true
-
-	else
-
-		# Don't use base image
-
-		m "[hypervisor-root] Creating virtual machine disk image: \"/home/hypervisor/libvirt/images/$EQ_NAME.qcow2\" ($EQ_DISK_SIZE)"
-		qemu-img create "/home/hypervisor/libvirt/images/$EQ_NAME.qcow2" $C_DISK_SIZE
-
-		m "[hypervisor-root] Creating virtual machine \"$EQ_NAME\""
-		sudo virt-install \
-			$VIRT_INSTALL_ARGUMENTS \
-			--name $C_NAME
-
-		m "[hypervisor-root] Ensuring virtual machine \"$EQ_NAME\" will autostart"
-		virsh autostart --domain $C_NAME
-
 	fi
 
 EOT

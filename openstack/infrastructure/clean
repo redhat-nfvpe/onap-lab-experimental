@@ -21,10 +21,12 @@ ROOT=$(readlink -f "$HERE/../..")
 
 	. "\$HOME/stackrc"
 
+	m '[tripleo] Ensuring no infrastructure nodes'
+
 	for UUID in \$(openstack baremetal node list --format value --column UUID); do
 		m "[tripleo] Deleting infrastructure node \"\$UUID\""
-		openstack baremetal node maintenance set "\$UUID" || true
-		openstack baremetal node delete "\$UUID"
+		openstack baremetal node maintenance set "\$UUID" $(c "$TRIPLEO_VERBOSITY") || true
+		openstack baremetal node delete "\$UUID" $(c "$TRIPLEO_VERBOSITY")
 	done
 
 EOT
@@ -32,9 +34,15 @@ EOT
 
 "$ROOT/ssh" hypervisor-root "$(cat <<- EOT
 
-	m '[hypervisor-root] Ensuring no virtual machines'
+	set -e
+	CYAN='\033[0;36m'
+	RESET='\033[0m'
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
+
+	m '[hypervisor-root] Ensuring no virtual machines for infrastructure nodes'
 
 	function d () {
+		m "[hypervisor-root] Deleting virtual machine \"\$1\""
 		virsh destroy "\$1" || true
 		virsh undefine "\$1" || true
 		rm --force "/home/hypervisor/libvirt/images/\$1.qcow2"

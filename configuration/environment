@@ -16,6 +16,7 @@ HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=enp1s0
 VIRTUALBMC_VERSION=1.5.0
 VIRTUALBMC_USERNAME=admin
 VIRTUALBMC_PASSWORD=password
+VIRTUALBMC_HOST=192.168.122.1
 
 PYTHON_OPENSTACKCLIENT_VERSION=3.18.0
 
@@ -45,6 +46,8 @@ TRIPLEO_TAG=e7e5a7fc1b915f285751418d2ad3f157cc2bd287_24ce03e4
 
 # See: https://hub.docker.com/r/ceph/daemon/tags or "skopeo inspect docker://docker.io/ceph/daemon"
 CEPH_TAG="v4.0.0-stable-4.0-$CEPH_VERSION-centos-7-x86_64"
+
+TRIPLEO_VERBOSITY=-v
 
 #
 # OpenStack infrastructure nodes

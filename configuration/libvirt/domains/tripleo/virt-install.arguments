@@ -17,7 +17,8 @@
 
 --os-type linux
 --os-variant centos7.0
---import --disk path="$HOME/libvirt/images/$NAME.qcow2,device=disk,bus=virtio"
+--import --disk "path=$IMAGES/$NAME.qcow2,device=disk,bus=virtio"
+--disk "path=$IMAGES/$NAME-cloud-init.iso,device=cdrom"
 
 # See: https://images.rdoproject.org/docs/baremetal/requirements.html
 --vcpus 4

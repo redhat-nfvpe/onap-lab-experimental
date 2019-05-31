@@ -1,21 +1,23 @@
-# Used by "openstack overcloud deploy"
+# Apply Heat environments to use with "openstack overcloud deploy".
 
 environments:
 
 # Defines from where to fetch service container images
 - "$ENVIRONMENTS/container-images.yaml"
 
-# Defines networks per our "networks.yaml"
+# Request infrastructure nodes per each role 
+- "$ENVIRONMENTS/nodes.yaml"
+
+# Creates networks per our "networks.yaml"
 # Maps roles to their Single-NIC vLAN network configurations
 # See: "templates/network/config/single-nic-vlans/"
 - "$ENVIRONMENTS/network-environment.yaml"
 
-# Defines ports for each role its service on the networks defined above
+# Creates ports for each service of each OpenStack role on the networks defined above
 # * See: "templates/network/"
 # *      "templates/network/ports/" 
 - "$ENVIRONMENTS/network-isolation.yaml"
 # (without it nodes can't access outside world)
 
-# Ceph:
-#- hyperconverged-ceph.yaml
-#- ceph-ansible/ceph-ansible.yaml
+# Ceph (used by ComputeHCI role)
+- "$ENVIRONMENTS/ceph-ansible/ceph-ansible.yaml"

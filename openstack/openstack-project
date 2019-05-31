@@ -17,4 +17,7 @@ ROOT=$(readlink -f "$HERE/..")
 # output width to the width of our terminal ("CLIFF_FIT_WIDTH=1" doesn't seem to work)
 
 "$ROOT/ssh" hypervisor \
-". \"\$HOME/openstackrc\" && CLIFF_MAX_TERM_WIDTH=\"$(tput cols)\" OS_PROJECT_NAME=$Q_PROJECT_NAME openstack $(c "${@:2)")"
+". \"\$HOME/openstackrc\" 
+CLIFF_MAX_TERM_WIDTH=\"$(tput cols)\" \
+OS_PROJECT_NAME=$Q_PROJECT_NAME \
+\"\$HOME/.local/bin/openstack\" $(c "${@:2}")"

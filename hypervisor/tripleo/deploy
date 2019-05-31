@@ -31,7 +31,8 @@ UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" |
 	# See: /var/log/tripleo-container-image-prepare.log
 
 	m '[tripleo] Ensuring TripleO is deployed (~ 15 minutes)'
-	openstack undercloud install
+	openstack undercloud install \
+		$(c "$TRIPLEO_VERBOSITY")
 
 EOT
 )"

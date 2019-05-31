@@ -12,12 +12,14 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/utils/functions"
 . "$ROOT/utils/trap-fetch-results"
 
-OVERCLOUD_DEPLOY_ANSWERS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/deploy-answers.yaml" |
+OVERCLOUD_HEAT_ENVIRONMENTS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/heat-environments.yaml" |
 	HOME=/home/stack \
 	ENVIRONMENTS=/home/stack/overcloud/deploy/templates/environments \
 	envsubst)
 
 OVERCLOUD_NETWORKS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/networks.yaml")
+
+OVERCLOUD_NODES_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/nodes.yaml")
 
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
@@ -32,13 +34,17 @@ OVERCLOUD_NETWORKS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/networks.ya
 	rm --recursive --force "\$DEPLOY/"
 	mkdir --parents "\$DEPLOY/"
 
+	m '[tripleo] Updating Heat environment selection'
+	echo $(c "$OVERCLOUD_HEAT_ENVIRONMENTS_YAML") > "\$DEPLOY/heat-environments.yaml"
+
 	m '[tripleo] Updating networks configuration'
 	echo $(c "$OVERCLOUD_NETWORKS_YAML") > "\$DEPLOY/networks.yaml"
 
 	m '[tripleo] Updating roles configuration'
 	openstack overcloud roles generate \
 		-o "\$DEPLOY/roles.yaml" \
-		Controller ComputeHCI
+		Controller ComputeHCI \
+		$(c "$TRIPLEO_VERBOSITY")
 
 	m '[tripleo] Rendering Heat templates for deployment'
 
@@ -57,6 +63,9 @@ OVERCLOUD_NETWORKS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/networks.ya
 		--output-dir "\$DEPLOY/templates/" \
 		--network-data "\$DEPLOY/networks.yaml" \
 		--roles-data "\$DEPLOY/roles.yaml"
+
+	m '[tripleo] Updating Heat environment for nodes'
+	echo $(c "$OVERCLOUD_NODES_YAML") > "\$DEPLOY/templates/environments/nodes.yaml"
 
 	m '[tripleo] Updating Heat environment for container images'
 
@@ -87,13 +96,13 @@ OVERCLOUD_NETWORKS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/networks.ya
 	_EOT
 
 	m '[tripleo] Deploying OpenStack'
-	echo $(c "$OVERCLOUD_DEPLOY_ANSWERS_YAML") > "\$DEPLOY/answers.yaml"
 	openstack overcloud deploy \
+		--stack lab \
 		--templates "\$DEPLOY/templates/" \
 		--networks-file "\$DEPLOY/networks.yaml" \
 		--roles-file "\$DEPLOY/roles.yaml" \
-		--answers-file "\$DEPLOY/answers.yaml" \
-		-vvv
+		--answers-file "\$DEPLOY/heat-environments.yaml" \
+		$(c "$TRIPLEO_VERBOSITY")
 
 	#openstack stack resource list overcloud
 	#openstack stack resource show overcloud ControllerServiceChain

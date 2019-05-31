@@ -14,7 +14,7 @@ ROOT=$(readlink -f "$HERE/../..")
 
 EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 
-"$ROOT/hypervisor/create-virtual-machine" tripleo 80G centos7 "$CENTOS7_IMAGE"
+"$ROOT/hypervisor/create-virtual-machine" tripleo
 "$ROOT/hypervisor/enable-virtual-machine-control-plane" tripleo eth0 stack
 
 "$ROOT/ssh" tripleo "$(cat <<- EOT

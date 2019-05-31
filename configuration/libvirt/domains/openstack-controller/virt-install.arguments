@@ -17,7 +17,7 @@
 
 --os-type linux
 --os-variant centos7.0
---disk path="$HOME/libvirt/images/$NAME.qcow2,device=disk,bus=virtio"
+--disk "path=$IMAGES/$NAME.qcow2,device=disk,bus=virtio"
 
 # See: https://images.rdoproject.org/docs/baremetal/requirements.html
 --vcpus 4

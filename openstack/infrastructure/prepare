@@ -34,20 +34,22 @@ EQ_CEPH_VERSION=$(eq "$CEPH_VERSION")
 	m '[tripleo] Ensuring infrastructure images are built (~ 5 minutes)'
 	DIB_YUM_REPO_CONF="/etc/yum.repos.d/delorean.repo /etc/yum.repos.d/delorean-$EQ_TRIPLEO_VERSION-testing.repo /etc/yum.repos.d/tripleo-centos-ceph-$EQ_CEPH_VERSION.repo" \
 	DIB_LOCAL_IMAGE="\$HOME/images/centos7.qcow2" \
-	openstack overcloud image build
+	openstack overcloud image build \
+		$(c "$TRIPLEO_VERBOSITY")
 
 	m '[tripleo] Ensuring infrastructure images are uploaded'
-	openstack overcloud image upload
+	openstack overcloud image upload \
+		$(c "$TRIPLEO_VERBOSITY")
 
 EOT
 )"
 
 if [ -n "$CONTROLLER_VIRTUALBMC_PORT" ]; then
-	"$ROOT/hypervisor/create-virtual-machine" openstack-controller 80G
+	"$ROOT/hypervisor/create-virtual-machine" openstack-controller
 	"$ROOT/hypervisor/enable-virtual-machine-virtualbmc" openstack-controller "$CONTROLLER_VIRTUALBMC_PORT"
 fi
 
 if [ -n "$COMPUTE_VIRTUALBMC_PORT" ]; then
-	"$ROOT/hypervisor/create-virtual-machine" openstack-compute 200G
+	"$ROOT/hypervisor/create-virtual-machine" openstack-compute
 	"$ROOT/hypervisor/enable-virtual-machine-virtualbmc" openstack-compute "$COMPUTE_VIRTUALBMC_PORT"
 fi

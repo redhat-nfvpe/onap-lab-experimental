@@ -1,0 +1,50 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+IMAGE_NAME=$1
+DISK_SIZE=$2
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+
+EQ_IMAGE_NAME=$(eq "$IMAGE_NAME")
+C_IMAGE_NAME=$(c "$IMAGE_NAME")
+EQ_DISK_SIZE=$(eq "$DISK_SIZE")
+C_DISK_SIZE=$(c "$DISK_SIZE")
+C_BASE_IMAGE_URL=$(c "$CENTOS7_IMAGE")
+BASE_IMAGE_NAME=/home/hypervisor/libvirt/images/centos7.qcow2
+
+"$ROOT/ssh" hypervisor-root -tt "$(cat <<- EOT
+
+	set -e
+	CYAN='\033[0;36m'
+	RESET='\033[0m'
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
+
+	if [ -f $C_IMAGE_NAME ]; then
+		m "[hypervisor-root] Virtual machine disk image already exists: \"$EQ_IMAGE_NAME\""
+		exit
+	fi
+
+	if [ -f $BASE_IMAGE_NAME ]; then
+		m "[hypervisor-root] Base image already exists: \"$BASE_IMAGE_NAME\""
+	else
+		m "[hypervisor-root] Downloading base image: \"$BASE_IMAGE_NAME\""
+		mkdir --parents \$(dirname $BASE_IMAGE_NAME)
+		wget --output-document=$BASE_IMAGE_NAME $C_BASE_IMAGE_URL
+	fi
+
+	m "[hypervisor-root] Creating virtual machine disk image: \"$EQ_IMAGE_NAME\" ($EQ_DISK_SIZE)"
+	mkdir --parents \$(dirname $C_IMAGE_NAME)
+	cp $BASE_IMAGE_NAME $C_IMAGE_NAME
+	qemu-img resize $C_IMAGE_NAME $C_DISK_SIZE
+
+EOT
+)"
