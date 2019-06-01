@@ -14,8 +14,8 @@ ROOT=$(readlink -f "$HERE/../..")
 
 EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 
-"$ROOT/hypervisor/create-virtual-machine" tripleo
-"$ROOT/hypervisor/enable-virtual-machine-control-plane" tripleo eth0 stack
+"$ROOT/manager/create-virtual-machine" tripleo
+"$ROOT/manager/enable-virtual-machine-control-plane" tripleo eth0 stack
 
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
@@ -81,5 +81,5 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 EOT
 )"
 
-m '[hypervisor-root] Rebooting virtual machine "tripleo"'
-"$ROOT/hypervisor/virsh" reboot tripleo
+m '[manager-root] Rebooting virtual machine "tripleo"'
+"$ROOT/manager/virsh" reboot tripleo

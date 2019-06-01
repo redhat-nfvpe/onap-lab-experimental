@@ -45,11 +45,11 @@ EOT
 )"
 
 if [ -n "$CONTROLLER_VIRTUALBMC_PORT" ]; then
-	"$ROOT/hypervisor/create-virtual-machine" openstack-controller
-	"$ROOT/hypervisor/enable-virtual-machine-virtualbmc" openstack-controller "$CONTROLLER_VIRTUALBMC_PORT"
+	"$ROOT/manager/create-virtual-machine" openstack-controller
+	"$ROOT/manager/enable-virtual-machine-virtualbmc" openstack-controller "$CONTROLLER_VIRTUALBMC_PORT"
 fi
 
 if [ -n "$COMPUTE_VIRTUALBMC_PORT" ]; then
-	"$ROOT/hypervisor/create-virtual-machine" openstack-compute
-	"$ROOT/hypervisor/enable-virtual-machine-virtualbmc" openstack-compute "$COMPUTE_VIRTUALBMC_PORT"
+	"$ROOT/manager/create-virtual-machine" openstack-compute
+	"$ROOT/manager/enable-virtual-machine-virtualbmc" openstack-compute "$COMPUTE_VIRTUALBMC_PORT"
 fi

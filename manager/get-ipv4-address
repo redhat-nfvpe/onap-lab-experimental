@@ -17,7 +17,7 @@ ROOT=$(readlink -f "$HERE/..")
 C_NAME=$(c "$NAME")
 C_INTERFACE=$(c "$INTERFACE")
 
-IP_ADDRESSES=$("$ROOT/ssh" hypervisor-root "$(cat <<- EOT
+IP_ADDRESSES=$("$ROOT/ssh" manager-root "$(cat <<- EOT
 	set -e
 	virsh domifaddr $C_NAME --interface $C_INTERFACE --source agent 2> /dev/null |
 		tail --lines=+3 |

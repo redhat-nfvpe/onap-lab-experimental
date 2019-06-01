@@ -17,7 +17,15 @@ environments:
 # * See: "templates/network/"
 # *      "templates/network/ports/" 
 - "$ENVIRONMENTS/network-isolation.yaml"
-# (without it nodes can't access outside world)
+# (without it nodes can't access outside world?)
 
-# Ceph (used by ComputeHCI role)
+# Ceph-Ansible (used by ComputeHCI role)
+# See: http://docs.ceph.com/ceph-ansible/
+#      https://docs.openstack.org/tripleo-docs/latest/install/advanced_deployment/ceph_config.html
 - "$ENVIRONMENTS/ceph-ansible/ceph-ansible.yaml"
+
+# Improve throughput performance for hyperconverged scenario
+- "$ENVIRONMENTS/tuned-ceph-filestore-hci.yaml"
+
+# Our Ceph configuration
+- "$ENVIRONMENTS/ceph.yaml"

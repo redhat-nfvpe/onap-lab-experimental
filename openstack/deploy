@@ -21,6 +21,8 @@ OVERCLOUD_NETWORKS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/networks.ya
 
 OVERCLOUD_NODES_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/nodes.yaml")
 
+OVERCLOUD_CEPH_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/ceph.yaml")
+
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
 	set -e
@@ -48,15 +50,6 @@ OVERCLOUD_NODES_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/nodes.yaml")
 
 	m '[tripleo] Rendering Heat templates for deployment'
 
-# 	mkdir --parents "\$DEPLOY/templates/"
-# 
-# 	# process-templates.py skips copying a few YAML files 
-# 	rsync --recursive \
-# 		--exclude=*.j2.yaml \
-# 		--include=*.yaml \
-# 		/usr/share/openstack-tripleo-heat-templates/* \
-# 		"\$DEPLOY/templates/"
-
 	/usr/share/openstack-tripleo-heat-templates/tools/process-templates.py \
 		--safe \
 		--base_path /usr/share/openstack-tripleo-heat-templates/ \
@@ -66,6 +59,9 @@ OVERCLOUD_NODES_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/nodes.yaml")
 
 	m '[tripleo] Updating Heat environment for nodes'
 	echo $(c "$OVERCLOUD_NODES_YAML") > "\$DEPLOY/templates/environments/nodes.yaml"
+
+	m '[tripleo] Updating Heat environment for Ceph'
+	echo $(c "$OVERCLOUD_CEPH_YAML") > "\$DEPLOY/templates/environments/ceph.yaml"
 
 	m '[tripleo] Updating Heat environment for container images'
 
@@ -88,8 +84,8 @@ OVERCLOUD_NODES_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/nodes.yaml")
 		  y = yaml.load(f)
 
 		s = y["parameter_defaults"]["ContainerImagePrepare"][0]["set"]
-		s["tag"] = $(q "$TRIPLEO_TAG")
-		s["ceph_tag"] = $(q "$CEPH_TAG")
+		s["tag"] = $(q "$TRIPLEO_CONTAINER_IMAGE_TAG")
+		s["ceph_tag"] = $(q "$CEPH_CONTAINER_IMAGE_TAG")
 
 		with open("\$DEPLOY/templates/environments/container-images.yaml", "w") as f:
 		  yaml.dump(y, f, default_flow_style=False)

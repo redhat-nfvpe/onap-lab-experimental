@@ -18,6 +18,6 @@ ROOT=$(readlink -f "$HERE/../..")
 
 EQ_NAME=$(eq "$NAME")
 
-ADDRESSES=$("$ROOT/hypervisor/tripleo/openstack" server show "$NAME" --format value --column addresses | sed 's/\-/_/g')
+ADDRESSES=$("$ROOT/manager/tripleo/openstack" server show "$NAME" --format value --column addresses | sed 's/\-/_/g')
 eval "$ADDRESSES"
 echo "${!NETWORK}"

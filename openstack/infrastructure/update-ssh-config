@@ -22,7 +22,7 @@ m "[tripleo] Fetching keypair"
 	tripleo:/home/stack/.ssh/id_rsa.pub \
 	"$KEYS_ROOT/tripleo.pub"
 
-for NAME in $("$ROOT/hypervisor/tripleo/openstack" server list --format value --column Name); do
+for NAME in $("$ROOT/manager/tripleo/openstack" server list --format value --column Name); do
 	EQ_NAME=$(eq "$NAME")
 	IP_ADDRESS=$("$HERE/get-ipv4-address" "$NAME" ctlplane)
 	if [ -n "$IP_ADDRESS" ]; then

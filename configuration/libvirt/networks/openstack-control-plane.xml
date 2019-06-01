@@ -3,17 +3,17 @@ OpenStack control plane.
 
 Used by OpenStack manager (TripleO) to control and provision OpenStack nodes.
 
-For this to work, you need to configure bridge "br-os-ctl" on the hypervisor.
+For this to work, you need to configure bridge "br-os-ctl" on the Manager.
 
 There are two main ways to configure this bridge:
 
 1) Dedicated LAN for the OpenStack control plane. In this case all OpenStack nodes will be on this
-   LAN. Your hypervisor will also need a dedicated NIC on this LAN, and it should be added to the
+   LAN. Your Manager will also need a dedicated NIC on this LAN, and it should be added to the
    bridge. Example: "brctl addif br-os-ctl eth1"
 
-2) Single LAN. This is a more complicated scenario. In this case your hypervisor just needs a single
+2) Single LAN. This is a more complicated scenario. In this case your Manager just needs a single
    NIC. However, you will also need to configure your router. First you will need to IP route
-   192.168.24.0/24 to your hypervisor IP address. This will allow the OpenStack nodes to access the
+   192.168.24.0/24 to your Manager IP address. This will allow the OpenStack nodes to access the
    OpenStack manager. Then you'll need to configure your router's DHCP server to forward PXE
    requests to 192.168.24.1, which is the OpenStack manager's TFTP server.
 

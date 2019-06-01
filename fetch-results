@@ -20,7 +20,7 @@ if [ "$1" == '-c' ]; then
 fi
 
 mkdir --parents "$RESULTS/configuration/tripleo/"
-mkdir --parents "$RESULTS/logs/hypervisor/"
+mkdir --parents "$RESULTS/logs/manager/"
 mkdir --parents "$RESULTS/logs/tripleo/"
 
 function r () {
@@ -51,14 +51,14 @@ r \
 	--include=*/ \
 	--include=*.log \
 	--exclude=* \
-	hypervisor:/home/hypervisor/ \
-	hypervisor:/var/log/libvirt/qemu \
-	hypervisor:/var/log/virtualbmc \
-	"$RESULTS/logs/hypervisor/" || true
+	manager:/home/manager/ \
+	manager:/var/log/libvirt/qemu \
+	manager:/var/log/virtualbmc \
+	"$RESULTS/logs/manager/" || true
 
 r \
 	--include=*/ \
-	--exclude=overcloud-config.tar.gz \
+	--exclude=lab-config.tar.gz \
 	--include=*.log \
 	--include=*.tar.gz \
 	--exclude=* \

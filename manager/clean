@@ -12,16 +12,16 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/utils/functions"
 . "$ROOT/utils/trap"
 
-C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE")
+C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE")
 
-ssh "root@$HYPERVISOR_IP_ADDRESS" "$(cat <<- EOT
+ssh "root@$MANAGER_IP_ADDRESS" "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'
 	RESET='\033[0m'
 	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
-	m '[hypervisor-root] Ensuring no libvirt virtual machines'
+	m '[manager-root] Ensuring no libvirt virtual machines'
 	for UUID in \$(virsh list --uuid); do
 		virsh destroy "\$UUID"
 	done
@@ -29,12 +29,12 @@ ssh "root@$HYPERVISOR_IP_ADDRESS" "$(cat <<- EOT
 		virsh undefine "\$UUID" --managed-save --remove-all-storage --delete-snapshots --snapshots-metadata --nvram  
 	done
 
-	m '[hypervisor-root] Ensuring no libvirt volumes'
+	m '[manager-root] Ensuring no libvirt volumes'
 	for NAME in \$(virsh vol-list images 2> /dev/null | tail --lines=+3 | head --line=-1 | cut --fields=2 --delimiter=' '); do
 		virsh vol-delete "\$NAME" --pool images
 	done
 
-	m '[hypervisor-root] Ensuring no libvirt networks'
+	m '[manager-root] Ensuring no libvirt networks'
 	for UUID in \$(virsh -r net-list --all --uuid); do
 		virsh net-destroy "\$UUID"
 	done
@@ -42,16 +42,16 @@ ssh "root@$HYPERVISOR_IP_ADDRESS" "$(cat <<- EOT
 		virsh net-undefine "\$UUID"
 	done
 
-	m '[hypervisor-root] Ensuring no libvirt network bridges'
+	m '[manager-root] Ensuring no libvirt network bridges'
 	rm --force /etc/sysconfig/network-scripts/ifcfg-os-ctlplane
-	rm --force /etc/sysconfig/network-scripts/ifcfg-$C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE
+	rm --force /etc/sysconfig/network-scripts/ifcfg-$C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE
 	systemctl restart network.service
 
 	# TODO: NetworkManager bridge does not work
 	#nmcli connection delete os-ctlplane || true
-	#nmcli connection delete $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE || true
+	#nmcli connection delete $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE || true
 
-	m '[hypervisor-root] Ensuring VirtualBMC service is disabled'
+	m '[manager-root] Ensuring VirtualBMC service is disabled'
  	systemctl stop vbmcd || true
  	systemctl disable vbmcd || true
 	rm --force /etc/systemd/system/vbmcd.service
@@ -63,9 +63,9 @@ ssh "root@$HYPERVISOR_IP_ADDRESS" "$(cat <<- EOT
 		firewall-cmd --reload
 	fi
 
-	m '[hypervisor-root] Ensuring no user "hypervisor"...'
-	if id -u hypervisor > /dev/null; then
-		userdel --force --remove hypervisor
+	m '[manager-root] Ensuring no user "manager"...'
+	if id -u manager > /dev/null; then
+		userdel --force --remove manager
 	fi
 
 EOT

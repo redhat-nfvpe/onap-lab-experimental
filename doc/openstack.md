@@ -3,7 +3,7 @@ Chapter 3: Install OpenStack
 
 As mentioned in chapter 2, OpenStack is modular such that each participating machine may have a
 different role. For the purpose of this lab our "compute" role will have its own dedicated hardware,
-while the "controller" role will live on the Hypervisor as a virtual machine.
+while the "controller" role will live on the Manager as a virtual machine.
 
 > Note that it is technically possible for the "compute" role to also be a virtual machine, such
 that our entire OpenStack deployment would run on a single physical machine. Though it would work,
@@ -38,7 +38,7 @@ repository is rather slow and does not offer an advantage over building them loc
 
 After it's done we can see that the images have been uploaded into TripleO:
 
-	hypervisor/tripleo/openstack image list
+	manager/tripleo/openstack image list
 
 We will also find some more files under our `workspace/` directory:
 
@@ -48,14 +48,14 @@ We will also find some more files under our `workspace/` directory:
 Logs and configuration files have been fetched to the `workspace/results/` directory. Some useful
 ones are from:
 
-* Hypervisor: `/var/log/libvirt/qemu/openstack-controller.log`
-* Hypervisor: `/var/log/virtualbmc/virtualbmc.log`
+* Manager: `/var/log/libvirt/qemu/openstack-controller.log`
+* Manager: `/var/log/virtualbmc/virtualbmc.log`
 
-In the Hypervisor's `hypervisor` user's home directory:
+In the Manager's `manager` user's home directory:
 
-* `/home/hypervisor/keys/stack@openstack-controller` and
+* `/home/manager/keys/stack@openstack-controller` and
   `/home/stack/stack@openstack-controller.pub`
-* `/home/hypervisor/libvirt/images/openstack-controller.qcow2` is our virtual machine drive image
+* `/home/manager/libvirt/images/openstack-controller.qcow2` is our virtual machine drive image
 
 In TripleO's `stack` user's home directory:
 
@@ -74,9 +74,9 @@ of the infrastructure due to its reliance on Ironic. VirtualBMC will thus provid
 machine so that it could be remote controlled like a physical machine.
 
 We can test this using [ipmitool](https://github.com/ipmitool/ipmitool), which we installed for this
-purpose on the Hypervisor in the previous chapter. Use this shortcut:
+purpose on the Manager in the previous chapter. Use this shortcut:
 
-    hypervisor/ipmitool 6230 power status
+    manager/ipmitool 6230 power status
 
 The first argument is the IPMI port: each virtual machine supported by VirtualBMC gets its own
 dedicated port. 6230 is the port we configured for `openstack-controller`.
@@ -98,19 +98,19 @@ During introspection each node is provisioned a minimal operating system image v
 prepared in the previous step), which boots up and reports back to TripleO with a detailed profile
 of its hardware. TripleO will store this profile in its database.
 
-This can take a while, 15 minutes and more. How long exactly depends on our hardware.
+This can take a while, 15 minutes and more. How long exactly depends on our infrastructure nodes.
 
 While it runs it could be useful to see the changing state of the infrastructure nodes. We can
 set up a `watch` like so:
 
-    watch hypervisor/tripleo/openstack baremetal node list
+    watch manager/tripleo/openstack baremetal node list
 
 We should see the nodes powering on, then changing their provisioning state from "enroll" to
 "verifying" to "manageable". (If we set `clean_nodes` to true in `undercloud.conf` then we will
 also see "cleaning" and "clean wait".) When introspection finishes successfully for all nodes they
 will be set at once to "available".
 
-hypervisor/tripleo/openstack overcloud profiles list
+manager/tripleo/openstack overcloud profiles list
 
 > TODO: machines without IPMI. "pm_type: manual-management". need monitor-keyboard-mouse.
 
@@ -157,15 +157,15 @@ internally uses [Ansible](https://www.ansible.com/).
 Note that OpenStack container images, including those for TripleO, are provided by the
 [Kolla project](https://docs.openstack.org/kolla/latest/).
 
-While it runs it could be useful to follow Mistral's Ansible log:
+Deploying Ceph is handled by yet another project,
+[Ceph-Ansible](http://docs.ceph.com/ceph-ansible/).
 
-    ./ssh tripleo
-    tail -F /var/lib/mistral/overcloud/ansible.log
+All off this takes a while. Expect TODO 
 
 As in the previous step, it could also be useful to see the changing state of the infrastructure
 nodes. We can set up a `watch` like so:
 
-    watch hypervisor/tripleo/openstack baremetal node list
+    watch manager/tripleo/openstack baremetal node list
 
 We should see the nodes getting an "Instance UUID" and then changing their provisioning
 state from "available" to "deploying". They should then power on and change to "wait call-back".
@@ -175,7 +175,7 @@ fully installed.
 At this point the overcloud servers will also be up. We can simultaneously set up yet another watch
 for them:
 
-    watch hypervisor/tripleo/openstack server list
+    watch manager/tripleo/openstack server list
 
 Their initial status will be "BUILD" and eventually switch to "ACTIVE" and they will receive network
 IP addresses.
@@ -199,13 +199,18 @@ After deployment is done we will find some useful files in the `tripleo` virtual
 Logs and configuration files have been fetched to the `workspace/results/` directory. Some useful
 ones are from:
 
+`/var/lib/mistral/lab/ansible.log`
+
+`/var/lib/mistral/lab/ceph-ansible/ceph_ansible_command.log`
+
 * TripleO: `/var/log/containers/ironic/deploy/` contains `tar.gz` files for each infrastructure node
   workflow, which internally contain the `journal` of the installation process
+
 
 TODO tail this file:
 /var/lib/mistral/overcloud/ansible.log
 
-hypervisor/tripleo/openstack baremetal node undeploy compute-0
+manager/tripleo/openstack baremetal node undeploy compute-0
 
 openstack/openstack user list
 
@@ -223,7 +228,7 @@ sudo ip r add 10.0.0.0/24 dev br-ctlplane
 controller:
 sudo ovs-vsctl remove port vlan10 tag 10
 
-hypervisor:
+manager:
 sudo ip a add 10.0.0.69/24 dev os-ctlplane
 
 
@@ -234,6 +239,25 @@ sudo ovs-vsctl add-port br-ctlplane vlan10 tag=10 -- set interface vlan10 type=i
 sudo ip l set dev vlan10 up
 ...
 sudo ovs-vsctl del-port vlan10
+
+
+in `/var/lib/mistral/lab/ceph-ansible/ceph_ansible_command.log`
+podman pull failed
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -292,7 +316,7 @@ Accessing the Cloud
 -------------------
 
 Access details for the `admin` user on the `admin` proect were added to our InfraRed workspace on
-the Hypervisor. We provide `openstack` as a shortcut script. Example:
+the Manager. We provide `openstack` as a shortcut script. Example:
 
     ./openstack network list
 

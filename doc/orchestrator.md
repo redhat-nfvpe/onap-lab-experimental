@@ -14,12 +14,12 @@ sshpass. To install it on Fedora:
 
     sudo dnf install sshpass
 
-Alternatively, we *can* run orchestration on the Hypervisor machine itself, in which case the two
-machine roles would be combined into one physical machine and the Hypervisor address would be
+Alternatively, we *can* run orchestration on the Manager machine itself, in which case the two
+machine roles would be combined into one physical machine and the Manager address would be
 `localhost`.
 
 
 Next
 ----
 
-[Continue to Chapter 2: Prepare the Hypervisor](hypervisor.md)
+[Continue to Chapter 2: Prepare the Manager](manager.md)

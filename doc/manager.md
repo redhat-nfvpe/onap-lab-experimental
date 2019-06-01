@@ -1,5 +1,5 @@
-Chapter 2: Prepare the Hypervisor
-=================================
+Chapter 2: Prepare the Manager
+==============================
 
 In production OpenStack environments there's no single controller, instead there would be many
 controllers of various kinds running on dedicated hardware with redundancy. For our lab we will
@@ -7,7 +7,7 @@ converge all these roles in a single machine. However, it's important to underst
 machine will be fulfilling several roles. In order to keep these roles isolated we will be running
 each role in a virtual machine, which will also make it much easier to tear down and rebuild roles. 
 
-Our Hypervisor will need two NICs, with one NIC on our work LAN and one NIC on a dedicated OpenStack
+Our Manager will need two NICs, with one NIC on our work LAN and one NIC on a dedicated OpenStack
 control plane LAN.
 
 /diagram/
@@ -23,22 +23,22 @@ install (with no desktop environment) is good enough. We will need:
 * Its IP address on the work LAN 
 
 Our scripts in the next steps will be making changes to this machine. They do the best they can to
-isolate our work: most of it will be under the user "hypervisor", and most of what they run will be
+isolate our work: most of it will be under the user "manager", and most of what they run will be
 inside virtual machines, which we will set up with libvirt.
 
 However, some work will have to be done in root: installing some utility packages and setting up
 custom network bridges as well as the virtual machines themselves.
 
 
-Step 2: Prepare the Hypervisor
+Step 2: Prepare the Manager
 ------------------------------
 
-Edit `configuration/environment` and set `HYPERVISOR_IP_ADDRESS` to point to our Hypervisor. We can
-use a host name. Then run:
+Edit `configuration/environment` and set `MANAGER_IP_ADDRESS` to point to our Manager. We can use
+a host name. Then run:
 
-    hypervisor/prepare
+    manager/prepare
 
-We will be prompted only once for the root password for the Hypervisor, which we will use to
+We will be prompted only once for the root password for the Manager, which we will use to
 authorize a keypair for ssh.
 
 What this script does:
@@ -50,49 +50,49 @@ What this script does:
 * Sets up network bridges to be used by our libvirt virtual machines, configured by
   `configuration/libvirt/networks/virtual-machine-control-plane.xml` and
   `configuration/libvirt/networks/openstack-control-plane.xml`
-* Creates and configures the "hypervisor" user
+* Creates and configures the "manager" user
 
 After it's done we will find some files under our `workspace/` directory:
 
-* `workspace/keys/root@hypervisor` and `workspace/keys/root@hypervisor.pub`
-* `workspace/keys/hypervisor@hypervisor` and `workspace/keys/hypervisor@hypervisor.pub`
-* `workspace/passwords/hypervisor@hypervisor`
-* `workspace/ssh.config` is updated for `hypervisor-root` and `hypervisor`
+* `workspace/keys/root@manager` and `workspace/keys/root@manager.pub`
+* `workspace/keys/manager@manager` and `workspace/keys/manager@manager.pub`
+* `workspace/passwords/manager@manager`
+* `workspace/ssh.config` is updated for `manager-root` and `manager`
 
 Our scripts will later on add more keys and passwords and keep `workspace/ssh.config` updated.
 That `ssh.config` file is especially useful: it configures custom hosts that we can use it to ssh
-from our orchestrator to our lab machines, including virtual machines running inside the Hypervisor
+from our orchestrator to our lab machines, including virtual machines running inside the Manager
 and OpenStack infrastructure nodes. The `./ssh` and `./rsync` shortcuts use this config. Examples:
 
-    ./ssh hypervisor
-    ./ssh hypervisor-root "ls -al"
-    ./rsync myfile.txt hypervisor:/text/
+    ./ssh manager
+    ./ssh manager-root "ls -al"
+    ./rsync myfile.txt manager:/text/
 
 Now that we have libvirt installed we can also use its CLI,
 [virsh](https://libvirt.org/virshcmdref.html), via our shortcut: 
 
-    hypervisor/virsh list
+    manager/virsh list
 
 Because we haven't created any virtual machines yet, the above should result in an empty table. But
 this will show results:
 
-    hypervisor/virsh net-list
+    manager/virsh net-list
 
 You should see the two networks we created in this step. 
 
 (Note that if we have libvirt installed on our orchestrator it would also be possible to connect
-[remotely](https://libvirt.org/remote.html) to the Hypervisor's instance via a "qemu+ssh:" or
+[remotely](https://libvirt.org/remote.html) to the Manager's instance via a "qemu+ssh:" or
 similar URI.)
 
 
 Step 3: Prepare TripleO
 -----------------------
 
-Now that our Hypervisor is set up for hosting virtual machines we will prepare a virtual machine
+Now that our Manager is set up for hosting virtual machines we will prepare a virtual machine
 for installation of our OpenStack infrastructure manager,
 [TripleO](https://docs.openstack.org/tripleo-docs/latest/):
 
-    hypervisor/tripleo/prepare
+    manager/tripleo/prepare
 
 What this script does:
 
@@ -121,19 +121,19 @@ After it's done we will find some more files under our `workspace/` directory:
 Logs and configuration files have been fetched to the `workspace/results/` directory. Some useful
 ones are from:
 
-* Hypervisor: `/var/log/libvirt/qemu/tripleo.log`
+* Manager: `/var/log/libvirt/qemu/tripleo.log`
 
-In the Hypervisor's `hypervisor` user's home directory:
+In the Manager's `manager` user's home directory:
 
-* `/home/hypervisor/keys/stack@tripleo` and `/home/hypervisor/stack@tripleo.pub`
-* `/home/hypervisor/libvirt/images/tripleo.qcow2` is our virtual machine drive image
+* `/home/manager/keys/stack@tripleo` and `/home/manager/stack@tripleo.pub`
+* `/home/manager/libvirt/images/tripleo.qcow2` is our virtual machine drive image
 
 We'll wait a few seconds for the `tripleo` virtual machine to start up and then we can connect to
 it:
 
     ./ssh tripleo
 
-Note that if you reboot the Hypervisor this virtual machine will also be rebooted.
+Note that if you reboot the Manager this virtual machine will also be rebooted.
 
 > You might be wondering why our OpenStack infrastructure manager is called "TripleO". It's actually
 named after the pronunciation of "OoO" which is an acronym for "OpenStack on OpenStack". Wait, what?
@@ -174,7 +174,7 @@ Step 4: Deploy TripleO
 Now that we have the `tripleo` virtual machine ready with the TripleO client we can use it to
 deploy TripleO:
 
-    hypervisor/tripleo/install
+    manager/tripleo/install
 
 This step is almost entirely handled by the `openstack undercloud install` command. It is configured
 by `configuration/tripleo/undercloud.conf`. Internally it has several steps and takes a while to
@@ -209,11 +209,14 @@ In TripleO's `stack` user's home directory:
 We can now access the undercloud's `openstack` command via a shortcut (that uses the `stackrc`
 mentioned above), e.g.:
 
-    hypervisor/tripleo/openstack network list
+    manager/tripleo/openstack network list
 
 The `openstack` command is mostly documented
-[here](https://docs.openstack.org/python-openstackclient/stein/cli/), though note that it itself
-extensible and indeed TripleO adds extra commands to manage the undercloud and the overcloud.
+[here](https://docs.openstack.org/python-openstackclient/stein/cli/), though note that it is
+extensible. Ironic adds
+[these commands](https://docs.openstack.org/python-ironicclient/latest/cli/osc_plugin_cli.html)
+and TripleO adds commands to deploy itself (`undercloud install`) and OpenStack
+(`overcloud deploy`, see the next chapter).
 
 We can directly access the individual service containers on any machine via the `./podman`,
 `./podman-bash`, and `./podman-restart` shortcuts. Run any of them without arguments to get a list
@@ -252,16 +255,16 @@ How to Reset
 ------------
 
 You can start from scratch if you experience any failures in the above or later steps. This script
-will delete all the virtual resources from the Hypervisor:
+will delete all the virtual resources from the Manager:
 
-    hypervisor/clean
+    manager/clean
 
 You may need to run it several times until it completes successfully because some resources might
 be in an indeterminate state when you run it.
 
 You can also combine `clean` and `prepare`:
 
-    hypervisor/prepare -c
+    manager/prepare -c
 
 
 Next

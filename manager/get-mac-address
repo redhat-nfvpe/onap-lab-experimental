@@ -18,7 +18,7 @@ ROOT=$(readlink -f "$HERE/..")
 
 C_NAME=$(c "$NAME")
 
-MAC_ADDRESSES=$("$ROOT/ssh" hypervisor-root "$(cat <<- EOT
+MAC_ADDRESSES=$("$ROOT/ssh" manager-root "$(cat <<- EOT
 	set -e
 	virsh domiflist $C_NAME 2> /dev/null |
 		tail --lines=+3 |

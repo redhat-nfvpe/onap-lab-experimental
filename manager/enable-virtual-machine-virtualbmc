@@ -20,14 +20,14 @@ C_PORT=$(c "$PORT")
 C_VIRTUALBMC_USERNAME=$(c "$VIRTUALBMC_USERNAME")
 C_VIRTUALBMC_PASSWORD=$(c "$VIRTUALBMC_PASSWORD")
 
-"$ROOT/ssh" hypervisor-root "$(cat <<- EOT
+"$ROOT/ssh" manager-root "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'
 	RESET='\033[0m'
 	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
-	m "[hypervisor-root] Ensuring VirtualBMC configured for virtual machine \"$EQ_NAME\""
+	m "[manager-root] Ensuring VirtualBMC configured for virtual machine \"$EQ_NAME\""
 
 	vbmc delete $C_NAME || true
 

@@ -13,11 +13,11 @@ ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/utils/trap-fetch-results"
 
 if [ -n "$CONTROLLER_VIRTUALBMC_PORT" ]; then
-	CONTROLLER_MAC_ADDRESS=$("$ROOT/hypervisor/get-mac-address" openstack-controller os_ctlplane)
+	CONTROLLER_MAC_ADDRESS=$("$ROOT/manager/get-mac-address" openstack-controller os_ctlplane)
 fi
 
 if [ -n "$COMPUTE_VIRTUALBMC_PORT" ]; then
-	COMPUTE_MAC_ADDRESS=$("$ROOT/hypervisor/get-mac-address" openstack-compute os_ctlplane)
+	COMPUTE_MAC_ADDRESS=$("$ROOT/manager/get-mac-address" openstack-compute os_ctlplane)
 fi
 
 INFRASTRUCTURE_INVENTORY_YAML=$(cat "$ROOT/configuration/tripleo/infrastructure-inventory.yaml" |

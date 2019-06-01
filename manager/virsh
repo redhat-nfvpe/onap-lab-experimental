@@ -6,12 +6,9 @@ if [ "$EUID" == 0 ]; then
 	exit 1
 fi
 
-PORT=${1:-6230}
-
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
-. "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
 
-"$ROOT/ssh" hypervisor \
-"ipmitool -I lanplus -U admin -P password -H 192.168.122.1 -p $(c "$PORT") $(c "${@:2}")"
+"$ROOT/ssh" manager-root \
+"virsh $(c "$@")"

@@ -32,7 +32,7 @@ CLOUD_CONFIG=$(cat "$ROOT/configuration/libvirt/domains/$NAME/cloud-config.yaml"
 	KEY=$(eq "$KEY") \
 	envsubst)
 
-"$ROOT/ssh" hypervisor-root "$(cat <<- EOT
+"$ROOT/ssh" manager-root "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'
@@ -40,11 +40,11 @@ CLOUD_CONFIG=$(cat "$ROOT/configuration/libvirt/domains/$NAME/cloud-config.yaml"
 	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
 	if [ -f $C_IMAGE_NAME ]; then
-		m "[hypervisor-root] Cloud-init configuration disk image already exists: \"$EQ_IMAGE_NAME\""
+		m "[manager-root] Cloud-init configuration disk image already exists: \"$EQ_IMAGE_NAME\""
 		exit
 	fi
 
-	m "[hypervisor-root] Creating cloud-init configuration disk image: \"$EQ_IMAGE_NAME\""
+	m "[manager-root] Creating cloud-init configuration disk image: \"$EQ_IMAGE_NAME\""
 	CONFIG="${EQ_IMAGE_NAME}.cloud-config.yaml"
 	echo $(c "$CLOUD_CONFIG") > "\$CONFIG"
 	cloud-localds $C_IMAGE_NAME "\$CONFIG"

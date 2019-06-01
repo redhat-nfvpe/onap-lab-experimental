@@ -7,11 +7,11 @@ PASSWORDS_ROOT="$WORKSPACE_ROOT/passwords"
 KEYS_ROOT="$WORKSPACE_ROOT/keys"
 
 #
-# Hypervisor
+# Manager
 #
 
-HYPERVISOR_IP_ADDRESS=lab1
-HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=enp1s0
+MANAGER_IP_ADDRESS=lab1
+MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=enp1s0
 
 VIRTUALBMC_VERSION=1.5.0
 VIRTUALBMC_USERNAME=admin
@@ -23,7 +23,7 @@ PYTHON_OPENSTACKCLIENT_VERSION=3.18.0
 #
 # Operating system images
 #
-# For OpenStack servers, OpenStack infrastructure nodes, and hypervisor VMs 
+# For OpenStack servers, OpenStack infrastructure nodes, and Manager VMs 
 # 
 
 CENTOS7_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1901.qcow2
@@ -41,11 +41,17 @@ TRIPLEO_VERSION=stein
 # You do no have a choice here: you must use the Ceph version packaged for the TripleO version
 CEPH_VERSION=nautilus
 
-# See: https://hub.docker.com/r/tripleostein/centos-binary-nova-api/tags
-TRIPLEO_TAG=e7e5a7fc1b915f285751418d2ad3f157cc2bd287_24ce03e4
+# See e.g.: https://hub.docker.com/r/tripleostein/centos-binary-nova-api/tags
+# Problem: It would be best to lock all container images to a specific tag, but unfortunately at
+# a given time all images might not have that tag (yet?). A related issue is that if pulling the
+# image fails ("error pulling image" in the logs) then the task as a whole would not immediately
+# fail -- instead you would just not have services running on the node.
+TRIPLEO_CONTAINER_IMAGE_TAG=current-tripleo-rdo
+#TRIPLEO_CONTAINER_IMAGE_TAG=d45bbddf5063604b241bc8f14e39d90cae03de8b_24ce03e4
 
-# See: https://hub.docker.com/r/ceph/daemon/tags or "skopeo inspect docker://docker.io/ceph/daemon"
-CEPH_TAG="v4.0.0-stable-4.0-$CEPH_VERSION-centos-7-x86_64"
+# See: https://hub.docker.com/r/ceph/daemon/tags
+# Or run: skopeo inspect docker://docker.io/ceph/daemon
+CEPH_CONTAINER_IMAGE_TAG="v4.0.0-stable-4.0-$CEPH_VERSION-centos-7-x86_64"
 
 TRIPLEO_VERBOSITY=-v
 

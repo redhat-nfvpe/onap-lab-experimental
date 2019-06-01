@@ -1,6 +1,6 @@
 # Request infrastructure nodes per each OpenStack role.
 
-# This is Heat template environment.
+# This is a Heat template environment.
 
 # Infrastructure nodes are assigned to roles via an algorithm that iterates available
 # infrastructure nodes and checks if they meet the requirements for the role. The requirements are
@@ -13,9 +13,9 @@
 # set the "current profile" for the infrastructure node to the matched profile.
 
 # For convenience, the default flavors are preconfigured to require a profile tag of the same name,
-# e.g. flavor "compute" requires the profile tag "compute". The exception is flavor "baremetal",
-# which doesn't require any profile tag. Specifying that flavor for a role here means that any
-# infrastructure node (that meets the minimum hardware capabilities) could be matched.
+# e.g. flavor "compute" requires the profile tag "compute". The exception is flavor "baremetal"
+# (the default), which doesn't require any profile tag. Specifying that flavor for a role here means
+# that any infrastructure node (that meets the minimum hardware capabilities) could be matched.
 
 # Thus, if you want an infrastructure node to be assignable to only one role, then you must 1) give
 # it a profile tag, 2) make sure there's a flavor that requires that tag, and 3) select that flavor
@@ -36,13 +36,6 @@ parameter_defaults:
   OvercloudControlFlavor: control
 
   # HCI = Hyper-Converged Infrastructure
-  # Fully enabled via the "ceph-ansible/ceph-ansible.yaml"
+  # Needs the "ceph-ansible/ceph-ansible.yaml" environment in order to fully enable
   ComputeHCICount: 1
   OvercloudComputeHCIFlavor: compute
-
-  # By default ceph-ansible will attempt to use drive "/dev/vdb" for Ceph, but we can override this
-  # See: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/deploying_an_overcloud_with_containerized_red_hat_ceph/configuring_ceph_storage_cluster_settings#Mapping_the_Ceph_Storage_Node_Disk_Layout
-  #CephAnsibleDisksConfig:
-  #  osd_scenario: collocated
-  #  devices:
-  #  - /dev/vda

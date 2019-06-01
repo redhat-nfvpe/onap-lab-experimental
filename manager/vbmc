@@ -8,7 +8,8 @@ fi
 
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
+. "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
 
-"$ROOT/ssh" hypervisor-root \
-"virsh $(c "$@")"
+"$ROOT/ssh" manager \
+"vbmc $(c "$@")"

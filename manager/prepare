@@ -16,33 +16,33 @@ if [ "$1" == '-c' ]; then
 	"$HERE/clean"
 fi
 
-EQ_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=$(eq "$HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE")
-C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE")
+EQ_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=$(eq "$MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE")
+C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE")
 
-m '[hypervisor-root] Ensuring keypair authorization for user "root" (you will be prompted for password if not)'
-"$ROOT/utils/ensure-ssh-key-authorized" root@hypervisor \
-ssh "root@$HYPERVISOR_IP_ADDRESS"
+m '[manager-root] Ensuring keypair authorization for user "root" (you will be prompted for password if not)'
+"$ROOT/utils/ensure-ssh-key-authorized" root@manager \
+ssh "root@$MANAGER_IP_ADDRESS"
 
-"$ROOT/utils/ensure-ssh-config" hypervisor-root "$HYPERVISOR_IP_ADDRESS" root root@hypervisor
+"$ROOT/utils/ensure-ssh-config" manager-root "$MANAGER_IP_ADDRESS" root root@manager
 
-PASSWORD=$("$ROOT/utils/get-password" hypervisor@hypervisor)
+PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 
 "$ROOT/rsync" --recursive \
 	--rsync-path='mkdir --parents libvirt/ && rsync' \
 	"$ROOT/configuration/libvirt/networks" \
-	hypervisor-root:libvirt/
+	manager-root:libvirt/
 
-"$ROOT/ssh" hypervisor-root "$(cat <<- EOT
+"$ROOT/ssh" manager-root "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'
 	RESET='\033[0m'
 	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
-	m "[hypervisor-root] Ensuring timezone is \"$TIMEZONE\""
+	m "[manager-root] Ensuring timezone is \"$TIMEZONE\""
 	timedatectl set-timezone $(c "$TIMEZONE")
 
-	m '[hypervisor-root] Ensuring libvirt and related packages are installed'
+	m '[manager-root] Ensuring libvirt and related packages are installed'
 	# Note: "centos-release-qemu-ev" provides a repository that will give us a newer version of
 	# qemu, which is required to avoid the "CPU feature arat not found" error with OpenStack images
 	# running in our virtual machines
@@ -54,9 +54,9 @@ PASSWORD=$("$ROOT/utils/get-password" hypervisor@hypervisor)
 		virt-install cloud-utils ipmitool \
 		python36-pip python36-devel libvirt-devel openssl-devel gcc
 
-	m '[hypervisor-root] Ensuring VirtualBMC service is installed and configured'
+	m '[manager-root] Ensuring VirtualBMC service is installed and configured'
 
-	# Unfortunately we must run vbmcd as root. It cannot run on the "hypervisor" user because
+	# Unfortunately we must run vbmcd as root. It cannot run on the "manager" user because
 	# SELinux won't let it delegate to "/usr/libexec/qemu-kvm" from within systemd. However, it is
 	# possible for root to access any user's libvirt session via their socket. The libvirt
 	# connection string would be:
@@ -66,7 +66,7 @@ PASSWORD=$("$ROOT/utils/get-password" hypervisor@hypervisor)
 	# See: https://libvirt.org/remote.html
 	#
 	# (Side note: CentOS purposely disables systemd user units, so we would need a root systemd unit
-	# even if we use "[Service] User=hypervisor".)
+	# even if we use "[Service] User=manager".)
 
 	# VirtualBMC requirements: python36-devel libvirt-devel openssl-devel gcc
 	pip3 install virtualbmc==$(c "$VIRTUALBMC_VERSION")
@@ -116,7 +116,7 @@ PASSWORD=$("$ROOT/utils/get-password" hypervisor@hypervisor)
 	 	systemctl enable vbmcd
 	 fi
 
-	m '[hypervisor-root] Ensuring libvirt networks and bridges are configured'
+	m '[manager-root] Ensuring libvirt networks and bridges are configured'
 
 	if [ ! -f /etc/sysconfig/network-scripts/ifcfg-os-ctlplane ]; then
 		cat > /etc/sysconfig/network-scripts/ifcfg-os-ctlplane <<- _EOT
@@ -127,8 +127,8 @@ PASSWORD=$("$ROOT/utils/get-password" hypervisor@hypervisor)
 			DELAY=0
 		_EOT
 
-		cat > /etc/sysconfig/network-scripts/ifcfg-$C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE <<- _EOT
-			DEVICE=$EQ_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE
+		cat > /etc/sysconfig/network-scripts/ifcfg-$C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE <<- _EOT
+			DEVICE=$EQ_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE
 			TYPE=Ethernet
 			BRIDGE=os-ctlplane
 			ONBOOT=yes
@@ -141,21 +141,21 @@ PASSWORD=$("$ROOT/utils/get-password" hypervisor@hypervisor)
 
 	# TODO: brctl works but won't survive reboots
 	#brctl addbr os-ctlplane || true
-	#brctl addif os-ctlplane $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE || true
+	#brctl addif os-ctlplane $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE || true
 	#brctl stp os-ctlplane on
 	#ip link set os-ctlplane up
 
 	# TODO: NetworkManager bridge does not work
 	#nmcli connection delete os-ctlplane || true
-	#nmcli connection delete $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE || true
+	#nmcli connection delete $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE || true
 	#nmcli connection add \
 	#	con-name os-ctlplane \
 	#	type bridge \
 	#	ifname os-ctlplane
 	#nmcli connection add \
-	#	con-name $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE \
+	#	con-name $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE \
 	#	type ethernet \
-	#	ifname $C_HYPERVISOR_OPENSTACK_CONTROL_PLANE_INTERFACE \
+	#	ifname $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE \
 	#	master os-ctlplane
 
 	function kvm_enable_bridge () {
@@ -178,37 +178,37 @@ PASSWORD=$("$ROOT/utils/get-password" hypervisor@hypervisor)
 	kvm_enable_bridge os-ctlplane
 	virsh_enable_network openstack-control-plane
 
-	m "[hypervisor-root] Ensuring user \"hypervisor\" exists and is configured"
+	m "[manager-root] Ensuring user \"manager\" exists and is configured"
 
-	if ! id --user hypervisor > /dev/null; then
-		useradd hypervisor
+	if ! id --user manager > /dev/null; then
+		useradd manager
 	fi
 
-	echo $(c "$PASSWORD") | passwd --stdin hypervisor
+	echo $(c "$PASSWORD") | passwd --stdin manager
 
-	echo "hypervisor ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/hypervisor
+	echo "manager ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/manager
 
 	# User "qemu" will need access to our libvirt images
-	chmod a+rx /home/hypervisor/
+	chmod a+rx /home/manager/
 
 EOT
 )"
 
-m "[hypervisor] Ensuring keypair authorization for user \"hypervisor\""
+m "[manager] Ensuring keypair authorization for user \"manager\""
 
-"$ROOT/utils/ensure-ssh-key-authorized" hypervisor@hypervisor \
-sshpass -p "$PASSWORD" ssh "hypervisor@$HYPERVISOR_IP_ADDRESS"
+"$ROOT/utils/ensure-ssh-key-authorized" manager@manager \
+sshpass -p "$PASSWORD" ssh "manager@$MANAGER_IP_ADDRESS"
 
-"$ROOT/utils/ensure-ssh-config" hypervisor "$HYPERVISOR_IP_ADDRESS" hypervisor hypervisor@hypervisor
+"$ROOT/utils/ensure-ssh-config" manager "$MANAGER_IP_ADDRESS" manager manager@manager
 
-"$ROOT/ssh" hypervisor "$(cat <<- EOT
+"$ROOT/ssh" manager "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'
 	RESET='\033[0m'
 	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
-	m '[hypervisor] Ensuring OpenStack client is installed'
+	m '[manager] Ensuring OpenStack client is installed'
 	pip3 install --user --upgrade \
 		python-openstackclient==$(c "$PYTHON_OPENSTACKCLIENT_VERSION")
 

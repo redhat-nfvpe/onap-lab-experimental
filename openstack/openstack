@@ -13,7 +13,7 @@ ROOT=$(readlink -f "$HERE/..")
 # For quality of life we will make sure that the "openstack" command (Cliff) will always limit its
 # output width to the width of our terminal ("CLIFF_FIT_WIDTH=1" doesn't seem to work)
 
-"$ROOT/ssh" hypervisor \
-". \"\$HOME/openstackrc\" 
+"$ROOT/ssh" manager \
+". \"\$HOME/labrc\" 
 CLIFF_MAX_TERM_WIDTH=\"$(tput cols)\" \
 \"\$HOME/.local/bin/openstack\" $(c "$@")"

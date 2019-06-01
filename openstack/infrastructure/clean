@@ -32,20 +32,20 @@ ROOT=$(readlink -f "$HERE/../..")
 EOT
 )"
 
-"$ROOT/ssh" hypervisor-root "$(cat <<- EOT
+"$ROOT/ssh" manager-root "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'
 	RESET='\033[0m'
 	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
-	m '[hypervisor-root] Ensuring no virtual machines for infrastructure nodes'
+	m '[manager-root] Ensuring no virtual machines for infrastructure nodes'
 
 	function d () {
-		m "[hypervisor-root] Deleting virtual machine \"\$1\""
+		m "[manager-root] Deleting virtual machine \"\$1\""
 		virsh destroy "\$1" || true
 		virsh undefine "\$1" || true
-		rm --force "/home/hypervisor/libvirt/images/\$1.qcow2"
+		rm --force "/home/manager/libvirt/images/\$1.qcow2"
 	}
 
 	d openstack-controller

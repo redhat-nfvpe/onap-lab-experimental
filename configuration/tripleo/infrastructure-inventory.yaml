@@ -22,7 +22,7 @@
 
 # TripleO uses Ironic to manage *all* infrastructure nodes, both physical and virtual machines.
 # It does not support libvirt directly. To allow it to manage our virtual machines we've installed
-# VirtualBMC on the hypervisor to provide IPMI on a single IP address. Each virtual machine gets
+# VirtualBMC on the Manager to provide IPMI on a single IP address. Each virtual machine gets
 # its own assigned port on that IP address.
 
 # Physical machines without IMPI
@@ -59,7 +59,7 @@
 nodes:
 
 - name: controller
-  _comment: virtual machine on hypervisor
+  _comment: virtual machine in Manager
   capabilities: profile:control,boot_option:local
   mac: [ "$CONTROLLER_MAC_ADDRESS" ]
   pm_type: ipmi
@@ -69,7 +69,7 @@ nodes:
   pm_password: "$VIRTUALBMC_PASSWORD"
 
 - name: compute
-  _comment: virtual machine on hypervisor
+  _comment: virtual machine in Manager
   capabilities: profile:compute,boot_option:local
   mac: [ "$COMPUTE_MAC_ADDRESS" ]
   pm_type: ipmi

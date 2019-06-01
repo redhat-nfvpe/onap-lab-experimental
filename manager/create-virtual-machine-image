@@ -19,7 +19,7 @@ C_IMAGE_NAME=$(c "$IMAGE_NAME")
 EQ_DISK_SIZE=$(eq "$DISK_SIZE")
 C_DISK_SIZE=$(c "$DISK_SIZE")
 
-"$ROOT/ssh" hypervisor-root "$(cat <<- EOT
+"$ROOT/ssh" manager-root "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'
@@ -27,11 +27,11 @@ C_DISK_SIZE=$(c "$DISK_SIZE")
 	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
 	if [ -f $C_IMAGE_NAME ]; then
-		m "[hypervisor-root] Virtual machine disk image already exists: \"$EQ_IMAGE_NAME\""
+		m "[manager-root] Virtual machine disk image already exists: \"$EQ_IMAGE_NAME\""
 		exit
 	fi
 
-	m "[hypervisor-root] Creating virtual machine disk image: \"$EQ_IMAGE_NAME\" ($EQ_DISK_SIZE)"
+	m "[manager-root] Creating virtual machine disk image: \"$EQ_IMAGE_NAME\" ($EQ_DISK_SIZE)"
 	mkdir --parents \$(dirname $C_IMAGE_NAME)
 	qemu-img create $C_IMAGE_NAME $C_DISK_SIZE
 
