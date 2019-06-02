@@ -1,0 +1,22 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$HERE
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+. "$ROOT/utils/trap"
+
+"$ROOT/manager/prepare" -c
+"$ROOT/manager/tripleo/prepare"
+"$ROOT/manager/tripleo/deploy"
+"$ROOT/openstack/infrastructure/prepare"
+"$ROOT/openstack/infrastructure/introspect"
+"$ROOT/openstack/deploy"
+"$ROOT/openstack/connect"
+"$ROOT/workloads/heat/deploy"

@@ -1,6 +1,0 @@
-heat_template_version: stein
-parameters:
-  ExternalAllocationPools: [{'start': '10.19.111.100', 'end': '10.19.111.150'}]
-  ExternalNetworkVip: 10.19.111.151
-  ExternalInterfaceDefaultRoute: 10.19.111.254
-  ExternalNetCidr: 10.19.111.0/24

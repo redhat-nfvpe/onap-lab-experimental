@@ -12,16 +12,18 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/utils/functions"
 . "$ROOT/utils/trap-fetch-results"
 
-OVERCLOUD_HEAT_ENVIRONMENTS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/heat-environments.yaml" |
+OVERCLOUD_HEAT_ENVIRONMENTS_YAML=$(cat "$ROOT/configuration/openstack/heat-environments.yaml" |
 	HOME=/home/stack \
 	ENVIRONMENTS=/home/stack/overcloud/deploy/templates/environments \
 	envsubst)
 
-OVERCLOUD_NETWORKS_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/networks.yaml")
+OVERCLOUD_NETWORKS_YAML=$(cat "$ROOT/configuration/openstack/networks.yaml")
 
-OVERCLOUD_NODES_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/nodes.yaml")
+OVERCLOUD_NODES_YAML=$(cat "$ROOT/configuration/openstack/nodes.yaml")
 
-OVERCLOUD_CEPH_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/ceph.yaml")
+OVERCLOUD_COMPUTE_YAML=$(cat "$ROOT/configuration/openstack/compute.yaml")
+
+OVERCLOUD_STORAGE_YAML=$(cat "$ROOT/configuration/openstack/storage.yaml")
 
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
@@ -60,8 +62,11 @@ OVERCLOUD_CEPH_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/ceph.yaml")
 	m '[tripleo] Updating Heat environment for nodes'
 	echo $(c "$OVERCLOUD_NODES_YAML") > "\$DEPLOY/templates/environments/nodes.yaml"
 
-	m '[tripleo] Updating Heat environment for Ceph'
-	echo $(c "$OVERCLOUD_CEPH_YAML") > "\$DEPLOY/templates/environments/ceph.yaml"
+	m '[tripleo] Updating Heat environment for compute'
+	echo $(c "$OVERCLOUD_COMPUTE_YAML") > "\$DEPLOY/templates/environments/compute.yaml"
+
+	m '[tripleo] Updating Heat environment for storage'
+	echo $(c "$OVERCLOUD_STORAGE_YAML") > "\$DEPLOY/templates/environments/storage.yaml"
 
 	m '[tripleo] Updating Heat environment for container images'
 
@@ -92,6 +97,7 @@ OVERCLOUD_CEPH_YAML=$(cat "$ROOT/configuration/tripleo/overcloud/ceph.yaml")
 	_EOT
 
 	m '[tripleo] Deploying OpenStack'
+	# The stack name will be used as a prefix for server names and for the "rc" file ("labrc")
 	openstack overcloud deploy \
 		--stack lab \
 		--templates "\$DEPLOY/templates/" \

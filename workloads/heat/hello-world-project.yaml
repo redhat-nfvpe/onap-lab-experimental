@@ -3,28 +3,25 @@
 heat_template_version: 2018-08-31
 
 description: >-
-  Hello World!
+  Hello World project
 
 resources:
 
   project:
-    type: type: OS::Keystone::Project
+    type: OS::Keystone::Project
     properties:
       name: hello-world
       description: >-
-        Hello World!
-
-  admins-role:
-    type: OS::Keystone::Role
-    properties:
-      name: admins
+        Hello World
 
   admin-user:
     type: OS::Keystone::User
     properties:
-      name: admin
+      name: hello-world-admin
+      description: >-
+        Hello World Administrator
       password: admin
       default_project: { get_resource: project }
       roles:
       - project: { get_resource: project }
-        role: { get_resource: admins-role }
+        role: admin

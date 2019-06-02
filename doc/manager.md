@@ -185,10 +185,8 @@ configuration of the various OpenStack undercloud services as containers to be r
 [Podman](https://podman.io/). Containers allow for better isolation and portability. The undercloud
 itself is installed using the OpenStack [Heat](https://docs.openstack.org/heat/latest/)
 orchestration and [Mistral](https://docs.openstack.org/mistral/latest/) workflow services, which
-internally uses [Ansible](https://www.ansible.com/).
-
-Note that OpenStack container images, including those for TripleO, are provided by the
-[Kolla project](https://docs.openstack.org/kolla/latest/).
+internally uses [Ansible](https://www.ansible.com/). The OpenStack container images are provided by
+the [Kolla project](https://docs.openstack.org/kolla/latest/).
 
 Logs and configuration files have been fetched to the `workspace/results/` directory. Some useful
 ones are from:

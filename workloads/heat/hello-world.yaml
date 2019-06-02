@@ -3,7 +3,7 @@
 heat_template_version: 2018-08-31
 
 description: >-
-  Hello World!
+  Hello World
 
 resources:
 
@@ -20,13 +20,14 @@ resources:
       network_id: { get_resource: net }
       ip_version: 4
       cidr: 192.0.2.0/24
-      dns_nameservers: 1.0.0.1
+      dns_nameservers:
+      - 1.0.0.1
 
   router:
     type: OS::Neutron::Router
     properties:
       external_gateway_info:
-        network: external
+        network: public
 
   router-interface:
     type: OS::Neutron::RouterInterface
@@ -37,7 +38,7 @@ resources:
   security-group:
     type: OS::Neutron::SecurityGroup
     properties:
-      name: default
+      name: control-plane
       rules:
       - remote_ip_prefix: 0.0.0.0/0
         direction: ingress
@@ -60,7 +61,7 @@ resources:
   floating-ip:
     type: OS::Neutron::FloatingIP
     properties:
-      floating_network: external
+      floating_network: public
       port_id: { get_resource: port } 
 
   # Server
@@ -69,12 +70,13 @@ resources:
     type: OS::Nova::KeyPair
     properties:
       name: hello-world
+      save_private_key: true
 
   server:
     type: OS::Nova::Server
     properties:
       name: server
-      flavor: m1.large
+      flavor: m1.tiny
       image: centos7
       key_name: { get_resource: keypair }
       networks:
@@ -95,6 +97,13 @@ resources:
       #mountpoint: /dev/vdb
 
 outputs:
+
+  # openstack/openstack-project hello-world hello-world-admin admin stack output show hello-world private-key --format value --column output_value
+  # user: centos
+
+  private-key:
+    description: Private key
+    value: { get_attr: [ keypair, private_key ] }
 
   private-ip:
     description: Private IP address

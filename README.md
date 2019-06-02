@@ -81,10 +81,11 @@ Chapters
 Special Thanks
 --------------
 
-The following people may not show up in the commit history but helped on the way:
+The following people may not show up in the commit history but deserve credit for contributing:
 
-* Ruslan Usichenko
+* Aaron Smith
 * Andrew Bays
-* Yolanda Robla Mota
 * Frank Zdarsky
 * Leif Madsen
+* Ruslan Usichenko
+* Yolanda Robla Mota

@@ -27,5 +27,8 @@ environments:
 # Improve throughput performance for hyperconverged scenario
 - "$ENVIRONMENTS/tuned-ceph-filestore-hci.yaml"
 
-# Our Ceph configuration
-- "$ENVIRONMENTS/ceph.yaml"
+# Our compute configuration
+- "$ENVIRONMENTS/compute.yaml"
+
+# Our storage configuration
+- "$ENVIRONMENTS/storage.yaml"

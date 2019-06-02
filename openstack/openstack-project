@@ -6,8 +6,9 @@ if [ "$EUID" == 0 ]; then
 	exit 1
 fi
 
-PROJECT_NAME=$1
-Q_PROJECT_NAME=$(q "$PROJECT_NAME")
+PROJECT=$1
+USERNAME=$2
+PASSWORD=$3
 
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
@@ -19,5 +20,7 @@ ROOT=$(readlink -f "$HERE/..")
 "$ROOT/ssh" manager \
 ". \"\$HOME/labrc\" 
 CLIFF_MAX_TERM_WIDTH=\"$(tput cols)\" \
-OS_PROJECT_NAME=$Q_PROJECT_NAME \
-\"\$HOME/.local/bin/openstack\" $(c "${@:2}")"
+OS_PROJECT_NAME=$(c "$PROJECT") \
+OS_USERNAME=$(c "$USERNAME") \
+OS_PASSWORD=$(c "$PASSWORD") \
+\"\$HOME/.local/bin/openstack\" $(c "${@:4}")"

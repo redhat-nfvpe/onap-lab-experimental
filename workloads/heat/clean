@@ -1,0 +1,26 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/../..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+. "$ROOT/utils/trap"
+
+m '[openstack] Deleting hello-world'
+"$ROOT/openstack/openstack-project" \
+    hello-world hello-world-admin admin \
+	stack delete --wait hello-world -v || true
+
+m '[openstack] Deleting hello-world-project'
+"$ROOT/openstack/openstack" \
+	stack delete --wait hello-world-project -v || true
+
+m '[openstack] Deleting common'
+"$ROOT/openstack/openstack" \
+	stack delete --wait common -v || true

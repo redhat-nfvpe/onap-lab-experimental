@@ -1,0 +1,35 @@
+#!/bin/bash
+set -e
+
+if [ "$EUID" == 0 ]; then
+	echo "Do not run this script as root"
+	exit 1
+fi
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/../..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+. "$ROOT/utils/trap"
+
+if [ "$1" == '-c' ]; then
+	"$HERE/clean"
+fi
+
+"$ROOT/rsync" \
+	--rsync-path='mkdir --parents /home/manager/workloads/ && rsync' \
+	"$HERE/"*.yaml \
+	manager:/home/manager/workloads/
+
+m '[openstack] Creating common'
+"$ROOT/openstack/openstack" \
+	stack create --wait --template /home/manager/workloads/common.yaml common -v
+
+m '[openstack] Creating hello-world-project'
+"$ROOT/openstack/openstack" \
+	stack create --wait --template /home/manager/workloads/hello-world-project.yaml hello-world-project -v
+
+m '[openstack] Creating hello-world'
+"$ROOT/openstack/openstack-project" \
+    hello-world hello-world-admin admin \
+	stack create --wait --template /home/manager/workloads/hello-world.yaml hello-world -v

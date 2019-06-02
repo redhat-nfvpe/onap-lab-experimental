@@ -1,0 +1,109 @@
+# See: https://docs.openstack.org/heat/stein/template_guide/
+
+heat_template_version: 2018-08-31
+
+description: >-
+  Defaults
+
+resources:
+
+  # Flavors
+
+  m1.tiny:
+    type: OS::Nova::Flavor
+    properties:
+      name: m1.tiny
+      flavorid: 0
+      vcpus: 1
+      ram: 512 # MB
+      disk: 10 # GB
+
+  m1.small:
+    type: OS::Nova::Flavor
+    properties:
+      name: m1.small
+      flavorid: 1
+      vcpus: 1
+      ram: 1024 # MB
+      disk: 20 # GB
+
+  m1.medium:
+    type: OS::Nova::Flavor
+    properties:
+      name: m1.medium
+      flavorid: 2
+      vcpus: 2
+      ram: 2048 # MB
+      disk: 40 # GB
+
+  m1.large:
+    type: OS::Nova::Flavor
+    properties:
+      name: m1.large
+      flavorid: 3
+      vcpus: 2
+      ram: 4096 # MB
+      disk: 80 # GB
+
+  m1.xlarge:
+    type: OS::Nova::Flavor
+    properties:
+      name: m1.xlarge
+      flavorid: 4
+      vcpus: 4
+      ram: 8192 # MB
+      disk: 160 # GB
+
+  # Images
+
+  centos7:
+    type: OS::Glance::WebImage
+    properties:
+      name: centos7
+      visibility: public
+      os_distro: CentOS
+      os_version: "7"
+      architecture: x86_64
+      location: http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1901.qcow2
+      container_format: bare
+      disk_format: qcow2
+
+  # Networks
+
+  # For options, see controller:
+  # /var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/ml2_conf.ini
+  public-net:
+    type: OS::Neutron::ProviderNet
+    properties:
+      name: public
+      physical_network: datacentre
+      network_type: vlan
+      segmentation_id: "50" # Tenant, 172.16.0.0/24
+      router_external: true
+
+  public-subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: public-net }
+      enable_dhcp: false
+      ip_version: 4
+      cidr: 172.16.0.0/24
+      gateway_ip: 172.16.0.1
+      allocation_pools:
+      - start: 172.16.0.100
+        end: 172.16.0.120
+      dns_nameservers:
+      - 1.0.0.1
+
+# External: vlan 10, not assigned to compute
+#       cidr: 10.0.0.0/24
+#       gateway_ip: 10.0.0.1
+#       allocation_pools:
+#       - start: 10.0.0.100
+#         end: 10.0.0.120
+
+#       cidr: 192.168.24.0/24
+#       gateway_ip: 192.168.24.1
+#       allocation_pools:
+#       - start: 192.168.24.100
+#         end: 192.168.24.120

@@ -28,9 +28,9 @@ ssh "root@$MANAGER_IP_ADDRESS"
 PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 
 "$ROOT/rsync" --recursive \
-	--rsync-path='mkdir --parents libvirt/ && rsync' \
+	--rsync-path='mkdir --parents /root/libvirt/ && rsync' \
 	"$ROOT/configuration/libvirt/networks" \
-	manager-root:libvirt/
+	manager-root:/root/libvirt/
 
 "$ROOT/ssh" manager-root "$(cat <<- EOT
 
@@ -210,7 +210,8 @@ sshpass -p "$PASSWORD" ssh "manager@$MANAGER_IP_ADDRESS"
 
 	m '[manager] Ensuring OpenStack client is installed'
 	pip3 install --user --upgrade \
-		python-openstackclient==$(c "$PYTHON_OPENSTACKCLIENT_VERSION")
+		python-openstackclient==$(c "$PYTHON_OPENSTACKCLIENT_VERSION") \
+		python-heatclient==$(c "$PYTHON_HEATCLIENT_VERSION")
 
 	m '[tripleo] Updating OpenStack Cliff configuration'
 

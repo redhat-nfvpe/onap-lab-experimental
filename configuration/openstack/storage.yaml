@@ -1,4 +1,4 @@
-# Ceph configuration.
+# Storage configuration.
 
 # This is a Heat template environment.
 
@@ -7,8 +7,6 @@
 parameter_defaults:
 
   CephAnsiblePlaybookVerbosity: 1 # the default is 0
-
-  #CephStorageCount: 1
 
   # Hyperconvergence
   # ----------------

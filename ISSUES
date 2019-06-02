@@ -1,8 +1,0 @@
-
-Default storage for Ceph VM is not big enough.
-e.g. 1ctlr_1comp_1ceph.yml
-
-Not installing ceph-ansible
-
-Not found:
-/var/lib/mistral/overcloud/ceph-ansible/fetch_dir/c2fdfe6c-7046-11e9-8842-005c6e785d3f//var/lib/ceph/bootstrap-osd/ceph.keyring
