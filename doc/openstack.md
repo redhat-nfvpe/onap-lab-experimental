@@ -236,7 +236,7 @@ controller:
 sudo ovs-vsctl remove port vlan10 tag 10
 
 manager:
-sudo ip a add 10.0.0.69/24 dev os-ctlplane
+sudo ip a add 10.0.0.69/24 dev openstack
 
 
 https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/8/html/ipv6_networking_for_the_overcloud/configuring_the_overcloud_before_creation

@@ -102,9 +102,8 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 			ProtectKernelModules=true
 			ProtectControlGroup=true
 			ProtectKernelTunables=true
+			# Note: CentOS 7 ignores "ProtectSystem=strict", but let's keep it here for the future
 			ProtectSystem=strict
-	
-			# Note: CentOS 7 ignores "ProtectSystem=strict"
 	
 			[Install]
 			WantedBy=default.target
@@ -118,9 +117,9 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 
 	m '[manager-root] Ensuring libvirt networks and bridges are configured'
 
-	if [ ! -f /etc/sysconfig/network-scripts/ifcfg-os-ctlplane ]; then
-		cat > /etc/sysconfig/network-scripts/ifcfg-os-ctlplane <<- _EOT
-			DEVICE=os-ctlplane
+	if [ ! -f /etc/sysconfig/network-scripts/ifcfg-openstack ]; then
+		cat > /etc/sysconfig/network-scripts/ifcfg-openstack <<- _EOT
+			DEVICE=openstack
 			TYPE=Bridge
 			ONBOOT=yes
 			BOOTPROTO=none
@@ -130,7 +129,7 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 		cat > /etc/sysconfig/network-scripts/ifcfg-$C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE <<- _EOT
 			DEVICE=$EQ_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE
 			TYPE=Ethernet
-			BRIDGE=os-ctlplane
+			BRIDGE=openstack
 			ONBOOT=yes
 			BOOTPROTO=none
 			DELAY=0
@@ -140,23 +139,23 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 	fi
 
 	# TODO: brctl works but won't survive reboots
-	#brctl addbr os-ctlplane || true
-	#brctl addif os-ctlplane $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE || true
-	#brctl stp os-ctlplane on
-	#ip link set os-ctlplane up
+	#brctl addbr openstack || true
+	#brctl addif openstack $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE || true
+	#brctl stp openstack on
+	#ip link set openstack up
 
 	# TODO: NetworkManager bridge does not work
-	#nmcli connection delete os-ctlplane || true
+	#nmcli connection delete openstack || true
 	#nmcli connection delete $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE || true
 	#nmcli connection add \
-	#	con-name os-ctlplane \
+	#	con-name openstack \
 	#	type bridge \
-	#	ifname os-ctlplane
+	#	ifname openstack
 	#nmcli connection add \
 	#	con-name $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE \
 	#	type ethernet \
 	#	ifname $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE \
-	#	master os-ctlplane
+	#	master openstack
 
 	function kvm_enable_bridge () {
 		# Allow the bridge to be used by libvirt
@@ -173,9 +172,9 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 		virsh net-start "\$1" || true
 	}
 
-	kvm_enable_bridge vm-ctlplane
-	virsh_enable_network virtual-machine-control-plane
-	kvm_enable_bridge os-ctlplane
+	kvm_enable_bridge hypervisor
+	virsh_enable_network hypervisor-control-plane
+	kvm_enable_bridge openstack
 	virsh_enable_network openstack-control-plane
 
 	m "[manager-root] Ensuring user \"manager\" exists and is configured"

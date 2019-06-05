@@ -43,12 +43,12 @@ ssh "root@$MANAGER_IP_ADDRESS" "$(cat <<- EOT
 	done
 
 	m '[manager-root] Ensuring no libvirt network bridges'
-	rm --force /etc/sysconfig/network-scripts/ifcfg-os-ctlplane
+	rm --force /etc/sysconfig/network-scripts/ifcfg-openstack
 	rm --force /etc/sysconfig/network-scripts/ifcfg-$C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE
 	systemctl restart network.service
 
 	# TODO: NetworkManager bridge does not work
-	#nmcli connection delete os-ctlplane || true
+	#nmcli connection delete openstack || true
 	#nmcli connection delete $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE || true
 
 	m '[manager-root] Ensuring VirtualBMC service is disabled'

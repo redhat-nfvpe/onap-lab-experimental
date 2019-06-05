@@ -19,7 +19,7 @@ EQ_NAME=$(eq "$NAME")
 EQ_USERNAME=$(eq "$USERNAME")
 
 while true; do
-	m "[manager-root] Waiting for virtual machine \"$EQ_NAME\" to get an IP address on vm-ctlplane..."
+	m "[manager-root] Waiting for virtual machine \"$EQ_NAME\" to get an IP address on hypervisor control plane..."
 	IP_ADDRESS=$("$HERE/get-ipv4-address" "$NAME" "$INTERFACE")
 	if [ -n "$IP_ADDRESS" ]; then
 		break
@@ -27,7 +27,7 @@ while true; do
 	sleep 1
 done
 
-m "Virtual machine \"$EQ_NAME\" has IP address on vm-ctlplane: $IP_ADDRESS"
+m "Virtual machine \"$EQ_NAME\" has IP address on hypervisor control plane: $IP_ADDRESS"
 
 # Give it some time to fully come up
 m "Waiting 5 seconds to ensure that virtual machine \"$EQ_NAME\" is ready for ssh connections..."

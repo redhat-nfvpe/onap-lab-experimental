@@ -10,7 +10,7 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
-. "$ROOT/utils/trap"
+. "$ROOT/utils/trap-fetch-results"
 
 "$HERE/infrastructure/update-ssh-config"
 
@@ -25,7 +25,7 @@ ROOT=$(readlink -f "$HERE/..")
 CONTROLLER_IP_ADDRESS=$("$ROOT/manager/get-ipv4-address" openstack-controller eth1)
 
 if [ -z "$CONTROLLER_IP_ADDRESS" ]; then
-	m '[manager] Controller does not have an IP address on vm-ctlplane' "$RED"
+	m '[manager] Controller does not have an IP address on hypervisor control plane' "$RED"
 	exit 1
 fi
 

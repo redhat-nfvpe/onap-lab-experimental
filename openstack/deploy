@@ -21,9 +21,13 @@ OVERCLOUD_NETWORKS_YAML=$(cat "$ROOT/configuration/openstack/networks.yaml")
 
 OVERCLOUD_NODES_YAML=$(cat "$ROOT/configuration/openstack/nodes.yaml")
 
-OVERCLOUD_COMPUTE_YAML=$(cat "$ROOT/configuration/openstack/compute.yaml")
+OVERCLOUD_NETWORKING_J2_YAML=$(cat "$ROOT/configuration/openstack/networking.j2.yaml")
 
-OVERCLOUD_STORAGE_YAML=$(cat "$ROOT/configuration/openstack/storage.yaml")
+OVERCLOUD_NOVA_YAML=$(cat "$ROOT/configuration/openstack/nova.yaml")
+
+OVERCLOUD_NEUTRON_YAML=$(cat "$ROOT/configuration/openstack/neutron.yaml")
+
+OVERCLOUD_CEPH_YAML=$(cat "$ROOT/configuration/openstack/ceph.yaml")
 
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
@@ -36,7 +40,7 @@ OVERCLOUD_STORAGE_YAML=$(cat "$ROOT/configuration/openstack/storage.yaml")
 
 	DEPLOY="\$HOME/overcloud/deploy"
 	rm --recursive --force "\$DEPLOY/"
-	mkdir --parents "\$DEPLOY/"
+	mkdir --parents "\$DEPLOY/templates.j2/"
 
 	m '[tripleo] Updating Heat environment selection'
 	echo $(c "$OVERCLOUD_HEAT_ENVIRONMENTS_YAML") > "\$DEPLOY/heat-environments.yaml"
@@ -50,11 +54,21 @@ OVERCLOUD_STORAGE_YAML=$(cat "$ROOT/configuration/openstack/storage.yaml")
 		Controller ComputeHCI \
 		$(c "$TRIPLEO_VERBOSITY")
 
-	m '[tripleo] Rendering Heat templates for deployment'
+	m '[tripleo] Updating Heat Jinja2 template for networking'
 
-	/usr/share/openstack-tripleo-heat-templates/tools/process-templates.py \
+	rsync --recursive \
+		/usr/share/openstack-tripleo-heat-templates/* \
+		"\$DEPLOY/templates.j2/"
+
+	# Note: the default "environments/network-environment.yaml" imports configs (harcoded) from
+	# "single-nic-vlan", so to avoid updating that file we will override "single-nic-vlan"
+	echo $(c "$OVERCLOUD_NETWORKING_J2_YAML") > "\$DEPLOY/templates.j2/network/config/single-nic-vlans/role.role.j2.yaml"
+
+	m '[tripleo] Rendering Heat templates from Jinja2'
+
+	"\$DEPLOY/templates.j2/tools/process-templates.py" \
 		--safe \
-		--base_path /usr/share/openstack-tripleo-heat-templates/ \
+		--base_path "\$DEPLOY/templates.j2/" \
 		--output-dir "\$DEPLOY/templates/" \
 		--network-data "\$DEPLOY/networks.yaml" \
 		--roles-data "\$DEPLOY/roles.yaml"
@@ -62,11 +76,14 @@ OVERCLOUD_STORAGE_YAML=$(cat "$ROOT/configuration/openstack/storage.yaml")
 	m '[tripleo] Updating Heat environment for nodes'
 	echo $(c "$OVERCLOUD_NODES_YAML") > "\$DEPLOY/templates/environments/nodes.yaml"
 
-	m '[tripleo] Updating Heat environment for compute'
-	echo $(c "$OVERCLOUD_COMPUTE_YAML") > "\$DEPLOY/templates/environments/compute.yaml"
+	m '[tripleo] Updating Heat environment for Nova'
+	echo $(c "$OVERCLOUD_NOVA_YAML") > "\$DEPLOY/templates/environments/nova.yaml"
 
-	m '[tripleo] Updating Heat environment for storage'
-	echo $(c "$OVERCLOUD_STORAGE_YAML") > "\$DEPLOY/templates/environments/storage.yaml"
+	m '[tripleo] Updating Heat environment for Neutron'
+	echo $(c "$OVERCLOUD_NEUTRON_YAML") > "\$DEPLOY/templates/environments/neutron.yaml"
+
+	m '[tripleo] Updating Heat environment for Ceph'
+	echo $(c "$OVERCLOUD_CEPH_YAML") > "\$DEPLOY/templates/environments/ceph.yaml"
 
 	m '[tripleo] Updating Heat environment for container images'
 

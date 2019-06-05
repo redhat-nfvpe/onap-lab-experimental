@@ -48,7 +48,7 @@ What this script does:
   [IPMI](https://en.wikipedia.org/wiki/Intelligent_Platform_Management_Interface) for libvirt
   virtual machines
 * Sets up network bridges to be used by our libvirt virtual machines, configured by
-  `configuration/libvirt/networks/virtual-machine-control-plane.xml` and
+  `configuration/libvirt/networks/hypervisor-control-plane.xml` and
   `configuration/libvirt/networks/openstack-control-plane.xml`
 * Creates and configures the "manager" user
 

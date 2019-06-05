@@ -1,0 +1,138 @@
+# See: https://docs.openstack.org/heat/stein/template_guide/
+
+heat_template_version: 2018-08-31
+
+description: >-
+  Defaults
+
+parameters:
+
+  centos7-image-url:
+    type: string
+    label: CentOS 7 image URL
+
+resources:
+
+  # Flavors
+
+  m1.tiny:
+    type: OS::Nova::Flavor
+    properties:
+      name: m1.tiny
+      flavorid: 0
+      vcpus: 1
+      ram: 512 # MB
+      disk: 10 # GB
+
+  m1.small:
+    type: OS::Nova::Flavor
+    properties:
+      name: m1.small
+      flavorid: 1
+      vcpus: 1
+      ram: 1024 # MB
+      disk: 20 # GB
+
+  m1.medium:
+    type: OS::Nova::Flavor
+    properties:
+      name: m1.medium
+      flavorid: 2
+      vcpus: 2
+      ram: 2048 # MB
+      disk: 40 # GB
+
+  m1.large:
+    type: OS::Nova::Flavor
+    properties:
+      name: m1.large
+      flavorid: 3
+      vcpus: 2
+      ram: 4096 # MB
+      disk: 80 # GB
+
+  m1.xlarge:
+    type: OS::Nova::Flavor
+    properties:
+      name: m1.xlarge
+      flavorid: 4
+      vcpus: 4
+      ram: 8192 # MB
+      disk: 160 # GB
+
+  # Images
+
+  centos7:
+    type: OS::Glance::WebImage
+    properties:
+      name: centos7
+      visibility: public
+      os_distro: CentOS
+      os_version: "7"
+      architecture: x86_64
+      # User is "centos"
+      location: { get_param: centos7-image-url }
+      container_format: bare
+      disk_format: qcow2
+
+  # Networks
+
+  external-net:
+    type: OS::Neutron::ProviderNet
+    properties:
+      name: external
+      network_type: vlan
+      # For "vlan" the "physical_network" must be specified in "network_vlan_ranges"
+      # See: /var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/ml2_conf.ini @ controller
+      physical_network: datacentre # control plane
+      segmentation_id: "10" # External, 10.0.0.0/24
+      router_external: true
+
+  external-subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: external
+      network_id: { get_resource: external-net }
+      enable_dhcp: false
+      ip_version: 4
+      cidr: 10.0.0.0/24
+      gateway_ip: 10.0.0.1
+      allocation_pools:
+      - start: 10.0.0.251
+        end: 10.0.0.254
+      dns_nameservers:
+      - 1.0.0.1
+
+  public-net:
+    type: OS::Neutron::ProviderNet
+    properties:
+      name: public
+      network_type: flat
+      # For "flat" the "physical_network" must be specified in "flat_networks"
+      # See: /var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/ml2_conf.ini @ controller
+      physical_network: public
+
+  public-subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: public
+      network_id: { get_resource: public-net }
+      enable_dhcp: false
+      ip_version: 4
+      cidr: 10.0.2.0/24
+      gateway_ip: 10.0.2.1
+      allocation_pools:
+      - start: 10.0.2.2
+        end: 10.0.2.254
+      dns_nameservers:
+      - 1.0.0.1
+
+#  public-router:
+#    type: OS::Neutron::Router
+#    properties:
+
+#  public-router-interface:
+#    type: OS::Neutron::RouterInterface
+#    properties:
+#      router_id: { get_resource: public-router }
+#      subnet_id: { get_resource: public-subnet }

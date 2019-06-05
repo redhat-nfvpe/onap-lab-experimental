@@ -16,7 +16,7 @@ network:
   config:
   - type: nameserver
     address: "$NAMESERVER"
-  # Virtual machine control plane:
+  # Hypervisor control plane:
   - type: physical
     name: eth0
     subnets:

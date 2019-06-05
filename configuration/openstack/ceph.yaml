@@ -1,8 +1,9 @@
-# Storage configuration.
+# Ceph configuration.
 
 # This is a Heat template environment.
 
 # See: https://docs.openstack.org/tripleo-docs/latest/install/advanced_deployment/ceph_config.html
+#      https://docs.openstack.org/heat/stein/template_guide/environment.html
 
 parameter_defaults:
 
@@ -23,7 +24,7 @@ parameter_defaults:
 
   # Note: The default values might cause this error during deployment: 
   # "pg_num 128 size 3 would mean 768 total pgs, which exceeds max 750"
-  # See: https://bugs.launchpad.net/kolla-ansible/+bug/1763356
+  # See also: https://bugs.launchpad.net/kolla-ansible/+bug/1763356
 
   CephPoolDefaultSize: 1 # the default is 3
   #CephPoolDefaultPgNum: 64 # the default is 128
@@ -33,7 +34,7 @@ parameter_defaults:
 
   # The default is to use drive "/dev/vdb"
 
-  # As en example, if we had just one drive on the machine and wanted to collocate there:
+  # As an example, if we had just one drive on the machine and wanted to collocate there:
   #CephAnsibleDisksConfig:
   #  osd_scenario: collocated
   #  devices:

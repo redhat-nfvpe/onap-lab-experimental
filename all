@@ -12,11 +12,15 @@ ROOT=$HERE
 . "$ROOT/utils/functions"
 . "$ROOT/utils/trap"
 
-"$ROOT/manager/prepare" -c
+if [ "$1" == '-c' ]; then
+	"$ROOT/manager/clean"
+fi
+
+"$ROOT/manager/prepare"
 "$ROOT/manager/tripleo/prepare"
 "$ROOT/manager/tripleo/deploy"
 "$ROOT/openstack/infrastructure/prepare"
 "$ROOT/openstack/infrastructure/introspect"
 "$ROOT/openstack/deploy"
 "$ROOT/openstack/connect"
-"$ROOT/workloads/heat/deploy"
+"$ROOT/openstack/workloads/deploy"

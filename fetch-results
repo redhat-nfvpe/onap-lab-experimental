@@ -20,8 +20,10 @@ if [ "$1" == '-c' ]; then
 fi
 
 mkdir --parents "$RESULTS/configuration/tripleo/"
+mkdir --parents "$RESULTS/configuration/controller/"
 mkdir --parents "$RESULTS/logs/manager/"
 mkdir --parents "$RESULTS/logs/tripleo/"
+mkdir --parents "$RESULTS/logs/controller/"
 
 function r () {
 	"$ROOT/rsync" \
@@ -49,6 +51,17 @@ r \
 
 r \
 	--include=*/ \
+	--include=*.sh \
+	--include=*.conf \
+	--include=*.ini \
+	--include=*.yaml \
+	--include=*.json \
+	--exclude=* \
+	lab-controller-0:/var/lib/config-data/puppet-generated/ \
+	"$RESULTS/configuration/controller/" || true
+
+r \
+	--include=*/ \
 	--include=*.log \
 	--exclude=* \
 	manager:/home/manager/ \
@@ -67,6 +80,13 @@ r \
 	tripleo:/var/log/tripleo-container-image-prepare.log \
 	tripleo:/var/lib/mistral \
 	"$RESULTS/logs/tripleo/" || true
+
+r \
+	--include=*/ \
+	--include=*.log \
+	--exclude=* \
+	lab-controller-0:/var/log/containers/ \
+	"$RESULTS/logs/controller/" || true
 
 find "$RESULTS/logs/tripleo/" -type f -name "*.tar.gz" |
 while read F; do

@@ -1,0 +1,12 @@
+<!--
+Public network.
+
+See: https://libvirt.org/formatnetwork.html
+-->
+
+<network>
+  <name>public</name>
+  <!-- bridge name length should be no longer than 11 -->
+  <bridge name="public"/>
+  <ip address="10.0.2.1" netmask="255.255.255.0"/>
+</network>

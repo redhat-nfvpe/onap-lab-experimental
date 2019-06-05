@@ -5,15 +5,13 @@ environments:
 # Defines from where to fetch service container images
 - "$ENVIRONMENTS/container-images.yaml"
 
-# Request infrastructure nodes per each role 
+# Request infrastructure nodes per each node role 
 - "$ENVIRONMENTS/nodes.yaml"
 
-# Creates networks per our "networks.yaml"
-# Maps roles to their Single-NIC vLAN network configurations
-# See: "templates/network/config/single-nic-vlans/"
+# Creates networks per our "networks.yaml" and maps node roles to our "networking.j2.yaml"
 - "$ENVIRONMENTS/network-environment.yaml"
 
-# Creates ports for each service of each OpenStack role on the networks defined above
+# Creates ports for each service of each node role on the networks defined above
 # * See: "templates/network/"
 # *      "templates/network/ports/" 
 - "$ENVIRONMENTS/network-isolation.yaml"
@@ -27,8 +25,11 @@ environments:
 # Improve throughput performance for hyperconverged scenario
 - "$ENVIRONMENTS/tuned-ceph-filestore-hci.yaml"
 
-# Our compute configuration
-- "$ENVIRONMENTS/compute.yaml"
+# Our Nova configuration
+- "$ENVIRONMENTS/nova.yaml"
 
-# Our storage configuration
-- "$ENVIRONMENTS/storage.yaml"
+# Our Neutron configuration
+- "$ENVIRONMENTS/neutron.yaml"
+
+# Our Ceph configuration
+- "$ENVIRONMENTS/ceph.yaml"

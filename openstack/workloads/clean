@@ -14,7 +14,7 @@ ROOT=$(readlink -f "$HERE/../..")
 
 m '[openstack] Deleting hello-world'
 "$ROOT/openstack/openstack-project" \
-    hello-world hello-world-admin admin \
+	hello-world hello-world-admin password \
 	stack delete --wait hello-world -v || true
 
 m '[openstack] Deleting hello-world-project'

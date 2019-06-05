@@ -9,7 +9,7 @@ There are two main ways to configure this bridge:
 
 1) Dedicated LAN for the OpenStack control plane. In this case all OpenStack nodes will be on this
    LAN. Your Manager will also need a dedicated NIC on this LAN, and it should be added to the
-   bridge. Example: "brctl addif br-os-ctl eth1"
+   bridge.
 
 2) Single LAN. This is a more complicated scenario. In this case your Manager just needs a single
    NIC. However, you will also need to configure your router. First you will need to IP route
@@ -17,23 +17,15 @@ There are two main ways to configure this bridge:
    OpenStack manager. Then you'll need to configure your router's DHCP server to forward PXE
    requests to 192.168.24.1, which is the OpenStack manager's TFTP server.
 
-Relevant virtual machines (tripleo and other controllers) will connect to this network on eth1.
+Note that virtual machines that need to PXE-boot from this network will need it connected as the
+first network, eth0, because libvirt's PXE only works on eth0.
 
 See: https://libvirt.org/formatnetwork.html
-Note: bridge name length should be no longer than 11 
-
-sudo virsh net-destroy os-ctl
-sudo virsh net-undefine os-ctl
-sudo virsh net-define libvirt/networks/os-ctl.xml
-sudo virsh net-start os-ctl
-
-http://www.thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html
-https://unix.stackexchange.com/questions/35409/pxe-boot-chaining-to-hardcoded-tftp-server
 -->
 
 <network>
   <name>openstack-control-plane</name>
   <!-- bridge name length should be no longer than 11 -->
-  <bridge name="os-ctlplane"/>
+  <bridge name="openstack"/>
   <forward mode="bridge"/>
 </network>

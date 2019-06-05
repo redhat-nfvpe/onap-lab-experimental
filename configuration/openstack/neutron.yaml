@@ -1,0 +1,10 @@
+# Neutron configuration.
+
+# This is a Heat template environment.
+
+# See: https://docs.openstack.org/heat/stein/template_guide/environment.html
+
+parameter_defaults:
+
+  NeutronFlatNetworks: datacentre,public
+  #NeutronBridgeMappings: datacentre:br-ex,public:br-public
