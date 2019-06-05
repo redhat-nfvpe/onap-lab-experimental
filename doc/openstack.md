@@ -1,5 +1,5 @@
-Chapter 3: Install OpenStack
-============================
+Chapter 3: OpenStack
+====================
 
 As mentioned in chapter 2, OpenStack is modular such that each participating machine may have a
 different role. For the purpose of this lab our "compute" role will have its own dedicated hardware,
@@ -160,12 +160,14 @@ Our OpenStack storage is handled by [Ceph](https://ceph.com/) and its deployment
 another project, [Ceph-Ansible](http://docs.ceph.com/ceph-ansible/), which provides its own
 container images.
 
-> In production deployments we would likely have dedicated storage machines, indeed divided among
-various Ceph roles. But that is unnecessary for our lab, where it would be fine to have our single
-machine provide both compute and storage resources. Thus we will be deploying a
+> In production deployments we would likely have dedicated storage machines, indeed different kinds
+according to the various Ceph roles. But that is unnecessary for our lab, where it would be fine to
+have our single machine provide both compute and storage resources. Thus we will be deploying a
 [hyper-converged infrastructure (HCI)](https://en.wikipedia.org/wiki/Hyper-converged_infrastructure)
-version of the "Compute" role, named "ComputeHCI". Indeed, we will even be fine-tuning Ceph for
-optimal performance for this particular scenario.  
+version of the "Compute" role, named "ComputeHCI". We will even be fine-tuning Ceph for optimal
+performance for this converged setup.  
+
+TODO: explain networking, OVS, OVN
 
 All off this takes a while. Expect TODO 
 

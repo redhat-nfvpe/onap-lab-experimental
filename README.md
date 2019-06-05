@@ -71,11 +71,11 @@ The lab comprises 3 physical machines roles:
 Chapters
 --------
 
-1. [Prepare the Orchestrator](doc/orchestrator.md)
-2. [Prepare the Manager](doc/manager.md)
-3. [Install OpenStack](doc/openstack.md)
-4. [Install Kubernetes](doc/kubernetes.md)
-5. [Install ONAP](doc/onap.md)
+1. [The Orchestrator](doc/orchestrator.md)
+2. [The Manager](doc/manager.md)
+3. [OpenStack](doc/openstack.md)
+4. [Kubernetes](doc/kubernetes.md)
+5. [ONAP](doc/onap.md)
 
 
 Special Thanks

@@ -3,7 +3,7 @@
 heat_template_version: 2018-08-31
 
 description: >-
-  Defaults
+  Common resources: flavors, images, and networks.
 
 parameters:
 
@@ -111,6 +111,7 @@ resources:
       # For "flat" the "physical_network" must be specified in "flat_networks"
       # See: /var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/ml2_conf.ini @ controller
       physical_network: public
+      router_external: true
 
   public-subnet:
     type: OS::Neutron::Subnet

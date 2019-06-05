@@ -1,5 +1,5 @@
-Chapter 1: Preparing the Orchestrator
-=====================================
+Chapter 1: The Orchestrator
+===========================
 
 The Orchestrator machine is where we will be running the scripts in this repository.
 
@@ -22,4 +22,4 @@ machine roles would be combined into one physical machine and the Manager addres
 Next
 ----
 
-[Continue to Chapter 2: Prepare the Manager](manager.md)
+[Continue to Chapter 2: The Manager](manager.md)

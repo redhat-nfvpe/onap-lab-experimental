@@ -178,7 +178,7 @@ resources:
                             get_param: {{network.name}}InterfaceDefaultRoute
 {%-     endif %}
 {%- endfor %}
-{%- if role.name.startswith('###Controller') %}
+{%- if role.name.startswith('Controller') %}
               # See: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/advanced_overcloud_customization/custom-network-interface-templates
               # "public" flat network for Neutron ML2 
               - type: ovs_bridge

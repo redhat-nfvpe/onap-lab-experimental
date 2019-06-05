@@ -45,7 +45,7 @@ resources:
     type: OS::Neutron::Port
     properties:
       network_id: { get_resource: net }
-      fixed_ips: # required if we want to bind a floating IP
+      fixed_ips: # required if we want to bind a floating IP to this port
       - subnet_id: { get_resource: subnet }
       security_groups:
       - { get_resource: security-group }

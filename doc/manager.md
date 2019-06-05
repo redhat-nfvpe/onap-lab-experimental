@@ -1,5 +1,5 @@
-Chapter 2: Prepare the Manager
-==============================
+Chapter 2: The Manager
+======================
 
 In production OpenStack environments there's no single controller, instead there would be many
 controllers of various kinds running on dedicated hardware with redundancy. For our lab we will
@@ -31,7 +31,7 @@ custom network bridges as well as the virtual machines themselves.
 
 
 Step 2: Prepare the Manager
-------------------------------
+---------------------------
 
 Edit `configuration/environment` and set `MANAGER_IP_ADDRESS` to point to our Manager. We can use
 a host name. Then run:
@@ -268,4 +268,4 @@ You can also combine `clean` and `prepare`:
 Next
 ----
 
-[Continue to Chapter 3: Install OpenStack](openstack.md)
+[Continue to Chapter 3: OpenStack](openstack.md)
