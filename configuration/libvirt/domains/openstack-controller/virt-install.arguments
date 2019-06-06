@@ -15,7 +15,7 @@
 --network bridge=hypervisor,model=virtio
 
 # eth2 is our public network
-#--network bridge=public,model=virtio
+--network bridge=public,model=virtio
 
 --os-type linux
 --os-variant centos7.0

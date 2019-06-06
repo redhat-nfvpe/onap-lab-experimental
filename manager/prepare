@@ -16,8 +16,24 @@ if [ "$1" == '-c' ]; then
 	"$HERE/clean"
 fi
 
+EQ_MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE=$(eq "$MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE")
 EQ_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=$(eq "$MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE")
 C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE")
+
+NETWORK_HYPERVISOR_CONTROL_PLANE_XML=$(cat "$ROOT/configuration/libvirt/networks/hypervisor-control-plane.xml" |
+	MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE=$EQ_MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE \
+	MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=$EQ_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE \
+	envsubst)
+
+NETWORK_OPENSTACK_CONTROL_PLANE_XML=$(cat "$ROOT/configuration/libvirt/networks/openstack-control-plane.xml" |
+	MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE=$EQ_MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE \
+	MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=$EQ_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE \
+	envsubst)
+
+NETWORK_PUBLIC_XML=$(cat "$ROOT/configuration/libvirt/networks/public.xml" |
+	MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE=$EQ_MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE \
+	MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=$EQ_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE \
+	envsubst)
 
 m '[manager-root] Ensuring keypair authorization for user "root" (you will be prompted for password if not)'
 "$ROOT/utils/ensure-ssh-key-authorized" root@manager \
@@ -26,11 +42,6 @@ ssh "root@$MANAGER_IP_ADDRESS"
 "$ROOT/utils/ensure-ssh-config" manager-root "$MANAGER_IP_ADDRESS" root root@manager
 
 PASSWORD=$("$ROOT/utils/get-password" manager@manager)
-
-"$ROOT/rsync" --recursive \
-	--rsync-path='mkdir --parents /root/libvirt/ && rsync' \
-	"$ROOT/configuration/libvirt/networks" \
-	manager-root:/root/libvirt/
 
 "$ROOT/ssh" manager-root "$(cat <<- EOT
 
@@ -157,8 +168,13 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 	#	ifname $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE \
 	#	master openstack
 
-	function kvm_enable_bridge () {
-		# Allow the bridge to be used by libvirt
+	mkdir --parents "\$HOME/libvirt/networks/"
+	echo $(c "$NETWORK_HYPERVISOR_CONTROL_PLANE_XML") > "\$HOME/libvirt/networks/hypervisor-control-plane.xml"
+	echo $(c "$NETWORK_OPENSTACK_CONTROL_PLANE_XML") > "\$HOME/libvirt/networks/openstack-control-plane.xml"
+	echo $(c "$NETWORK_PUBLIC_XML") > "\$HOME/libvirt/networks/public.xml"
+
+	function qemu_enable_bridge () {
+		# Allow the bridge to be used by qemu
 		if ! grep --quiet --line-regexp "allow \$1" /etc/qemu-kvm/bridge.conf; then
 			echo "allow \$1" >> /etc/qemu-kvm/bridge.conf
 		fi
@@ -172,10 +188,12 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 		virsh net-start "\$1" || true
 	}
 
-	kvm_enable_bridge hypervisor
+	qemu_enable_bridge hypervisor
 	virsh_enable_network hypervisor-control-plane
-	kvm_enable_bridge openstack
+	qemu_enable_bridge openstack
 	virsh_enable_network openstack-control-plane
+	qemu_enable_bridge public
+	virsh_enable_network public
 
 	m "[manager-root] Ensuring user \"manager\" exists and is configured"
 

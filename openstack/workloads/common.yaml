@@ -82,10 +82,13 @@ resources:
     properties:
       name: external
       network_type: vlan
-      # For "vlan" the "physical_network" must be specified in "network_vlan_ranges"
-      # See: /var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/ml2_conf.ini @ controller
+      # For type "vlan" the "physical_network" must be specified in
+      # "network_vlan_ranges" for the Neutron ML2 plugin on the controller
+      # See: /var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/ml2_conf.ini
+      # OVN then maps this name to an OVS bridge
+      # See: sudo ovs-vsctl get open . external_ids:ovn-bridge-mappings
       physical_network: datacentre # control plane
-      segmentation_id: "10" # External, 10.0.0.0/24
+      segmentation_id: "10" # External VLAN: 10.0.0.0/24
       router_external: true
 
   external-subnet:
@@ -108,8 +111,11 @@ resources:
     properties:
       name: public
       network_type: flat
-      # For "flat" the "physical_network" must be specified in "flat_networks"
-      # See: /var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/ml2_conf.ini @ controller
+      # For type "flat" the "physical_network" must be specified in
+      # "flat_networks" for the Neutron ML2 plugin on the controller
+      # See: /var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/ml2_conf.ini
+      # OVN then maps this name to an OVS bridge
+      # See: sudo ovs-vsctl get open . external_ids:ovn-bridge-mappings
       physical_network: public
       router_external: true
 
@@ -118,22 +124,24 @@ resources:
     properties:
       name: public
       network_id: { get_resource: public-net }
-      enable_dhcp: false
+      enable_dhcp: true #???
       ip_version: 4
       cidr: 10.0.2.0/24
-      gateway_ip: 10.0.2.1
+      gateway_ip: 10.0.2.2
       allocation_pools:
-      - start: 10.0.2.2
+      - start: 10.0.2.100
         end: 10.0.2.254
       dns_nameservers:
       - 1.0.0.1
 
-#  public-router:
-#    type: OS::Neutron::Router
-#    properties:
+  # TODO: do we need a router?
 
-#  public-router-interface:
-#    type: OS::Neutron::RouterInterface
-#    properties:
-#      router_id: { get_resource: public-router }
-#      subnet_id: { get_resource: public-subnet }
+#   public-router:
+#     type: OS::Neutron::Router
+# #    properties:
+# 
+#   public-router-interface:
+#     type: OS::Neutron::RouterInterface
+#     properties:
+#       router_id: { get_resource: public-router }
+#       subnet_id: { get_resource: public-subnet }

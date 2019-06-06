@@ -1,9 +1,9 @@
 function EXIT_trap () {
 	local ERR=$?
 	if [ "$ERR" == 0 ]; then
-		m "Succeeded $(realpath --relative-to="$ROOT" "$0")!" "$GREEN"
+		m "Congratulations! $(realpath --relative-to="$ROOT" "$0") succeeded!" "$GREEN"
 	else
-		m "Failed $(realpath --relative-to="$ROOT" "$0")!" "$RED"
+		m "Oh no! $(realpath --relative-to="$ROOT" "$0") failed!" "$RED"
 	fi
 	exit "$ERR"
 }

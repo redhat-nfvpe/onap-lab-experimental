@@ -13,7 +13,7 @@ See: https://libvirt.org/formatnetwork.html
   <name>hypervisor-control-plane</name>
   <!-- bridge name length should be no longer than 11 -->
   <bridge name="hypervisor"/>
-  <forward mode="nat" dev="enp2s0"/>
+  <forward mode="nat" dev="$MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE"/>
   <ip address="192.168.122.1" netmask="255.255.255.0">
     <dhcp>
       <range start="192.168.122.2" end="192.168.122.254"/>

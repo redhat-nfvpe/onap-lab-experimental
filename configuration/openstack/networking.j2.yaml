@@ -184,17 +184,18 @@ resources:
               - type: ovs_bridge
                 name: br-public
                 addresses:
-                - ip_netmask: '10.0.2.0/24'
+                - ip_netmask: 10.0.2.2/24
                 mtu: { get_attr: [ MinViableMtu, value ] }
-                #routes:
-                #- default: true
-                #  next_hop: '10.0.2.1' # public network gateway
-                #dns_servers: { get_param: DnsServers }
-                #members:
-                #- type: interface
-                #  name: nic3 # public network interface
-                #  #primary: true
-                #  mtu: { get_attr: [ MinViableMtu, value ] }
+                # Breaks below?
+                routes:
+                - default: true
+                  next_hop: 10.0.2.1 # public network gateway
+                dns_servers: { get_param: DnsServers }
+                members:
+                - type: interface
+                  name: nic3 # public network interface (created by libvirt)
+                  primary: true
+                  mtu: { get_attr: [ MinViableMtu, value ] }
 {%- endif %}
 outputs:
   OS::stack_id:

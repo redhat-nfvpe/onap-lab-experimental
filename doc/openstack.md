@@ -258,8 +258,9 @@ openstack compute service list
 
 
 
-
-
+controller:
+sudo ovs-vsctl add-port br-public eth2
+sudo ip addr add 10.0.2.2 dev br-public
 
 
 
