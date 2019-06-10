@@ -17,6 +17,8 @@ MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE=enp2s0
 VIRTUALBMC_VERSION=1.5.0
 VIRTUALBMC_USERNAME=admin
 VIRTUALBMC_PASSWORD=password
+
+# The host is on the hypervisor control plane
 VIRTUALBMC_HOST=192.168.122.1
 
 PYTHON_OPENSTACKCLIENT_VERSION=3.18.0
@@ -28,8 +30,11 @@ PYTHON_HEATCLIENT_VERSION=1.17.0
 # For OpenStack servers, OpenStack infrastructure nodes, and Manager VMs 
 # 
 
-CENTOS7_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1901.qcow2
+# Default user for CentOS GenericCloud is "centos"
+CENTOS7_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1905.qcow2
+
 NAMESERVER=1.0.0.1
+
 TIMEZONE=America/Chicago
 
 #
@@ -56,6 +61,8 @@ TRIPLEO_CONTAINER_IMAGE_TAG=current-tripleo-rdo
 CEPH_CONTAINER_IMAGE_TAG="v4.0.0-stable-4.0-$CEPH_VERSION-centos-7-x86_64"
 
 TRIPLEO_VERBOSITY=-v
+
+OVERCLOUD_HEAT_STACK=lab
 
 #
 # OpenStack infrastructure nodes

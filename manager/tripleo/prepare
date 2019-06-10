@@ -10,7 +10,7 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
-. "$ROOT/utils/trap-fetch-results"
+. "$ROOT/utils/trap-with-fetch-results"
 
 EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 
@@ -25,9 +25,12 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
 	m '[tripleo] Ensuring utility packages are installed'
+
 	sudo yum install --assumeyes \
 		deltarpm
+
 	sudo yum upgrade --assumeyes
+
 	sudo yum install --assumeyes \
 		bash-completion \
 		wget lynx
@@ -42,17 +45,19 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 		TRIPLEO_REPOS=\$(lynx -listonly -nonumbers -dump  "https://trunk.rdoproject.org/centos7-$EQ_TRIPLEO_VERSION/consistent/" |
 			grep '/python2-tripleo-repos-.*\.rpm$')
 
-		# This 	
 		sudo yum install --assumeyes \
 			"\$TRIPLEO_REPOS"
+
 		sudo yum upgrade --assumeyes
 	fi
 
 	m '[tripleo] Ensuring TripleO-client packages are installed'
+
 	sudo --preserve-env tripleo-repos \
 		-b $(c "$TRIPLEO_VERSION") \
 		-d centos7 \
 		current ceph
+
 	# "python2-chardet" is workaround for: https://bugs.launchpad.net/tripleo/+bug/1829263
 	sudo yum upgrade --assumeyes
 	sudo yum install --assumeyes \

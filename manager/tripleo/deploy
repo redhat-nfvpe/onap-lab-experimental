@@ -10,7 +10,7 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
-. "$ROOT/utils/trap-fetch-results"
+. "$ROOT/utils/trap-with-fetch-results"
 
 UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" |
 	NAME=$(eq 'tripleo') \
@@ -31,7 +31,8 @@ UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" |
 	# See: /var/log/tripleo-container-image-prepare.log
 
 	m '[tripleo] Ensuring TripleO is deployed (~ 15 minutes)'
-	openstack undercloud install \
+	openstack \
+	undercloud install \
 		$(c "$TRIPLEO_VERBOSITY")
 
 EOT

@@ -3,25 +3,34 @@
 heat_template_version: 2018-08-31
 
 description: >-
-  Hello World project
+  Hello World tenant stack
 
 resources:
+
+  domain:
+    type: OS::Keystone::Domain
+    properties:
+      name: hello-world
+      description: >-
+        Hello World domain
 
   project:
     type: OS::Keystone::Project
     properties:
       name: hello-world
       description: >-
-        Hello World
+        Hello World project
+      domain: { get_resource: domain }
 
   admin-user:
     type: OS::Keystone::User
     properties:
       name: hello-world-admin
       description: >-
-        Hello World Administrator
+        Hello World administrator
+      domain: { get_resource: domain }
       password: password
-      default_project: { get_resource: project }
       roles:
       - project: { get_resource: project }
         role: admin
+      default_project: { get_resource: project }

@@ -10,7 +10,7 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
-. "$ROOT/utils/trap-fetch-results"
+. "$ROOT/utils/trap-with-fetch-results"
 
 if [ -n "$CONTROLLER_VIRTUALBMC_PORT" ]; then
 	CONTROLLER_MAC_ADDRESS=$("$ROOT/manager/get-mac-address" openstack-controller openstack)
@@ -44,15 +44,18 @@ INFRASTRUCTURE_INVENTORY_YAML=$(cat "$ROOT/configuration/tripleo/infrastructure-
 
 	m '[tripleo] Updating inventory of infrastructure nodes'
 
-	echo $(c "$INFRASTRUCTURE_INVENTORY_YAML") > "\$INFRASTRUCTURE/infrastructure-inventory.yaml"
+	echo $(c "$INFRASTRUCTURE_INVENTORY_YAML") \
+		> "\$INFRASTRUCTURE/infrastructure-inventory.yaml"
 
 	# Note: "import" will update existing baremetal nodes, but other nodes will *not* be deleted
 
-	openstack overcloud node import "\$INFRASTRUCTURE/infrastructure-inventory.yaml" \
+	openstack \
+	overcloud node import "\$INFRASTRUCTURE/infrastructure-inventory.yaml" \
 		$(c "$TRIPLEO_VERBOSITY")
 
 	m '[tripleo] Introspecting infrastructure nodes (~ 15 minutes)'
-	openstack overcloud node introspect \
+	openstack \
+	overcloud node introspect \
 		--all-manageable \
 		$(c "$TRIPLEO_VERBOSITY")
 
@@ -64,7 +67,8 @@ INFRASTRUCTURE_INVENTORY_YAML=$(cat "$ROOT/configuration/tripleo/infrastructure-
 	done
 
 	m '[tripleo] Ensuring infrastructure nodes are "available"'
-	openstack overcloud node provide \
+	openstack \
+	overcloud node provide \
 		--all-manageable \
 		$(c "$TRIPLEO_VERBOSITY")
 

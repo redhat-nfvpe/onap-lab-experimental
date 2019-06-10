@@ -1,9 +1,9 @@
 <!--
 OpenStack control plane.
 
-Used by OpenStack manager (TripleO) to control and provision OpenStack nodes.
+Used by our infrastructure manager (TripleO) to control and provision OpenStack nodes.
 
-For this to work, you need to configure bridge "br-os-ctl" on the Manager.
+The bridge itself must be created outside of libvirt.
 
 There are two main ways to configure this bridge:
 

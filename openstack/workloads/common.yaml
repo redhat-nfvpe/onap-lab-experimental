@@ -3,13 +3,13 @@
 heat_template_version: 2018-08-31
 
 description: >-
-  Common resources: flavors, images, and networks.
+  Common stack: flavors, images, and networks
 
 parameters:
 
   centos7-image-url:
     type: string
-    label: CentOS 7 image URL
+    label: CentOS 7 GenericCloud image URL
 
 resources:
 
@@ -68,80 +68,78 @@ resources:
       name: centos7
       visibility: public
       os_distro: CentOS
-      os_version: "7"
+      os_version: '7'
       architecture: x86_64
-      # User is "centos"
+      # Default user for CentOS GenericCloud is "centos"
       location: { get_param: centos7-image-url }
       container_format: bare
       disk_format: qcow2
 
   # Networks
 
-  external-net:
-    type: OS::Neutron::ProviderNet
-    properties:
-      name: external
-      network_type: vlan
-      # For type "vlan" the "physical_network" must be specified in
-      # "network_vlan_ranges" for the Neutron ML2 plugin on the controller
-      # See: /var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/ml2_conf.ini
-      # OVN then maps this name to an OVS bridge
-      # See: sudo ovs-vsctl get open . external_ids:ovn-bridge-mappings
-      physical_network: datacentre # control plane
-      segmentation_id: "10" # External VLAN: 10.0.0.0/24
-      router_external: true
-
-  external-subnet:
-    type: OS::Neutron::Subnet
-    properties:
-      name: external
-      network_id: { get_resource: external-net }
-      enable_dhcp: false
-      ip_version: 4
-      cidr: 10.0.0.0/24
-      gateway_ip: 10.0.0.1
-      allocation_pools:
-      - start: 10.0.0.251
-        end: 10.0.0.254
-      dns_nameservers:
-      - 1.0.0.1
-
   public-net:
     type: OS::Neutron::ProviderNet
     properties:
       name: public
-      network_type: flat
+      router_external: true
+      port_security_enabled: false
+      physical_network: public
       # For type "flat" the "physical_network" must be specified in
       # "flat_networks" for the Neutron ML2 plugin on the controller
-      # See: /var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/ml2_conf.ini
+      # See: "/var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/ml2_conf.ini"
       # OVN then maps this name to an OVS bridge
-      # See: sudo ovs-vsctl get open . external_ids:ovn-bridge-mappings
-      physical_network: public
-      router_external: true
+      # See: "sudo ovs-vsctl get open . external_ids:ovn-bridge-mappings"
+      network_type: flat
 
   public-subnet:
     type: OS::Neutron::Subnet
     properties:
       name: public
-      network_id: { get_resource: public-net }
-      enable_dhcp: true #???
+      network: { get_resource: public-net }
+      enable_dhcp: false
       ip_version: 4
       cidr: 10.0.2.0/24
-      gateway_ip: 10.0.2.2
+      gateway_ip: 10.0.2.2 # address on eth2
       allocation_pools:
       - start: 10.0.2.100
         end: 10.0.2.254
       dns_nameservers:
       - 1.0.0.1
+      #host_routes:
+      #- destination: 0.0.0.0/0
+      #- destination: 10.0.0.0/24
+      #  nexthop: 10.0.2.2
 
-  # TODO: do we need a router?
+  # The "external" network is used by OpenStack services
+  # This resource will let us connect to it and add our own services to it 
+  external-net:
+    type: OS::Neutron::ProviderNet
+    properties:
+      name: external
+      router_external: true
+      # For type "vlan" the "physical_network" must be specified in
+      # "network_vlan_ranges" for the Neutron ML2 plugin on the controller
+      # See: "/var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/ml2_conf.ini"
+      # OVN then maps this name to an OVS bridge
+      # See: "sudo ovs-vsctl get open . external_ids:ovn-bridge-mappings"
+      network_type: vlan
+      physical_network: datacentre # control plane
+      segmentation_id: '10' # VLAN tag 10 = external
 
-#   public-router:
-#     type: OS::Neutron::Router
-# #    properties:
-# 
-#   public-router-interface:
-#     type: OS::Neutron::RouterInterface
-#     properties:
-#       router_id: { get_resource: public-router }
-#       subnet_id: { get_resource: public-subnet }
+  external-subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: external
+      network: { get_resource: external-net }
+      enable_dhcp: false
+      ip_version: 4
+      cidr: 10.0.0.0/24
+      gateway_ip: 10.0.0.1
+      # Be careful not to overlap allocations!
+      # We've already reserved the range 10.0.0.4-10.0.0.250 for OpenStack servers
+      # See: "configuration/openstack/networks.yaml"
+      allocation_pools:
+      - start: 10.0.0.251
+        end: 10.0.0.254
+      dns_nameservers:
+      - 1.0.0.1

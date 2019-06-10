@@ -10,7 +10,7 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
-. "$ROOT/utils/trap-fetch-results"
+. "$ROOT/utils/trap-with-fetch-results"
 
 OVERCLOUD_HEAT_ENVIRONMENTS_YAML=$(cat "$ROOT/configuration/openstack/heat-environments.yaml" |
 	HOME=/home/stack \
@@ -21,7 +21,7 @@ OVERCLOUD_NETWORKS_YAML=$(cat "$ROOT/configuration/openstack/networks.yaml")
 
 OVERCLOUD_NODES_YAML=$(cat "$ROOT/configuration/openstack/nodes.yaml")
 
-OVERCLOUD_NETWORKING_J2_YAML=$(cat "$ROOT/configuration/openstack/networking.j2.yaml")
+OVERCLOUD_NODE_NETWORKING_J2_YAML=$(cat "$ROOT/configuration/openstack/node-networking.j2.yaml")
 
 OVERCLOUD_NOVA_YAML=$(cat "$ROOT/configuration/openstack/nova.yaml")
 
@@ -43,13 +43,16 @@ OVERCLOUD_CEPH_YAML=$(cat "$ROOT/configuration/openstack/ceph.yaml")
 	mkdir --parents "\$DEPLOY/templates.j2/"
 
 	m '[tripleo] Updating Heat environment selection'
-	echo $(c "$OVERCLOUD_HEAT_ENVIRONMENTS_YAML") > "\$DEPLOY/heat-environments.yaml"
+	echo $(c "$OVERCLOUD_HEAT_ENVIRONMENTS_YAML") \
+		> "\$DEPLOY/heat-environments.yaml"
 
 	m '[tripleo] Updating networks configuration'
-	echo $(c "$OVERCLOUD_NETWORKS_YAML") > "\$DEPLOY/networks.yaml"
+	echo $(c "$OVERCLOUD_NETWORKS_YAML") \
+		> "\$DEPLOY/networks.yaml"
 
 	m '[tripleo] Updating roles configuration'
-	openstack overcloud roles generate \
+	openstack \
+	overcloud roles generate \
 		-o "\$DEPLOY/roles.yaml" \
 		Controller ComputeHCI \
 		$(c "$TRIPLEO_VERBOSITY")
@@ -62,7 +65,8 @@ OVERCLOUD_CEPH_YAML=$(cat "$ROOT/configuration/openstack/ceph.yaml")
 
 	# Note: the default "environments/network-environment.yaml" imports configs (harcoded) from
 	# "single-nic-vlan", so to avoid updating that file we will override "single-nic-vlan"
-	echo $(c "$OVERCLOUD_NETWORKING_J2_YAML") > "\$DEPLOY/templates.j2/network/config/single-nic-vlans/role.role.j2.yaml"
+	echo $(c "$OVERCLOUD_NODE_NETWORKING_J2_YAML") \
+		> "\$DEPLOY/templates.j2/network/config/single-nic-vlans/role.role.j2.yaml"
 
 	m '[tripleo] Rendering Heat templates from Jinja2'
 
@@ -74,23 +78,29 @@ OVERCLOUD_CEPH_YAML=$(cat "$ROOT/configuration/openstack/ceph.yaml")
 		--roles-data "\$DEPLOY/roles.yaml"
 
 	m '[tripleo] Updating Heat environment for nodes'
-	echo $(c "$OVERCLOUD_NODES_YAML") > "\$DEPLOY/templates/environments/nodes.yaml"
+	echo $(c "$OVERCLOUD_NODES_YAML") \
+		> "\$DEPLOY/templates/environments/nodes.yaml"
 
 	m '[tripleo] Updating Heat environment for Nova'
-	echo $(c "$OVERCLOUD_NOVA_YAML") > "\$DEPLOY/templates/environments/nova.yaml"
+	echo $(c "$OVERCLOUD_NOVA_YAML") \
+		> "\$DEPLOY/templates/environments/nova.yaml"
 
 	m '[tripleo] Updating Heat environment for Neutron'
-	echo $(c "$OVERCLOUD_NEUTRON_YAML") > "\$DEPLOY/templates/environments/neutron.yaml"
+	echo $(c "$OVERCLOUD_NEUTRON_YAML") \
+		> "\$DEPLOY/templates/environments/neutron.yaml"
 
 	m '[tripleo] Updating Heat environment for Ceph'
-	echo $(c "$OVERCLOUD_CEPH_YAML") > "\$DEPLOY/templates/environments/ceph.yaml"
+	echo $(c "$OVERCLOUD_CEPH_YAML") \
+		> "\$DEPLOY/templates/environments/ceph.yaml"
 
 	m '[tripleo] Updating Heat environment for container images'
 
 	# Note: This file is often created as "containers-prepare-parameter.yaml" in the documentation
 	mkdir --parents "\$DEPLOY/templates/environments/"
-	openstack tripleo container image prepare default \
-  		--output-env-file "\$DEPLOY/templates/environments/container-images.default.yaml"
+	openstack \
+	tripleo container image prepare default \
+  		--output-env-file "\$DEPLOY/templates/environments/container-images.default.yaml" \
+		$(c "$TRIPLEO_VERBOSITY")
 
 	# BUG: using "--local-push-destination" for the above will result in a failure to pull the
 	# images during "overcloud deploy". See possibly:
@@ -114,9 +124,10 @@ OVERCLOUD_CEPH_YAML=$(cat "$ROOT/configuration/openstack/ceph.yaml")
 	_EOT
 
 	m '[tripleo] Deploying OpenStack'
-	# The stack name will be used as a prefix for server names and for the "rc" file ("labrc")
-	openstack overcloud deploy \
-		--stack lab \
+	# The stack name will be used as a prefix for server names and for the "rc" file (e.g. "labrc")
+	openstack \
+	overcloud deploy \
+		--stack $(c "$OVERCLOUD_HEAT_STACK") \
 		--templates "\$DEPLOY/templates/" \
 		--networks-file "\$DEPLOY/networks.yaml" \
 		--roles-file "\$DEPLOY/roles.yaml" \

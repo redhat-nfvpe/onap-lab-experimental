@@ -10,7 +10,7 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
-. "$ROOT/utils/trap-fetch-results"
+. "$ROOT/utils/trap-with-fetch-results"
 
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
@@ -25,8 +25,13 @@ ROOT=$(readlink -f "$HERE/../..")
 
 	for UUID in \$(openstack baremetal node list --format value --column UUID); do
 		m "[tripleo] Deleting infrastructure node \"\$UUID\""
-		openstack baremetal node maintenance set "\$UUID" $(c "$TRIPLEO_VERBOSITY") || true
-		openstack baremetal node delete "\$UUID" $(c "$TRIPLEO_VERBOSITY")
+		openstack \
+		baremetal node maintenance set "\$UUID" \
+			$(c "$TRIPLEO_VERBOSITY") || true
+
+		openstack \
+		baremetal node delete "\$UUID" \
+			$(c "$TRIPLEO_VERBOSITY")
 	done
 
 EOT

@@ -1,4 +1,11 @@
-# Modified from: /usr/share/openstack-tripleo-heat-templates/network_data.yaml
+# Networks.
+
+# This is a custom format ingested by "network-environment.j2.yaml" and "network-isolation.j2.yaml"
+# to generate Heat template environments. 
+
+# This file was modified from the default at:
+#   /usr/share/openstack-tripleo-heat-templates/network_data.yaml
+
 # See: https://docs.openstack.org/tripleo-docs/latest/install/advanced_deployment/custom_networks.html
 
 - name: Storage

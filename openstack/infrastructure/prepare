@@ -10,7 +10,7 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
-. "$ROOT/utils/trap-fetch-results"
+. "$ROOT/utils/trap-with-fetch-results"
 
 EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 EQ_CEPH_VERSION=$(eq "$CEPH_VERSION")
@@ -34,11 +34,13 @@ EQ_CEPH_VERSION=$(eq "$CEPH_VERSION")
 	m '[tripleo] Ensuring infrastructure images are built (~ 5 minutes)'
 	DIB_YUM_REPO_CONF="/etc/yum.repos.d/delorean.repo /etc/yum.repos.d/delorean-$EQ_TRIPLEO_VERSION-testing.repo /etc/yum.repos.d/tripleo-centos-ceph-$EQ_CEPH_VERSION.repo" \
 	DIB_LOCAL_IMAGE="\$HOME/images/centos7.qcow2" \
-	openstack overcloud image build \
+	openstack \
+	overcloud image build \
 		$(c "$TRIPLEO_VERBOSITY")
 
 	m '[tripleo] Ensuring infrastructure images are uploaded'
-	openstack overcloud image upload \
+	openstack \
+	overcloud image upload \
 		$(c "$TRIPLEO_VERBOSITY")
 
 EOT

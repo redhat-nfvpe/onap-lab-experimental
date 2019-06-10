@@ -10,17 +10,17 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
-. "$ROOT/utils/trap-fetch-results"
+. "$ROOT/utils/trap-with-fetch-results"
 
 "$HERE/infrastructure/update-ssh-config"
 
 "$ROOT/rsync" \
 	tripleo:/home/stack/labrc \
-	"$WORKSPACE_ROOT/labrc"
+	"$WORKSPACE_ROOT/${OVERCLOUD_HEAT_STACK}rc"
 
 "$ROOT/rsync" \
-	"$WORKSPACE_ROOT/labrc" \
-	manager:/home/manager/labrc
+	"$WORKSPACE_ROOT/${OVERCLOUD_HEAT_STACK}rc" \
+	"manager:/home/manager/${OVERCLOUD_HEAT_STACK}rc"
 
 CONTROLLER_IP_ADDRESS=$("$ROOT/manager/get-ipv4-address" openstack-controller eth1)
 

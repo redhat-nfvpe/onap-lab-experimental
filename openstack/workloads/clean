@@ -13,14 +13,23 @@ ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/utils/trap"
 
 m '[openstack] Deleting hello-world'
-"$ROOT/openstack/openstack-project" \
-	hello-world hello-world-admin password \
-	stack delete --wait hello-world -v || true
+# Note: it's possible to delete the stack from the admin user, but we would have to use the ID
+# rather than the name
+"$ROOT/openstack/openstack-tenant" hello-world hello-world hello-world-admin password \
+stack delete hello-world \
+	--wait -v || true
 
-m '[openstack] Deleting hello-world-project'
+m '[openstack] Disabling hello-world domain'
+# Domain needs to be disabled in order to delete it
 "$ROOT/openstack/openstack" \
-	stack delete --wait hello-world-project -v || true
+domain set hello-world --disable -v || true
+
+m '[openstack] Deleting hello-world-tenant'
+"$ROOT/openstack/openstack" \
+stack delete hello-world-tenant \
+	--wait -v || true
 
 m '[openstack] Deleting common'
 "$ROOT/openstack/openstack" \
-	stack delete --wait common -v || true
+stack delete common \
+	--wait -v || true

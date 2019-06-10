@@ -1,6 +1,14 @@
-# Role networking Heat Jinja2 template.
+# Heat Jinja2 template for configuring networking on a node by its role.
 
-# Modified from: /usr/share/openstack-tripleo-heat-templates/network/config/single-nic-vlans/role.role.j2.yaml
+# Generates the "/etc/os-net-config/config.json" file for use by the "os-net-config" tool, see:
+#   https://opendev.org/openstack/os-net-config 
+
+# Internally delegates to the bash script at:
+#   /usr/share/openstack-tripleo-heat-templates/network/scripts/run-os-net-config.sh
+
+# This file was modified from the default at:
+#   /usr/share/openstack-tripleo-heat-templates/network/config/single-nic-vlans/role.role.j2.yaml
+
 # See: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/advanced_overcloud_customization/custom-network-interface-templates
 
 {#- Convert net map or net list to internal list of networks #}
@@ -179,22 +187,19 @@ resources:
 {%-     endif %}
 {%- endfor %}
 {%- if role.name.startswith('Controller') %}
-              # See: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/advanced_overcloud_customization/custom-network-interface-templates
-              # "public" flat network for Neutron ML2 
               - type: ovs_bridge
-                name: br-public
+                name: br-public # associated with OVN's "public" flat network in our "neutron.yaml"
                 addresses:
                 - ip_netmask: 10.0.2.2/24
-                mtu: { get_attr: [ MinViableMtu, value ] }
-                # Breaks below?
                 routes:
                 - default: true
-                  next_hop: 10.0.2.1 # public network gateway
+                  next_hop: 10.0.2.1 # gateway defined in our "../libvirt/networks/public.xml"
                 dns_servers: { get_param: DnsServers }
+                mtu: { get_attr: [ MinViableMtu, value ] }
                 members:
                 - type: interface
-                  name: nic3 # public network interface (created by libvirt)
-                  primary: true
+                  name: nic3 # "public" network interface created by libvirt (=eth2)
+                  primary: true # we want the bridge to use this NIC's MAC address
                   mtu: { get_attr: [ MinViableMtu, value ] }
 {%- endif %}
 outputs:
