@@ -7,6 +7,3 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/utils/functions"
 . "$ROOT/utils/trap-with-fetch-results"
 
-"$ROOT/manager/tripleo/openstack" \
-overcloud delete "$OVERCLOUD_HEAT_STACK" \
-	--yes

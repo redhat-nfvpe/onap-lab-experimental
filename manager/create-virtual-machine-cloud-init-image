@@ -1,11 +1,6 @@
 #!/bin/bash
 set -e
 
-if [ "$EUID" == 0 ]; then
-	echo "Do not run this script as root"
-	exit 1
-fi
-
 # See: https://stafwag.github.io/blog/blog/2019/03/03/howto-use-centos-cloud-images-with-cloud-init/
 # See: https://github.com/giovtorres/kvm-install-vm/blob/master/kvm-install-vm
 # See: https://cloudinit.readthedocs.io/en/latest/index.html

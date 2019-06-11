@@ -1,11 +1,6 @@
 #!/bin/bash
 set -e
 
-if [ "$EUID" == 0 ]; then
-	echo "Do not run this script as root"
-	exit 1
-fi
-
 NAME=$1
 
 HERE=$(dirname "$(readlink -f "$0")")
