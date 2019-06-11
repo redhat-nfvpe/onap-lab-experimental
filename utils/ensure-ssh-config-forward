@@ -5,6 +5,8 @@ NAME=$1
 HOST=$2
 USERNAME=$3
 KEY=$4
+PORT=$5
+LOCAL=$6
 
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
@@ -17,10 +19,15 @@ if [ -f "$CONFIG" ]; then
 	sed --in-place "/Host \"$NAME\"/,/^$/d" "$CONFIG"
 fi
 
+mkdir --parents "$SSH_CONTROL_ROOT/"
+
 cat >> "$CONFIG" <<- EOT
 	Host "$NAME"
 	  HostName "$HOST"
 	  User "$USERNAME"
 	  IdentityFile "$KEYS_ROOT/$KEY"
+	  LocalForward "$PORT" "$LOCAL"
+	  ControlMaster yes
+	  ControlPath "$SSH_CONTROL_ROOT/$NAME"
 
 EOT

@@ -21,4 +21,4 @@ fi
 "$HERE/infrastructure/introspect"
 "$HERE/deploy"
 "$HERE/connect"
-"$HERE/workloads/deploy"
+"$HERE/common/deploy"

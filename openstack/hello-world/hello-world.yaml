@@ -32,23 +32,6 @@ resources:
       allocation_pools:
       - start: 192.0.1.100
         end: 192.0.1.254
-      dns_nameservers:
-      - 1.0.0.1
-#       host_routes:
-#       - destination: 0.0.0.0/0 # 10.0.0.0/24
-#         nexthop: 192.0.1.2
-
-#   public-router-port:
-#     type: OS::Neutron::Port
-#     properties:
-#       name: public-router
-#       #device_owner: network:router_interface
-#       ##device_id: { get_resource: public-router }
-#       port_security_enabled: false
-#       network: { get_resource: private-net }
-#       fixed_ips:
-#       - subnet_id: { get_resource: private-subnet }
-#         ip_address: 192.0.1.2 # the "gateway_ip" of the subnet?
 
   public-router:
     type: OS::Neutron::Router
@@ -56,23 +39,19 @@ resources:
       name: public
       external_gateway_info:
         network: { get_param: public-network }
-        enable_snat: false
+        enable_snat: true
 
   public-router-interface:
     type: OS::Neutron::RouterInterface
     properties:
       router: { get_resource: public-router }
-      # Specifying subnet will automatically create a port at the first address (which is the "gateway_ip")
-      subnet: { get_resource: private-subnet }
-      #port: { get_resource: public-router-port } # floating ip not reachable
+      subnet: { get_resource: private-subnet } # will create a port at "gateway_ip" address
 
   security-group:
     type: OS::Neutron::SecurityGroup
     properties:
       name: control-plane
       rules:
-      - remote_ip_prefix: 0.0.0.0/0
-        direction: egress
       - remote_ip_prefix: 0.0.0.0/0
         direction: ingress
         protocol: icmp
@@ -89,8 +68,7 @@ resources:
       name: port
       network: { get_resource: private-net }
       fixed_ips: # required if we want to bind a floating IP to this port
-      - subnet_id: { get_resource: private-subnet }
-        ip_address: 192.0.1.10
+      - subnet: { get_resource: private-subnet }
       security_groups:
       - { get_resource: security-group }
 
@@ -127,12 +105,12 @@ resources:
     properties:
       size: 5 # GB
 
+  # Default mountpoint is /dev/vdb
   volume-attachment:
     type: OS::Cinder::VolumeAttachment
     properties:
       volume_id: { get_resource: volume }
       instance_uuid: { get_resource: server }
-      #mountpoint: /dev/vdb
 
 outputs:
 

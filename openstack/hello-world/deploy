@@ -21,13 +21,6 @@ fi
 	"$HERE/"*.yaml \
 	manager:/home/manager/workloads/
 
-m '[openstack] Creating common'
-"$ROOT/openstack/openstack" \
-stack create common \
-	--template /home/manager/workloads/common.yaml \
-	--parameter "centos7-image-url=$CENTOS7_IMAGE" \
-	--wait -v
-
 m '[openstack] Creating hello-world-tenant'
 "$ROOT/openstack/openstack" \
 stack create hello-world-tenant \
@@ -41,9 +34,11 @@ stack create hello-world \
 	--wait -v
 
 m '[openstack] Fetching hello-world private key'
+
 "$ROOT/openstack/openstack-tenant" hello-world hello-world hello-world-admin password \
 stack output show hello-world private-key --format value --column output_value \
 	> "$KEYS_ROOT/centos@hello-world"
+
 chmod 600 "$KEYS_ROOT/centos@hello-world"
 
 "$ROOT/rsync" \
@@ -53,6 +48,6 @@ chmod 600 "$KEYS_ROOT/centos@hello-world"
 IP_ADDRESS=$("$ROOT/openstack/openstack-tenant" hello-world hello-world hello-world-admin password \
 stack output show hello-world public-ip --format value --column output_value)
 
-m "[openstack] Server has public IP address: $IP_ADDRESS"
+m "[openstack] Server's public IP address: $IP_ADDRESS"
 
-"$ROOT/utils/ensure-ssh-config" hello-world "$IP_ADDRESS" centos centos@hello-world lab-controller-0
+"$ROOT/utils/ensure-ssh-config-proxy" hello-world "$IP_ADDRESS" centos centos@hello-world lab-controller-0

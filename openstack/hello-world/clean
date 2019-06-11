@@ -28,8 +28,3 @@ m '[openstack] Deleting hello-world-tenant'
 "$ROOT/openstack/openstack" \
 stack delete hello-world-tenant \
 	--wait -v || true
-
-m '[openstack] Deleting common'
-"$ROOT/openstack/openstack" \
-stack delete common \
-	--wait -v || true

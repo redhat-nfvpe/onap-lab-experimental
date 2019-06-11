@@ -10,9 +10,9 @@ HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
-. "$ROOT/utils/trap-with-fetch-results"
+. "$ROOT/utils/trap"
 
-"$HERE/infrastructure/update-ssh-config"
+"$HERE/infrastructure/connect"
 
 "$ROOT/rsync" \
 	tripleo:/home/stack/labrc \
@@ -36,7 +36,7 @@ fi
 	RESET='\033[0m'
 	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
-	m '[manager] Enabling route to External network via controller'
+	m '[manager] Enabling IP route to External network'
 
 	# TODO make permanent
 	ip route del 10.0.0.0/24 || true
@@ -44,3 +44,13 @@ fi
 
 EOT
 )"
+
+. "$WORKSPACE_ROOT/${OVERCLOUD_HEAT_STACK}rc"
+
+# TODO extract IP and password
+
+echo "$OS_AUTH_URL"
+
+m "[manager] Enabling dashboard port $OPENSTACK_LOCAL_DASHBOARD_PORT forwarded via ssh \"openstack-dashboard\""
+
+"$ROOT/utils/ensure-ssh-config-forward" openstack-dashboard "$MANAGER_IP_ADDRESS" manager manager@manager "$OPENSTACK_LOCAL_DASHBOARD_PORT" 10.0.0.70:80

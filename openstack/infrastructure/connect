@@ -12,7 +12,7 @@ ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/utils/functions"
 . "$ROOT/utils/trap"
 
-m "[tripleo] Fetching keypair"
+m "[tripleo] Fetching infrastructure access keypair"
 
 "$ROOT/rsync" \
 	tripleo:/home/stack/.ssh/id_rsa \
@@ -26,9 +26,9 @@ for NAME in $("$ROOT/manager/tripleo/openstack" server list --format value --col
 	EQ_NAME=$(eq "$NAME")
 	IP_ADDRESS=$("$HERE/get-ipv4-address" "$NAME" ctlplane)
 	if [ -n "$IP_ADDRESS" ]; then
-		m "[tripleo] Server \"$EQ_NAME\" has IP address on ctlplane: $IP_ADDRESS"
-		"$ROOT/utils/ensure-ssh-config" "$NAME" "$IP_ADDRESS" heat-admin tripleo tripleo
+		m "[tripleo] Enabling ssh access to infrastructure server \"$EQ_NAME\" via ctlplane: $IP_ADDRESS"
+		"$ROOT/utils/ensure-ssh-config-proxy" "$NAME" "$IP_ADDRESS" heat-admin tripleo tripleo
 	else
-		m "[tripleo] Server \"$EQ_NAME\" does not have an IP address on ctlplane"
+		m "[tripleo] Infrastructure server \"$EQ_NAME\" does not have an IP address on ctlplane" "$RED"
 	fi
 done

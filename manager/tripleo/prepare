@@ -38,9 +38,10 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 	if ! rpm --query --quiet python2-tripleo-repos; then
 		m '[tripleo] Ensuring TripleO repository is installed'
 
-		# RDO deletes old packages from the repository when adding new versions, which means we
-		# cannot rely on a stable URL. Instead we will scrape the repository's generated HTML index
-		# using Lynx to find the current URL.
+		# The RDO project deletes old packages from the repository when adding new versions, which
+		# means we cannot in this script rely on a stable URL for the package. Our workaround is
+		# to scrape the repository's generated HTML index using Lynx in order to find the current
+		# URL.
 	
 		TRIPLEO_REPOS=\$(lynx -listonly -nonumbers -dump  "https://trunk.rdoproject.org/centos7-$EQ_TRIPLEO_VERSION/consistent/" |
 			grep '/python2-tripleo-repos-.*\.rpm$')
@@ -58,8 +59,9 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 		-d centos7 \
 		current ceph
 
-	# "python2-chardet" is workaround for: https://bugs.launchpad.net/tripleo/+bug/1829263
 	sudo yum upgrade --assumeyes
+
+	# "python2-chardet" is workaround for: https://bugs.launchpad.net/tripleo/+bug/1829263
 	sudo yum install --assumeyes \
 		python2-tripleoclient python2-chardet \
 		ceph-ansible

@@ -5,6 +5,7 @@ NAME=$1
 HOST=$2
 USERNAME=$3
 KEY=$4
+PROXY=$5
 
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
@@ -17,10 +18,21 @@ if [ -f "$CONFIG" ]; then
 	sed --in-place "/Host \"$NAME\"/,/^$/d" "$CONFIG"
 fi
 
+# Since OpenSSH 7.3 ("-J"):
+#   ProxyJump "$PROXY"
+# Which is equivalent to:
+#   ProxyCommand ssh -F "$CONFIG" "$PROXY" -W %h:%p
+# Oldest way (requires "nc" on proxy):
+#   ProxyCommand ssh -F "$CONFIG" "$PROXY" "nc %h %p"
+
 cat >> "$CONFIG" <<- EOT
 	Host "$NAME"
 	  HostName "$HOST"
 	  User "$USERNAME"
 	  IdentityFile "$KEYS_ROOT/$KEY"
+	  StrictHostKeyChecking no
+	  UserKnownHostsFile /dev/null
+	  LogLevel ERROR
+	  ProxyJump "$PROXY"
 
 EOT

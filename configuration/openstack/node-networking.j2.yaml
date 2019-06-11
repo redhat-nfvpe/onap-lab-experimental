@@ -186,6 +186,7 @@ resources:
                             get_param: {{network.name}}InterfaceDefaultRoute
 {%-     endif %}
 {%- endfor %}
+              # Public network
               - type: ovs_bridge
                 name: br-public # associated with OVN's "public" flat network in our "neutron.yaml"
                 addresses:

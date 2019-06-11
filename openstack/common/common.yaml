@@ -77,6 +77,8 @@ resources:
 
   # Networks
 
+  # The "public" network allows access to the outside world
+  # Useful for floating IPs
   public-net:
     type: OS::Neutron::ProviderNet
     properties:
@@ -98,20 +100,14 @@ resources:
       network: { get_resource: public-net }
       enable_dhcp: false
       ip_version: 4
+      # See: "configuration/libvirt/networks/public.xml"
       cidr: 10.0.2.0/24
-      gateway_ip: 10.0.2.2 # address on eth2
+      gateway_ip: 10.0.2.1
       allocation_pools:
       - start: 10.0.2.100
         end: 10.0.2.254
-      dns_nameservers:
-      - 1.0.0.1
-      #host_routes:
-      #- destination: 0.0.0.0/0
-      #- destination: 10.0.0.0/24
-      #  nexthop: 10.0.2.2
 
   # The "external" network is used by OpenStack services
-  # This resource will let us connect to it and add our own services to it 
   external-net:
     type: OS::Neutron::ProviderNet
     properties:
@@ -141,5 +137,3 @@ resources:
       allocation_pools:
       - start: 10.0.0.251
         end: 10.0.0.254
-      dns_nameservers:
-      - 1.0.0.1
