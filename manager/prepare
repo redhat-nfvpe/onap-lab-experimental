@@ -37,7 +37,7 @@ NETWORK_PUBLIC_XML=$(cat "$ROOT/configuration/libvirt/networks/public.xml" |
 
 m '[manager-root] Ensuring keypair authorization for user "root" (you will be prompted for password if not)'
 "$ROOT/utils/ensure-ssh-key-authorized" root@manager \
-ssh "root@$MANAGER_IP_ADDRESS"
+ssh -i "$KEYS_ROOT/root@manager" "root@$MANAGER_IP_ADDRESS"
 
 "$ROOT/utils/ensure-ssh-config" manager-root "$MANAGER_IP_ADDRESS" root root@manager
 
@@ -54,16 +54,23 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 	timedatectl set-timezone $(c "$TIMEZONE")
 
 	m '[manager-root] Ensuring libvirt and related packages are installed'
+
 	# Note: "centos-release-qemu-ev" provides a repository that will give us a newer version of
 	# qemu, which is required to avoid the "CPU feature arat not found" error with OpenStack images
 	# running in our virtual machines
 	yum install --assumeyes \
 		epel-release centos-release-qemu-ev deltarpm
+
 	yum upgrade --assumeyes
+
 	yum install --assumeyes \
 		bash-completion \
-		virt-install cloud-utils ipmitool \
-		python36-pip python36-devel libvirt-devel openssl-devel gcc
+		qemu-kvm libvirt virt-install cloud-utils ipmitool \
+		python36-pip python36-devel libvirt-devel openssl-devel gcc \
+		wget
+
+	systemctl enable libvirtd.service
+	systemctl start libvirtd.service
 
 	m '[manager-root] Ensuring VirtualBMC service is installed and configured'
 
@@ -128,26 +135,24 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 
 	m '[manager-root] Ensuring libvirt networks and bridges are configured'
 
-	if [ ! -f /etc/sysconfig/network-scripts/ifcfg-openstack ]; then
-		cat > /etc/sysconfig/network-scripts/ifcfg-openstack <<- _EOT
-			DEVICE=openstack
-			TYPE=Bridge
-			ONBOOT=yes
-			BOOTPROTO=none
-			DELAY=0
-		_EOT
+	cat > /etc/sysconfig/network-scripts/ifcfg-openstack <<- _EOT
+		DEVICE=openstack
+		TYPE=Bridge
+		ONBOOT=yes
+		BOOTPROTO=none
+		DELAY=0
+	_EOT
 
-		cat > /etc/sysconfig/network-scripts/ifcfg-$C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE <<- _EOT
-			DEVICE=$EQ_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE
-			TYPE=Ethernet
-			BRIDGE=openstack
-			ONBOOT=yes
-			BOOTPROTO=none
-			DELAY=0
-		_EOT
+	cat > /etc/sysconfig/network-scripts/ifcfg-$C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE <<- _EOT
+		DEVICE=$EQ_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE
+		TYPE=Ethernet
+		BRIDGE=openstack
+		ONBOOT=yes
+		BOOTPROTO=none
+		DELAY=0
+	_EOT
 
-		systemctl restart network.service
-	fi
+	systemctl restart network.service
 
 	# TODO: brctl works but won't survive reboots
 	#brctl addbr openstack || true
@@ -168,11 +173,6 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 	#	ifname $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE \
 	#	master openstack
 
-	mkdir --parents "\$HOME/libvirt/networks/"
-	echo $(c "$NETWORK_HYPERVISOR_CONTROL_PLANE_XML") > "\$HOME/libvirt/networks/hypervisor-control-plane.xml"
-	echo $(c "$NETWORK_OPENSTACK_CONTROL_PLANE_XML") > "\$HOME/libvirt/networks/openstack-control-plane.xml"
-	echo $(c "$NETWORK_PUBLIC_XML") > "\$HOME/libvirt/networks/public.xml"
-
 	function qemu_enable_bridge () {
 		# Allow the bridge to be used by qemu
 		if ! grep --quiet --line-regexp "allow \$1" /etc/qemu-kvm/bridge.conf; then
@@ -188,10 +188,23 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 		virsh net-start "\$1" || true
 	}
 
+	mkdir --parents "\$HOME/libvirt/networks/"
+
+	echo $(c "$NETWORK_HYPERVISOR_CONTROL_PLANE_XML") \
+		> "\$HOME/libvirt/networks/hypervisor-control-plane.xml"
+
+	echo $(c "$NETWORK_OPENSTACK_CONTROL_PLANE_XML") \
+		> "\$HOME/libvirt/networks/openstack-control-plane.xml"
+
+	echo $(c "$NETWORK_PUBLIC_XML") \
+		> "\$HOME/libvirt/networks/public.xml"
+
 	qemu_enable_bridge hypervisor
 	virsh_enable_network hypervisor-control-plane
+
 	qemu_enable_bridge openstack
 	virsh_enable_network openstack-control-plane
+
 	qemu_enable_bridge public
 	virsh_enable_network public
 

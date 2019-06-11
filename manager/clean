@@ -14,7 +14,7 @@ ROOT=$(readlink -f "$HERE/..")
 
 C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE")
 
-ssh "root@$MANAGER_IP_ADDRESS" "$(cat <<- EOT
+ssh -i "$KEYS_ROOT/root@manager" "root@$MANAGER_IP_ADDRESS" "$(cat <<- EOT
 
 	set -e
 	CYAN='\033[0;36m'
@@ -35,7 +35,7 @@ ssh "root@$MANAGER_IP_ADDRESS" "$(cat <<- EOT
 	done
 
 	m '[manager-root] Ensuring no libvirt networks'
-	for UUID in \$(virsh -r net-list --all --uuid); do
+	for UUID in \$(virsh -r net-list --uuid); do
 		virsh net-destroy "\$UUID"
 	done
 	for UUID in \$(virsh -r net-list --all --uuid); do

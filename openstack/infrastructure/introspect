@@ -20,7 +20,7 @@ if [ -n "$COMPUTE_VIRTUALBMC_PORT" ]; then
 	COMPUTE_MAC_ADDRESS=$("$ROOT/manager/get-mac-address" openstack-compute openstack)
 fi
 
-INFRASTRUCTURE_INVENTORY_YAML=$(cat "$ROOT/configuration/tripleo/infrastructure-inventory.yaml" |
+INFRASTRUCTURE_INVENTORY_YAML=$(cat "$ROOT/configuration/openstack/infrastructure-inventory.yaml" |
 	CONTROLLER_MAC_ADDRESS=$(eq "$CONTROLLER_MAC_ADDRESS") \
 	CONTROLLER_VIRTUALBMC_PORT=$(eq "$CONTROLLER_VIRTUALBMC_PORT") \
 	COMPUTE_MAC_ADDRESS=$(eq "$COMPUTE_MAC_ADDRESS") \

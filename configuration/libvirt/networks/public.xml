@@ -18,6 +18,6 @@ See: https://libvirt.org/formatnetwork.html
   <name>public</name>
   <!-- bridge name length should be no longer than 11 -->
   <bridge name="public"/>
-  <forward mode="nat" dev="$MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE"/>
+  <forward mode="nat"/> <!-- do *not* specify "dev" here -->
   <ip address="10.0.2.1" netmask="255.255.255.0"/>
 </network>

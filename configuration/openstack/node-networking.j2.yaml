@@ -186,7 +186,6 @@ resources:
                             get_param: {{network.name}}InterfaceDefaultRoute
 {%-     endif %}
 {%- endfor %}
-{%- if role.name.startswith('Controller') %}
               - type: ovs_bridge
                 name: br-public # associated with OVN's "public" flat network in our "neutron.yaml"
                 addresses:
@@ -201,7 +200,7 @@ resources:
                   name: nic3 # "public" network interface created by libvirt (=eth2)
                   primary: true # we want the bridge to use this NIC's MAC address
                   mtu: { get_attr: [ MinViableMtu, value ] }
-{%- endif %}
+
 outputs:
   OS::stack_id:
     description: The OsNetConfigImpl resource.

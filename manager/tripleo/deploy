@@ -30,7 +30,7 @@ UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" |
 	# TODO: is there a way to use our own container-image-prepare.yaml?
 	# See: /var/log/tripleo-container-image-prepare.log
 
-	m '[tripleo] Ensuring TripleO is deployed (~ 15 minutes)'
+	m '[tripleo] Ensuring TripleO is deployed (~ 20 minutes)'
 	openstack \
 	undercloud install \
 		$(c "$TRIPLEO_VERBOSITY")

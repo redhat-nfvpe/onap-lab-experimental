@@ -53,8 +53,8 @@ CEPH_VERSION=nautilus
 # a given time all images might not have that tag (yet?). A related issue is that if pulling the
 # image fails ("error pulling image" in the logs) then the task as a whole would not immediately
 # fail -- instead you would just not have services running on the node.
-TRIPLEO_CONTAINER_IMAGE_TAG=current-tripleo-rdo
-#TRIPLEO_CONTAINER_IMAGE_TAG=d45bbddf5063604b241bc8f14e39d90cae03de8b_24ce03e4
+#TRIPLEO_CONTAINER_IMAGE_TAG=current-tripleo-rdo
+TRIPLEO_CONTAINER_IMAGE_TAG=d45bbddf5063604b241bc8f14e39d90cae03de8b_24ce03e4
 
 # See: https://hub.docker.com/r/ceph/daemon/tags
 # Or run: skopeo inspect docker://docker.io/ceph/daemon
