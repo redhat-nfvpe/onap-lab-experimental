@@ -28,7 +28,7 @@ network:
     - type: dhcp
 
 users:
-- name: stack
+- name: "$USERNAME"
   groups: wheel
   shell: /bin/bash
   sudo: ALL=(ALL) NOPASSWD:ALL

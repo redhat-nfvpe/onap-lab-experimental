@@ -40,12 +40,12 @@ INFRASTRUCTURE_INVENTORY_YAML=$(cat "$ROOT/configuration/openstack/infrastructur
 	m '[tripleo] Updating inventory of infrastructure nodes'
 
 	echo $(c "$INFRASTRUCTURE_INVENTORY_YAML") \
-		> "\$INFRASTRUCTURE/infrastructure-inventory.yaml"
+		> "\$INFRASTRUCTURE/inventory.yaml"
 
 	# Note: "import" will update existing baremetal nodes, but other nodes will *not* be deleted
 
 	openstack \
-	overcloud node import "\$INFRASTRUCTURE/infrastructure-inventory.yaml" \
+	overcloud node import "\$INFRASTRUCTURE/inventory.yaml" \
 		$(c "$TRIPLEO_VERBOSITY")
 
 	m '[tripleo] Introspecting infrastructure nodes (~ 15 minutes)'

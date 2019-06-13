@@ -104,8 +104,9 @@ What this script does:
   complex enough that it deserves its own step)
 * Installs Ceph Ansible playbooks on it, which TripleO will use later to install Ceph on cloud
   nodes 
-* Creates and configures the "stack" user, which will be used by TripleO client to configure TripleO
-  (though note that it does have sudo access, which will be necessary for *installing* TripleO)    
+* Creates and configures the "tripleo" user, which will be used by TripleO client to configure
+  TripleO (though note that it does have sudo access, which will be necessary for *deploying*
+  TripleO)    
 
 Note that OpenStack packages, including those for TripleO and TripleO-client, are provided by the
 [DLRN (pronounced "Delorean") project](https://dlrn.readthedocs.io/en/latest/). We will be
@@ -113,9 +114,9 @@ installing more than 500 packages in this step!
   
 After it's done we will find some more files under our `workspace/` directory:
 
-* `workspace/keys/stack@tripleo` and `workspace/keys/stack@tripleo.pub` are they keypair for the
+* `workspace/keys/tripleo@tripleo` and `workspace/keys/tripleo@tripleo.pub` are they keypair for the
   virtual machine
-* `workspace/passwords/stack@tripleo` is the password
+* `workspace/passwords/tripleo@tripleo` is the password
 * `workspace/ssh.config` is updated for `tripleo`
 
 Logs and configuration files have been fetched to the `workspace/results/` directory. Some useful
@@ -125,7 +126,7 @@ ones are from:
 
 In the Manager's `manager` user's home directory:
 
-* `/home/manager/keys/stack@tripleo` and `/home/manager/stack@tripleo.pub`
+* `/home/manager/keys/tripleo@tripleo` and `/home/manager/tripleo@tripleo.pub`
 * `/home/manager/libvirt/images/tripleo.qcow2` is our virtual machine drive image
 
 We'll wait a few seconds for the `tripleo` virtual machine to start up and then we can connect to
@@ -194,15 +195,15 @@ ones are from:
 * TripleO: `/var/log/containers/mistral/engine.log`
 * TripleO: `/var/log/containers/heat/heat-engine.log`
 
-In TripleO's `stack` user's home directory:
+In TripleO's `tripleo` user's home directory:
 
-* `/home/stack/install-undercloud.log` is a copy of the output we saw during this step
-* `/home/stack/undercloud.conf` is based on our `configuration/tripleo/undercloud.conf`
-* `/home/stack/tripleo-config-generated-env-files/undercloud_parameters.yaml` incorporates
+* `/home/tripleo/install-undercloud.log` is a copy of the output we saw during this step
+* `/home/tripleo/undercloud.conf` is based on our `configuration/tripleo/undercloud.conf`
+* `/home/tripleo/tripleo-config-generated-env-files/undercloud_parameters.yaml` incorporates
    the above two files
-* `/home/stack/undercloud-passwords.conf`
-* `/home/stack/tripleo-undercloud-passwords.yaml` incorporates the above file and also ssh keys
-* `/home/stack/stackrc` sets up a shell environment for accessing the undercloud
+* `/home/tripleo/undercloud-passwords.conf`
+* `/home/tripleo/tripleo-undercloud-passwords.yaml` incorporates the above file and also ssh keys
+* `/home/tripleo/stackrc` sets up a shell environment for accessing the undercloud
 
 We can now access the undercloud's `openstack` command via a shortcut (that uses the `stackrc`
 mentioned above), e.g.:

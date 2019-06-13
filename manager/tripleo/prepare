@@ -9,8 +9,8 @@ ROOT=$(readlink -f "$HERE/../..")
 
 EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 
-"$ROOT/manager/create-virtual-machine" tripleo
-"$ROOT/manager/enable-virtual-machine-control-plane" tripleo eth0 stack
+"$ROOT/manager/create-virtual-machine" tripleo tripleo
+"$ROOT/manager/enable-virtual-machine-control-plane" tripleo eth0 tripleo
 
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
@@ -47,7 +47,7 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 		sudo yum upgrade --assumeyes
 	fi
 
-	m '[tripleo] Ensuring TripleO-client packages are installed'
+	m '[tripleo] Ensuring TripleO-client packages are installed (~ 5 minutes)'
 
 	sudo --preserve-env tripleo-repos \
 		-b $(c "$TRIPLEO_VERSION") \
@@ -56,9 +56,8 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 
 	sudo yum upgrade --assumeyes
 
-	# "python2-chardet" is workaround for: https://bugs.launchpad.net/tripleo/+bug/1829263
 	sudo yum install --assumeyes \
-		python2-tripleoclient python2-chardet \
+		python2-tripleoclient \
 		ceph-ansible
 
 	m '[tripleo] Updating OpenStack Cliff configuration'

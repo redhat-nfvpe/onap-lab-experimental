@@ -10,11 +10,11 @@ ROOT=$(readlink -f "$HERE/../..")
 m "[tripleo] Fetching infrastructure access keypair"
 
 "$ROOT/rsync" \
-	tripleo:/home/stack/.ssh/id_rsa \
+	tripleo:/home/tripleo/.ssh/id_rsa \
 	"$KEYS_ROOT/tripleo"
 
 "$ROOT/rsync" \
-	tripleo:/home/stack/.ssh/id_rsa.pub \
+	tripleo:/home/tripleo/.ssh/id_rsa.pub \
 	"$KEYS_ROOT/tripleo.pub"
 
 for NAME in $("$ROOT/manager/tripleo/openstack" server list --format value --column Name); do

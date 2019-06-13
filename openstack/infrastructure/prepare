@@ -7,6 +7,10 @@ ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/utils/functions"
 . "$ROOT/utils/trap-with-fetch-results"
 
+if [ "$1" == '-c' ]; then
+	"$HERE/clean"
+fi
+
 EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 EQ_CEPH_VERSION=$(eq "$CEPH_VERSION")
 

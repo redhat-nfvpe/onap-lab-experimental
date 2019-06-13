@@ -10,7 +10,7 @@ ROOT=$(readlink -f "$HERE/..")
 "$HERE/infrastructure/connect"
 
 "$ROOT/rsync" \
-	tripleo:/home/stack/labrc \
+	tripleo:/home/tripleo/labrc \
 	"$WORKSPACE_ROOT/${OVERCLOUD_HEAT_STACK}rc"
 
 "$ROOT/rsync" \

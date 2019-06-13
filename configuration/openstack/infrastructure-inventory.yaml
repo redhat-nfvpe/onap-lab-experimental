@@ -61,25 +61,29 @@ nodes:
 - name: controller
   _comment: virtual machine in Manager
   capabilities: profile:control,boot_option:local
-  mac: [ "$CONTROLLER_MAC_ADDRESS" ]
+  mac:
+  - "$CONTROLLER_MAC_ADDRESS"
   pm_type: ipmi
   pm_addr: "$VIRTUALBMC_HOST"
   pm_port: $CONTROLLER_VIRTUALBMC_PORT
   pm_user: "$VIRTUALBMC_USERNAME"
   pm_password: "$VIRTUALBMC_PASSWORD"
 
-- name: compute
-  _comment: virtual machine in Manager
-  capabilities: profile:compute,boot_option:local
-  mac: [ "$COMPUTE_MAC_ADDRESS" ]
-  pm_type: ipmi
-  pm_addr: "$VIRTUALBMC_HOST"
-  pm_port: $COMPUTE_VIRTUALBMC_PORT
-  pm_user: "$VIRTUALBMC_USERNAME"
-  pm_password: "$VIRTUALBMC_PASSWORD"
-
 # - name: compute
-#   _comment: bare metal
-#   capabilities: profile:compute,boot_option:local,boot_mode:uefi
-#   mac: [ "$COMPUTE_MAC_ADDRESS" ]
-#   pm_type: manual-management
+#   _comment: virtual machine in Manager
+#   capabilities: profile:compute,boot_option:local
+#   mac:
+#   - "$COMPUTE_MAC_ADDRESS"
+#   pm_type: ipmi
+#   pm_addr: "$VIRTUALBMC_HOST"
+#   pm_port: $COMPUTE_VIRTUALBMC_PORT
+#   pm_user: "$VIRTUALBMC_USERNAME"
+#   pm_password: "$VIRTUALBMC_PASSWORD"
+
+- name: computehci
+  _comment: bare metal
+  capabilities: profile:compute,boot_option:local
+  mac:
+  - "$COMPUTE_MAC_ADDRESS"
+  pm_type: manual-management
+  #memory: 262144

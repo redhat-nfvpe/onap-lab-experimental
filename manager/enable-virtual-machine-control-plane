@@ -29,4 +29,4 @@ m "Waiting 5 seconds to ensure that virtual machine \"$EQ_NAME\" is ready for ss
 sleep 5
 
 m "[manager] Ensuring keypair authorization for user \"$EQ_USERNAME\" on virtual machine \"$EQ_NAME\""
-"$ROOT/utils/ensure-ssh-config" "$NAME" "$IP_ADDRESS" "$USERNAME" "$USERNAME@$NAME" manager
+"$ROOT/utils/ensure-ssh-config-proxy" "$NAME" "$IP_ADDRESS" "$USERNAME" "$USERNAME@$NAME" manager

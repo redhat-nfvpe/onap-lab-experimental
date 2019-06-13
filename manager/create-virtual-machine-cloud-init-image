@@ -7,6 +7,7 @@ set -e
 
 IMAGE_NAME=$1
 NAME=$2
+USERNAME=$3
 
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
@@ -16,13 +17,14 @@ ROOT=$(readlink -f "$HERE/..")
 EQ_IMAGE_NAME=$(eq "$IMAGE_NAME")
 C_IMAGE_NAME=$(c "$IMAGE_NAME")
 
-"$ROOT/utils/ensure-ssh-key-exists" "stack@$NAME"
-KEY=$(< "$KEYS_ROOT/stack@$NAME.pub")
+"$ROOT/utils/ensure-ssh-key-exists" "$USERNAME@$NAME"
+KEY=$(< "$KEYS_ROOT/$USERNAME@$NAME.pub")
 
 CLOUD_CONFIG=$(cat "$ROOT/configuration/libvirt/domains/$NAME/cloud-config.yaml" | 
 	NAME=$EQ_NAME \
 	NAMESERVER=$(eq "$NAMESERVER") \
 	TIMEZONE=$(eq "$TIMEZONE") \
+	USERNAME=$(eq "$USERNAME") \
 	PASSWORD=$(eq "$PASSWORD") \
 	KEY=$(eq "$KEY") \
 	envsubst)

@@ -8,8 +8,8 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/utils/trap-with-fetch-results"
 
 OVERCLOUD_HEAT_ENVIRONMENTS_YAML=$(cat "$ROOT/configuration/openstack/heat-environments.yaml" |
-	HOME=/home/stack \
-	ENVIRONMENTS=/home/stack/overcloud/deploy/templates/environments \
+	HOME=/home/tripleo \
+	ENVIRONMENTS=/home/tripleo/overcloud/deploy/templates/environments \
 	envsubst)
 
 OVERCLOUD_NETWORKS_YAML=$(cat "$ROOT/configuration/openstack/networks.yaml")
@@ -72,6 +72,11 @@ OVERCLOUD_CEPH_YAML=$(cat "$ROOT/configuration/openstack/ceph.yaml")
 		--network-data "\$DEPLOY/networks.yaml" \
 		--roles-data "\$DEPLOY/roles.yaml"
 
+	m '[tripleo] Updating Heat environment for container images'
+	# Note: We are using the same container images environment for the undercloud and the overcloud
+	# Note: This file is often created as "containers-prepare-parameter.yaml" in the documentation
+	cp "\$HOME/undercloud/container-images.yaml" "\$DEPLOY/templates/environments/"
+
 	m '[tripleo] Updating Heat environment for nodes'
 	echo $(c "$OVERCLOUD_NODES_YAML") \
 		> "\$DEPLOY/templates/environments/nodes.yaml"
@@ -88,36 +93,6 @@ OVERCLOUD_CEPH_YAML=$(cat "$ROOT/configuration/openstack/ceph.yaml")
 	echo $(c "$OVERCLOUD_CEPH_YAML") \
 		> "\$DEPLOY/templates/environments/ceph.yaml"
 
-	m '[tripleo] Updating Heat environment for container images'
-
-	# Note: This file is often created as "containers-prepare-parameter.yaml" in the documentation
-	mkdir --parents "\$DEPLOY/templates/environments/"
-	openstack \
-	tripleo container image prepare default \
-  		--output-env-file "\$DEPLOY/templates/environments/container-images.default.yaml" \
-		$(c "$TRIPLEO_VERBOSITY")
-
-	# BUG: using "--local-push-destination" for the above will result in a failure to pull the
-	# images during "overcloud deploy". See possibly:
-	# https://bugzilla.redhat.com/show_bug.cgi?id=1704838
-	# https://bugzilla.redhat.com/show_bug.cgi?id=1696393
-
-	# Annoyingly, the TripleO default locks some container images at specific versions while leaving
-	# others at latest upstream versions, so we will make sure to manually lock those, too
-	python2 <<- _EOT
-		import yaml
-
-		with open("\$DEPLOY/templates/environments/container-images.default.yaml") as f:
-		  y = yaml.load(f)
-
-		s = y["parameter_defaults"]["ContainerImagePrepare"][0]["set"]
-		s["tag"] = $(q "$TRIPLEO_CONTAINER_IMAGE_TAG")
-		s["ceph_tag"] = $(q "$CEPH_CONTAINER_IMAGE_TAG")
-
-		with open("\$DEPLOY/templates/environments/container-images.yaml", "w") as f:
-		  yaml.dump(y, f, default_flow_style=False)
-	_EOT
-
 	m '[tripleo] Deploying OpenStack'
 	# The stack name will be used as a prefix for server names and for the "rc" file (e.g. "labrc")
 	openstack \
@@ -128,9 +103,6 @@ OVERCLOUD_CEPH_YAML=$(cat "$ROOT/configuration/openstack/ceph.yaml")
 		--roles-file "\$DEPLOY/roles.yaml" \
 		--answers-file "\$DEPLOY/heat-environments.yaml" \
 		$(c "$TRIPLEO_VERBOSITY")
-
-	#openstack stack resource list overcloud
-	#openstack stack resource show overcloud ControllerServiceChain
 
 EOT
 )"

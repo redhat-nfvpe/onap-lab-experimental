@@ -2,6 +2,7 @@
 set -e
 
 NAME=$1
+USERNAME=$2
 
 HERE=$(dirname "$(readlink -f "$0")")
 ROOT=$(readlink -f "$HERE/..")
@@ -26,7 +27,7 @@ while IFS= read -r LINE; do
 	# See: https://stackoverflow.com/a/35208546
 	if [ "$V" == 'cloud-init' ]; then
 		CLOUD_INIT=true
-		echo '' | "$HERE/create-virtual-machine-cloud-init-image" "$IMAGE_NAME" "$NAME"
+		echo '' | "$HERE/create-virtual-machine-cloud-init-image" "$IMAGE_NAME" "$NAME" "$USERNAME"
 	elif [ "${V:0:5}" == 'base,' ]; then
 		echo '' | "$HERE/create-virtual-machine-image-from-base" "$IMAGE_NAME" "${V:5}"
 	else
@@ -44,8 +45,8 @@ if [ "$CLOUD_INIT" == 'true' ]; then
 	
 	"$ROOT/rsync" \
 		--rsync-path='mkdir --parents /home/manager/keys/ && rsync' \
-		"$KEYS_ROOT/stack@$NAME" \
-		"$KEYS_ROOT/stack@$NAME.pub" \
+		"$KEYS_ROOT/$USERNAME@$NAME" \
+		"$KEYS_ROOT/$USERNAME@$NAME.pub" \
 		manager:/home/manager/keys/
 
 	# Protect keys
