@@ -23,3 +23,5 @@ m '[openstack] Deleting hello-world-tenant'
 "$ROOT/openstack/openstack" \
 stack delete hello-world-tenant \
 	--wait -v || true
+
+"$ROOT/utils/delete-ssh-config" hello-world

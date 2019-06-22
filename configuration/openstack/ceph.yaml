@@ -1,7 +1,7 @@
 # Ceph configuration.
-
+#
 # This is a Heat template environment.
-
+#
 # See:
 #   https://docs.openstack.org/tripleo-docs/latest/install/advanced_deployment/ceph_config.html
 #   https://docs.openstack.org/heat/stein/template_guide/environment.html
@@ -33,10 +33,9 @@ parameter_defaults:
   # Disks
   # -----
 
-  # The default is to use drive "/dev/vdb"
-
-  # As an example, if we had just one drive on the machine and wanted to collocate there:
-  #CephAnsibleDisksConfig:
-  #  osd_scenario: collocated
-  #  devices:
-  #  - /dev/vda
+  # The default is to use disk "/dev/vdb", which would work for a virtual machine,
+  # But for a physical machine we would need to explicitly set the disks
+  CephAnsibleDisksConfig:
+    devices:
+    - /dev/sdb
+    #osd_scenario: collocated # to collocate on a single drive

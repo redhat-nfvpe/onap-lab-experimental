@@ -13,16 +13,25 @@ ROOT=$(readlink -f "$HERE/..")
 
 "$HERE/ensure-ssh-key-exists" "$KEY"
 
-Q_KEY=$(q "$(< "$KEYS_ROOT/$KEY.pub")")
+C_KEY=$(c "$(< "$KEYS_ROOT/$KEY.pub")")
 
-"${@:2}" \
-"set -e
-echo $Q_KEY | while read -r KTYPE KEY COMMENT; do
-	if ! (grep --no-messages --fixed-strings --word-regexp \"\$KTYPE \$KEY\" ~/.ssh/authorized_keys | grep --quiet --invert-match --fixed-strings '^#'); then
-		mkdir --parents --mode=0700 ~/.ssh
-		echo \"\$KTYPE \$KEY \$COMMENT\" >> ~/.ssh/authorized_keys
-		chmod 600 ~/.ssh/authorized_keys
-	else
-		echo 'Already authorized'
-	fi
-done"
+"${@:2}" "$(cat <<- EOT
+
+	set -e
+	CYAN='\033[0;36m'
+	RESET='\033[0m'
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
+
+	echo $C_KEY | while read -r KTYPE KEY COMMENT; do
+		if ! (grep --no-messages --fixed-strings --word-regexp "\$KTYPE \$KEY" ~/.ssh/authorized_keys | grep --quiet --invert-match --fixed-strings '^#'); then
+			mkdir --parents --mode=0700 ~/.ssh
+			echo "\$KTYPE \$KEY \$COMMENT" >> ~/.ssh/authorized_keys
+			chmod 600 ~/.ssh/authorized_keys
+			m 'Added key to "authorized_keys"'
+		else
+			m 'Key already in "authorized_keys"'
+		fi
+	done
+
+EOT
+)"

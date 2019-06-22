@@ -1,7 +1,9 @@
 # Neutron configuration.
-
+#
 # This is a Heat template environment.
-
+#
+# See also: "infrastructure-networking.j2.yaml" and "infrastructure-networks.yaml"
+#
 # See: https://docs.openstack.org/heat/stein/template_guide/environment.html
 
 parameter_defaults:
@@ -9,15 +11,14 @@ parameter_defaults:
   # Neutron is installed on the controller node with its ML2 plugin, which is in turn configured to
   # use the OVN agent.
 
-  # OVN "flat" networks
+  # OVN "flat" network names
   # See: "/var/lib/config-data/neutron/etc/neutron/plugins/ml2/ml2_conf.ini"
-  # TODO: datacentre is configured as a flat network by default, but should it be? It is *also*
-  # as a VLAN in NeutronNetworkVLANRanges
   NeutronFlatNetworks: datacentre,public
 
-  # OVN "vlan" networks
+  # OVN "vlan" network names
+  # Note that "datacentre" can also be used a flat network (VLAN=1)
   #NeutronNetworkVLANRanges: datacentre:1:1000
 
-  # Maps OVN networks to OVS bridges (via "ovn::controller::ovn_bridge_mappings")
+  # Maps OVN network names to bridges (via "ovn::controller::ovn_bridge_mappings")
   # See: "sudo ovs-vsctl get open . external_ids:ovn-bridge-mappings"
   NeutronBridgeMappings: datacentre:br-ex,public:br-public

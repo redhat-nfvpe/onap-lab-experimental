@@ -15,7 +15,7 @@ if [ -n "$COMPUTE_VIRTUALBMC_PORT" ]; then
 	COMPUTE_MAC_ADDRESS=$("$ROOT/manager/get-mac-address" openstack-compute openstack)
 fi
 
-INFRASTRUCTURE_INVENTORY_YAML=$(cat "$ROOT/configuration/openstack/infrastructure-inventory.yaml" |
+INFRASTRUCTURE_NODES_YAML=$(cat "$ROOT/configuration/openstack/infrastructure/nodes.yaml" |
 	CONTROLLER_MAC_ADDRESS=$(eq "$CONTROLLER_MAC_ADDRESS") \
 	CONTROLLER_VIRTUALBMC_PORT=$(eq "$CONTROLLER_VIRTUALBMC_PORT") \
 	COMPUTE_MAC_ADDRESS=$(eq "$COMPUTE_MAC_ADDRESS") \
@@ -39,13 +39,13 @@ INFRASTRUCTURE_INVENTORY_YAML=$(cat "$ROOT/configuration/openstack/infrastructur
 
 	m '[tripleo] Updating inventory of infrastructure nodes'
 
-	echo $(c "$INFRASTRUCTURE_INVENTORY_YAML") \
-		> "\$INFRASTRUCTURE/inventory.yaml"
+	echo $(c "$INFRASTRUCTURE_NODES_YAML") \
+		> "\$INFRASTRUCTURE/nodes.yaml"
 
-	# Note: "import" will update existing baremetal nodes, but other nodes will *not* be deleted
+	# Note: "import" will update existing nodes, but other nodes will *not* be deleted
 
 	openstack \
-	overcloud node import "\$INFRASTRUCTURE/inventory.yaml" \
+	overcloud node import "\$INFRASTRUCTURE/nodes.yaml" \
 		$(c "$TRIPLEO_VERBOSITY")
 
 	m '[tripleo] Introspecting infrastructure nodes (~ 15 minutes)'

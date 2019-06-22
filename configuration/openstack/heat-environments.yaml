@@ -1,5 +1,5 @@
 # Apply Heat environments in order.
-
+#
 # Answers file for "openstack overcloud deploy".
 
 environments:
@@ -8,7 +8,7 @@ environments:
 - "$ENVIRONMENTS/container-images.yaml"
 
 # Request infrastructure nodes per each node role 
-- "$ENVIRONMENTS/nodes.yaml"
+- "$ENVIRONMENTS/infrastructure-roles.yaml"
 
 # Creates networks per our "networks.yaml" and maps node roles to our "node-networking.j2.yaml"
 - "$ENVIRONMENTS/network-environment.yaml"

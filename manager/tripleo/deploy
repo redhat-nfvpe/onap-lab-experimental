@@ -37,6 +37,7 @@ UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" |
 	mkdir --parents "\$HOME/undercloud/"
 	openstack \
 	tripleo container image prepare default \
+	    --local-push-destination \
   		--output-env-file "\$HOME/undercloud/container-images.default.yaml" \
 		$(c "$TRIPLEO_VERBOSITY")
 
@@ -66,3 +67,5 @@ UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" |
 
 EOT
 )"
+
+"$HERE/patch"

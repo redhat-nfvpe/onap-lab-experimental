@@ -11,11 +11,11 @@
 # PXE is enabled for eth0 only
 --network bridge=openstack,model=virtio
 
-# eth1 on hypervisor control plane
---network bridge=hypervisor,model=virtio
-
-# eth2 is our public network
+# eth1 is our public network
 --network bridge=public,model=virtio
+
+# eth2 on hypervisor control plane
+#--network bridge=hypervisor,model=virtio
 
 --os-type linux
 --os-variant centos7.0

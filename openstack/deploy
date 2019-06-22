@@ -7,22 +7,26 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/utils/functions"
 . "$ROOT/utils/trap-with-fetch-results"
 
-OVERCLOUD_HEAT_ENVIRONMENTS_YAML=$(cat "$ROOT/configuration/openstack/heat-environments.yaml" |
+if [ "$1" == '-c' ]; then
+	"$HERE/clean"
+fi
+
+INFRASTRUCTURE_ROLES_YAML=$(cat "$ROOT/configuration/openstack/infrastructure/roles.yaml")
+
+INFRASTRUCTURE_NETWORKS_YAML=$(cat "$ROOT/configuration/openstack/infrastructure/networks.yaml")
+
+INFRASTRUCTURE_NETWORKING_J2_YAML=$(cat "$ROOT/configuration/openstack/infrastructure/networking.j2.yaml")
+
+NOVA_YAML=$(cat "$ROOT/configuration/openstack/nova.yaml")
+
+NEUTRON_YAML=$(cat "$ROOT/configuration/openstack/neutron.yaml")
+
+CEPH_YAML=$(cat "$ROOT/configuration/openstack/ceph.yaml")
+
+HEAT_ENVIRONMENTS_YAML=$(cat "$ROOT/configuration/openstack/heat-environments.yaml" |
 	HOME=/home/tripleo \
 	ENVIRONMENTS=/home/tripleo/overcloud/deploy/templates/environments \
 	envsubst)
-
-OVERCLOUD_NETWORKS_YAML=$(cat "$ROOT/configuration/openstack/networks.yaml")
-
-OVERCLOUD_NODES_YAML=$(cat "$ROOT/configuration/openstack/nodes.yaml")
-
-OVERCLOUD_NODE_NETWORKING_J2_YAML=$(cat "$ROOT/configuration/openstack/node-networking.j2.yaml")
-
-OVERCLOUD_NOVA_YAML=$(cat "$ROOT/configuration/openstack/nova.yaml")
-
-OVERCLOUD_NEUTRON_YAML=$(cat "$ROOT/configuration/openstack/neutron.yaml")
-
-OVERCLOUD_CEPH_YAML=$(cat "$ROOT/configuration/openstack/ceph.yaml")
 
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
@@ -34,73 +38,111 @@ OVERCLOUD_CEPH_YAML=$(cat "$ROOT/configuration/openstack/ceph.yaml")
 	. "\$HOME/stackrc"
 
 	DEPLOY="\$HOME/overcloud/deploy"
+	TEMPLATES="\$DEPLOY/templates"
+	TEMPLATES_J2="\$DEPLOY/templates.j2"
+	INFRASTRUCTURE="\$HOME/overcloud/infrastructure"
 	rm --recursive --force "\$DEPLOY/"
-	mkdir --parents "\$DEPLOY/templates.j2/"
+	mkdir --parents "\$TEMPLATES/"
+	mkdir --parents "\$TEMPLATES_J2/"
+	mkdir --parents "\$INFRASTRUCTURE/"
 
-	m '[tripleo] Updating Heat environment selection'
-	echo $(c "$OVERCLOUD_HEAT_ENVIRONMENTS_YAML") \
-		> "\$DEPLOY/heat-environments.yaml"
+	m '[tripleo] Updating infrastructure roles configuration'
 
-	m '[tripleo] Updating networks configuration'
-	echo $(c "$OVERCLOUD_NETWORKS_YAML") \
-		> "\$DEPLOY/networks.yaml"
-
-	m '[tripleo] Updating roles configuration'
 	openstack \
 	overcloud roles generate \
-		-o "\$DEPLOY/roles.yaml" \
+		-o "\$INFRASTRUCTURE/roles.default.yaml" \
 		Controller ComputeHCI \
 		$(c "$TRIPLEO_VERBOSITY")
 
-	m '[tripleo] Updating Heat Jinja2 template for networking'
+	# Add "Public" network to roles
+	python2 <<- _EOT
+		import yaml
+
+		with open("\$INFRASTRUCTURE/roles.default.yaml") as f:
+		  y = yaml.load(f)
+
+		for r in y:
+		  if r["name"] in ("Controller", "ComputeHCI"):
+		    r["networks"]["Public"] = {"subnet": "public_subnet"}
+		    if "default_route_networks" not in r:
+		      r["default_route_networks"] = []
+		    r["default_route_networks"].append("Public")
+
+		with open("\$INFRASTRUCTURE/roles.yaml", "w") as f:
+		  yaml.dump(y, f, default_flow_style=False)
+	_EOT
+
+	m '[tripleo] Updating infrastructure networks configuration'
+	echo $(c "$INFRASTRUCTURE_NETWORKS_YAML") \
+		> "\$INFRASTRUCTURE/networks.yaml"
+
+	m '[tripleo] Overriding Heat Jinja2 template for infrastructure networking'
 
 	rsync --recursive \
 		/usr/share/openstack-tripleo-heat-templates/* \
-		"\$DEPLOY/templates.j2/"
+		"\$TEMPLATES_J2/"
 
 	# Note: the default "environments/network-environment.yaml" imports configs (harcoded) from
 	# "single-nic-vlan", so to avoid updating that file we will override "single-nic-vlan"
-	echo $(c "$OVERCLOUD_NODE_NETWORKING_J2_YAML") \
-		> "\$DEPLOY/templates.j2/network/config/single-nic-vlans/role.role.j2.yaml"
+	echo $(c "$INFRASTRUCTURE_NETWORKING_J2_YAML") \
+		> "\$TEMPLATES_J2/network/config/single-nic-vlans/role.role.j2.yaml"
 
-	m '[tripleo] Rendering Heat templates from Jinja2'
+	m '[tripleo] Rendering Heat templates and environments from Jinja2'
 
-	"\$DEPLOY/templates.j2/tools/process-templates.py" \
+	"\$TEMPLATES_J2/tools/process-templates.py" \
 		--safe \
-		--base_path "\$DEPLOY/templates.j2/" \
-		--output-dir "\$DEPLOY/templates/" \
-		--network-data "\$DEPLOY/networks.yaml" \
-		--roles-data "\$DEPLOY/roles.yaml"
+		--base_path "\$TEMPLATES_J2/" \
+		--output-dir "\$TEMPLATES/" \
+		--network-data "\$INFRASTRUCTURE/networks.yaml" \
+		--roles-data "\$INFRASTRUCTURE/roles.yaml"
 
 	m '[tripleo] Updating Heat environment for container images'
+
 	# Note: We are using the same container images environment for the undercloud and the overcloud
 	# Note: This file is often created as "containers-prepare-parameter.yaml" in the documentation
-	cp "\$HOME/undercloud/container-images.yaml" "\$DEPLOY/templates/environments/"
+	#cp "\$HOME/undercloud/container-images.yaml" "\$TEMPLATES/environments/"
 
-	m '[tripleo] Updating Heat environment for nodes'
-	echo $(c "$OVERCLOUD_NODES_YAML") \
-		> "\$DEPLOY/templates/environments/nodes.yaml"
+	python2 <<- _EOT
+		import yaml
+
+		with open("\$HOME/undercloud/container-images.yaml") as f:
+		  y = yaml.load(f)
+
+		# TODO: what is our push_destination?
+		del y["parameter_defaults"]["ContainerImagePrepare"][0]["push_destination"]
+
+		with open("\$TEMPLATES/environments/container-images.yaml", "w") as f:
+		  yaml.dump(y, f, default_flow_style=False)
+	_EOT
+
+	m '[tripleo] Updating Heat environment for infrastructure roles'
+	echo $(c "$INFRASTRUCTURE_ROLES_YAML") \
+		> "\$TEMPLATES/environments/infrastructure-roles.yaml"
 
 	m '[tripleo] Updating Heat environment for Nova'
-	echo $(c "$OVERCLOUD_NOVA_YAML") \
-		> "\$DEPLOY/templates/environments/nova.yaml"
+	echo $(c "$NOVA_YAML") \
+		> "\$TEMPLATES/environments/nova.yaml"
 
 	m '[tripleo] Updating Heat environment for Neutron'
-	echo $(c "$OVERCLOUD_NEUTRON_YAML") \
-		> "\$DEPLOY/templates/environments/neutron.yaml"
+	echo $(c "$NEUTRON_YAML") \
+		> "\$TEMPLATES/environments/neutron.yaml"
 
 	m '[tripleo] Updating Heat environment for Ceph'
-	echo $(c "$OVERCLOUD_CEPH_YAML") \
-		> "\$DEPLOY/templates/environments/ceph.yaml"
+	echo $(c "$CEPH_YAML") \
+		> "\$TEMPLATES/environments/ceph.yaml"
+
+	m '[tripleo] Updating Heat environment selection'
+	echo $(c "$HEAT_ENVIRONMENTS_YAML") \
+		> "\$DEPLOY/heat-environments.yaml"
 
 	m '[tripleo] Deploying OpenStack'
 	# The stack name will be used as a prefix for server names and for the "rc" file (e.g. "labrc")
 	openstack \
 	overcloud deploy \
-		--stack $(c "$OVERCLOUD_HEAT_STACK") \
-		--templates "\$DEPLOY/templates/" \
-		--networks-file "\$DEPLOY/networks.yaml" \
-		--roles-file "\$DEPLOY/roles.yaml" \
+		--stack $(c "$TRIPLEO_OVERCLOUD_HEAT_STACK") \
+		--templates "\$TEMPLATES/" \
+		--networks-file "\$INFRASTRUCTURE/networks.yaml" \
+		--roles-file "\$INFRASTRUCTURE/roles.yaml" \
 		--answers-file "\$DEPLOY/heat-environments.yaml" \
 		$(c "$TRIPLEO_VERBOSITY")
 

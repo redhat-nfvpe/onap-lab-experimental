@@ -38,10 +38,10 @@ point to our Manager. We can use a host name. Then run:
 
     manager/prepare
 
-We will be prompted only once for the root password for the Manager, which we will use to
-authorize a keypair for ssh.
+We will be prompted only once for the root password for the Manager, which we will use to authorize
+a keypair for ssh.
 
-What this script does:
+What [this script](../manager/prepare) does:
 
 * Installs [libvirt](https://libvirt.org/) and related tools, such as
   [VirtualBMC](https://docs.openstack.org/virtualbmc/latest/), which provides an
@@ -61,14 +61,14 @@ After it's done we will find some files under our `workspace/` directory:
 Our scripts will later on add more keys and passwords and keep `ssh.config` updated. That file is
 especially useful: it configures custom hosts that we can use it to ssh from our Orchestrator to our
 lab machines, including virtual machines running inside the Manager, OpenStack, and Kubernetes. The
-`./ssh` and `./rsync` shortcuts use this config. Examples of use:
+[`./ssh`](../ssh) and [`./rsync`](../rsync) shortcuts use this config. Examples of use:
 
     ./ssh manager
     ./ssh manager-root "ls -al"
-    ./rsync myfile.txt manager:/text/
+    ./rsync manager:/etc/fstab .
 
 Now that we have libvirt installed we can also use its CLI,
-[virsh](https://libvirt.org/virshcmdref.html), via our shortcut: 
+[virsh](https://libvirt.org/virshcmdref.html), via our [`manager/virsh`](../manager/virsh) shortcut: 
 
     manager/virsh net-list
 
@@ -82,22 +82,22 @@ similar URI.)
 Step 3: Prepare TripleO
 -----------------------
 
-Now that our Manager is set up for hosting virtual machines we will prepare a virtual machine
-for installation of our OpenStack infrastructure manager,
+Now that our Manager is set up as a hypervisor for hosting virtual machines we will prepare a
+virtual machine for installation of our OpenStack infrastructure manager,
 [TripleO](https://docs.openstack.org/tripleo-docs/latest/):
 
     manager/tripleo/prepare
 
-What this script does:
+What [this script](../manager/tripleo/prepare) does:
 
 * Creates a virtual machine named `tripleo` based on a CentOS image using
   [cloud-init](https://cloudinit.readthedocs.io/en/latest/) to initialize it, configured by the
-  files in [`configuration/libvirt/domains/tripleo/`](../configuration/libvirt/domains/tripleo)
-* Installs TripleO-client on it, which we will use in the next step to install TripleO (yes, it's
+  files in [`configuration/libvirt/domains/tripleo/`](../configuration/libvirt/domains/tripleo/)
+* Installs TripleO-client on it, which we will use in the next step to deploy TripleO (yes, it's
   complex enough that it deserves its own step)
-* Installs Ceph Ansible playbooks on it, which TripleO will use later to install Ceph on cloud
-  nodes 
-* Creates and configures the "tripleo" user, which will be used by TripleO client to configure
+* Installs Ceph Ansible playbooks on it, which TripleO will use later to deploy Ceph on our
+  OpenStack infrastructure
+* Creates and configures the "tripleo" user on it, which will be used by TripleO client to configure
   TripleO (though note that it does have sudo access, which will be necessary for *deploying*
   TripleO)    
 
@@ -107,20 +107,14 @@ installing more than 500 packages in this step!
   
 After it's done we will find some more files under our `workspace/` directory:
 
-* `workspace/keys/tripleo@tripleo` and `workspace/keys/tripleo@tripleo.pub` are they keypair for the
-  virtual machine
-* `workspace/passwords/tripleo@tripleo` is the password
-* `workspace/ssh.config` is updated for `tripleo`
+* `keys/tripleo@tripleo` and `keys/tripleo@tripleo.pub`
+* `passwords/tripleo@tripleo`
+* `ssh.config` is updated for `tripleo`
 
 Logs and configuration files have been fetched to the `workspace/results/` directory. Some useful
 ones are from:
 
 * Manager: `/var/log/libvirt/qemu/tripleo.log`
-
-In the Manager's `manager` user's home directory:
-
-* `/home/manager/keys/tripleo@tripleo` and `/home/manager/tripleo@tripleo.pub`
-* `/home/manager/libvirt/images/tripleo.qcow2` is our virtual machine drive image
 
 We'll wait a few seconds for the `tripleo` virtual machine to start up and then we can connect to
 it:
@@ -168,38 +162,33 @@ Step 4: Deploy TripleO
 Now that we have the `tripleo` virtual machine ready with the TripleO client we can use it to
 deploy TripleO:
 
-    manager/tripleo/install
+    manager/tripleo/deploy
 
-This step is almost entirely handled by the `openstack undercloud install` command. It is configured
-by `configuration/tripleo/undercloud.conf`. Internally it has several steps and takes a while to
-complete, ~ 15 minutes.
+The bulk of the work of this [this script](../manager/tripleo/deploy) is handled by the
+`openstack undercloud install` command. It is configured by files in
+[`configuration/tripleo/`](../configuration/tripleo/). It itself comprises several steps and takes a
+while to complete, ~ 15 minutes.
 
 Internally it will be using [Puppet](https://puppet.com/) to orchestrate the installation and
 configuration of the various OpenStack undercloud services as containers to be run by
 [Podman](https://podman.io/). Containers allow for better isolation and portability. The undercloud
 itself is installed using the OpenStack [Heat](https://docs.openstack.org/heat/latest/)
 orchestration and [Mistral](https://docs.openstack.org/mistral/latest/) workflow services, which
-internally uses [Ansible](https://www.ansible.com/). The OpenStack container images are provided by
+internally use [Ansible](https://www.ansible.com/). The OpenStack container images are provided by
 the [Kolla project](https://docs.openstack.org/kolla/latest/).
 
 Logs and configuration files have been fetched to the `workspace/results/` directory. Some useful
 ones are from:
 
+* TripleO: `/home/tripleo/install-undercloud.log`
 * TripleO: `/var/log/containers/mistral/engine.log`
 * TripleO: `/var/log/containers/heat/heat-engine.log`
+* TripleO: `/home/tripleo/undercloud/undercloud-passwords.conf`
+* TripleO: `/home/tripleo/undercloud/container-images.yaml`
 
-In TripleO's `tripleo` user's home directory:
-
-* `/home/tripleo/install-undercloud.log` is a copy of the output we saw during this step
-* `/home/tripleo/undercloud.conf` is based on our `configuration/tripleo/undercloud.conf`
-* `/home/tripleo/tripleo-config-generated-env-files/undercloud_parameters.yaml` incorporates
-   the above two files
-* `/home/tripleo/undercloud-passwords.conf`
-* `/home/tripleo/tripleo-undercloud-passwords.yaml` incorporates the above file and also ssh keys
-* `/home/tripleo/stackrc` sets up a shell environment for accessing the undercloud
-
-We can now access the undercloud's `openstack` command via a shortcut (that uses the `stackrc`
-mentioned above), e.g.:
+We can now access the undercloud's `openstack` command via a
+[shortcut](../manager/tripleo/openstack) that uses the `stackrc` file created in the `tripleo`
+user's home directory), e.g.:
 
     manager/tripleo/openstack network list
 
@@ -207,26 +196,27 @@ The `openstack` command is mostly documented
 [here](https://docs.openstack.org/python-openstackclient/stein/cli/), though note that it is
 extensible. Ironic adds
 [these commands](https://docs.openstack.org/python-ironicclient/latest/cli/osc_plugin_cli.html)
-and TripleO adds commands to deploy itself (`undercloud install`) and OpenStack
-(`overcloud deploy`, see the next chapter).
+and TripleO adds
+[these commands](https://docs.openstack.org/python-tripleoclient/latest/commands.html).
 
-We can directly access the individual service containers on any machine via the `./podman`,
-`./podman-bash`, and `./podman-restart` shortcuts. Run any of them without arguments to get a list
+We can directly access the individual service containers on any machine via the
+[`./podman`](../podman), [`./podman-bash`](../podman-bash), and
+[`./podman-restart`](../podman-restart) shortcuts. Run any of them without arguments to get a list
 of available service containers. For example, to get a shell into the `mistral_engine` service
 container:
 
     ./podman-bash tripleo mistral_engine
     cat /var/log/mistral/engine.log
 
-(Note that `podman-bash` does not ssh into the container, but rather explicitly executes bash within
-the container. These are lightweight containers that are not running ssh servers.)
+(Note that `podman-bash` does not ssh into the service container, but rather explicitly executes
+bash within the container. These are lightweight containers that are not running ssh servers.)
 
 Podman's CLI intentionally mimics Docker's, so if you're familiar with commands like `docker ps`
-just replace the command with `podman`: `./podman tripleo ps`.
+just replace the command with `podman`, e.g.: `./podman tripleo ps`.
 
 We don't actually have to access the containers to get to the logs, because the log directories
-are shared from the host virtual machine at `/var/log/containers/`, for example the log we saw
-above is also here:
+are shared from the host virtual machine at `/var/log/containers/`, for example the Mistral log we
+saw above is also here:
 
     ./ssh tripleo
     cat /var/log/containers/mistral/engine.log
@@ -240,7 +230,14 @@ to manually edit `ironic.conf`:
 
 To use the file we will need to restart the service container:
 
-    ./podman-restart ironic_conductor
+    sudo systemctl restart tripleo_ironic_conductor.service
+
+Editing files within the container is a bit trickier. We'll need to find the mount location for the
+container's filesystem in order to access it from the host, e.g.:
+
+    ./ssh tripleo
+    sudo podman mount ironic_inspector
+    ...
 
 
 How to Reset
@@ -251,8 +248,8 @@ will delete all the virtual resources from the Manager:
 
     manager/clean
 
-You may need to run it several times until it completes successfully because some resources might
-be in an indeterminate state when you run it.
+You may need to run [this script](../manager/clean) several times until it completes successfully
+because some libvirt resources might be in an indeterminate state when you run it.
 
 You can also combine `clean` and `prepare`:
 

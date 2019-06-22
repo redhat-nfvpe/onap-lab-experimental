@@ -12,8 +12,7 @@ if [ "$1" == '-c' ]; then
 	"$HERE/infrastructure/clean"
 fi
 
-"$HERE/infrastructure/prepare"
-"$HERE/infrastructure/introspect"
+"$HERE/infrastructure/all"
 "$HERE/deploy"
 "$HERE/connect"
 "$HERE/common/deploy"

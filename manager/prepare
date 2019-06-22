@@ -11,22 +11,23 @@ if [ "$1" == '-c' ]; then
 	"$HERE/clean"
 fi
 
-EQ_MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE=$(eq "$MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE")
+EQ_MANAGER_OFFICE_INTERFACE=$(eq "$MANAGER_OFFICE_INTERFACE")
+C_MANAGER_OFFICE_INTERFACE=$(c "$MANAGER_OFFICE_INTERFACE")
 EQ_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=$(eq "$MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE")
 C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE")
 
 NETWORK_HYPERVISOR_CONTROL_PLANE_XML=$(cat "$ROOT/configuration/libvirt/networks/hypervisor-control-plane.xml" |
-	MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE=$EQ_MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE \
+	MANAGER_OFFICE_INTERFACE=$EQ_MANAGER_OFFICE_INTERFACE \
 	MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=$EQ_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE \
 	envsubst)
 
 NETWORK_OPENSTACK_CONTROL_PLANE_XML=$(cat "$ROOT/configuration/libvirt/networks/openstack-control-plane.xml" |
-	MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE=$EQ_MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE \
+	MANAGER_OFFICE_INTERFACE=$EQ_MANAGER_OFFICE_INTERFACE \
 	MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=$EQ_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE \
 	envsubst)
 
 NETWORK_PUBLIC_XML=$(cat "$ROOT/configuration/libvirt/networks/public.xml" |
-	MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE=$EQ_MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE \
+	MANAGER_OFFICE_INTERFACE=$EQ_MANAGER_OFFICE_INTERFACE \
 	MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=$EQ_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE \
 	envsubst)
 
@@ -45,7 +46,7 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 	RESET='\033[0m'
 	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
-	m "[manager-root] Ensuring timezone is \"$TIMEZONE\""
+	m "[manager-root] Ensuring timezone is \"$(eq "$TIMEZONE")\""
 	timedatectl set-timezone $(c "$TIMEZONE")
 
 	m '[manager-root] Ensuring libvirt and related packages are installed'
@@ -129,6 +130,26 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 	 fi
 
 	m '[manager-root] Ensuring libvirt networks and bridges are configured'
+
+	cat > /etc/sysconfig/network-scripts/ifcfg-public <<- _EOT
+		DEVICE=public
+		TYPE=Bridge
+		IPADDR=10.0.2.1
+		NETMASK=255.255.255.0
+		#HWADDR=80:EE:73:E0:CB:90
+		ONBOOT=yes
+		BOOTPROTO=none
+		DELAY=0
+	_EOT
+
+	cat > /etc/sysconfig/network-scripts/ifcfg-$C_MANAGER_OFFICE_INTERFACE <<- _EOT
+		DEVICE=$EQ_MANAGER_OFFICE_INTERFACE
+		TYPE=Ethernet
+		BRIDGE=public
+		ONBOOT=yes
+		BOOTPROTO=dhcp
+		DELAY=0
+	_EOT
 
 	cat > /etc/sysconfig/network-scripts/ifcfg-openstack <<- _EOT
 		DEVICE=openstack

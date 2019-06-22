@@ -1,11 +1,22 @@
 # Networks.
-
+#
 # This is a custom format ingested by "network-environment.j2.yaml" and "network-isolation.j2.yaml"
 # to generate Heat template environments. 
-
+#
 # This file was modified from the default at:
 #   /usr/share/openstack-tripleo-heat-templates/network_data.yaml
-
+#
+# Our addition is a Public network that has two intended uses:
+#
+# 1) Allows the undercloud nodes access to the outside world. This is necessary during overcloud
+#    deployment in order to download packages and container images from the Internet.
+#
+# 2) Can be used as a floating IP provider network for the overcloud, to allow workloads to be
+#    accessed by the outside world. To achieve this the Neutron ML2 plugin must be configured
+#    to map a "flat" OVN network name to a bridge.
+#
+# See also: "infrastructure-networking.j2.yaml" and "neutron.yaml"
+#
 # See: https://docs.openstack.org/tripleo-docs/latest/install/advanced_deployment/custom_networks.html
 
 - name: Storage
@@ -80,21 +91,34 @@
   gateway_ipv6: 2001:db8:fd00:1000::1
   mtu: 1500
 
-- name: Management
-  # Management network is enabled by default for backwards-compatibility, but
-  # is not included in any roles by default. Add to role definitions to use.
-  enabled: true
-  vip: false  # Management network does not use virtual IPs
-  name_lower: management
-  vlan: 60
-  ip_subnet: 10.0.1.0/24
+# - name: Management
+#   # Management network is enabled by default for backwards-compatibility, but
+#   # is not included in any roles by default. Add to role definitions to use.
+#   enabled: true
+#   vip: false  # Management network does not use virtual IPs
+#   name_lower: management
+#   vlan: 60
+#   ip_subnet: 10.0.1.0/24
+#   allocation_pools:
+#   - start: 10.0.1.4
+#     end: 10.0.1.250
+#   gateway_ip: 10.0.1.1
+#   ipv6_subnet: fd00:fd00:fd00:6000::/64
+#   ipv6_allocation_pools:
+#   - start: fd00:fd00:fd00:6000::10
+#     end: fd00:fd00:fd00:6000:ffff:ffff:ffff:fffe
+#   gateway_ipv6: fd00:fd00:fd00:6000::1
+#   mtu: 1500
+
+- name: Public
+  vip: false
+  name_lower: public
+  # See "../libvirt/networks/public.xml"
+  ip_subnet: 10.0.2.0/24
   allocation_pools:
-  - start: 10.0.1.4
-    end: 10.0.1.250
-  gateway_ip: 10.0.1.1
-  ipv6_subnet: fd00:fd00:fd00:6000::/64
-  ipv6_allocation_pools:
-  - start: fd00:fd00:fd00:6000::10
-    end: fd00:fd00:fd00:6000:ffff:ffff:ffff:fffe
-  gateway_ipv6: fd00:fd00:fd00:6000::1
+  # The range defined here is for the undercloud -- we must make sure it doesn't overlap with the
+  # overcloud range, see: "../../openstack/common/common.yaml"
+  - start: 10.0.2.2
+    end: 10.0.2.99
+  gateway_ip: 10.0.2.1
   mtu: 1500

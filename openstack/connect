@@ -7,20 +7,18 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/utils/functions"
 . "$ROOT/utils/trap"
 
-"$HERE/infrastructure/connect"
-
 "$ROOT/rsync" \
 	tripleo:/home/tripleo/labrc \
-	"$WORKSPACE_ROOT/${OVERCLOUD_HEAT_STACK}rc"
+	"$WORKSPACE_ROOT/${TRIPLEO_OVERCLOUD_HEAT_STACK}rc"
 
 "$ROOT/rsync" \
-	"$WORKSPACE_ROOT/${OVERCLOUD_HEAT_STACK}rc" \
-	"manager:/home/manager/${OVERCLOUD_HEAT_STACK}rc"
+	"$WORKSPACE_ROOT/${TRIPLEO_OVERCLOUD_HEAT_STACK}rc" \
+	"manager:/home/manager/${TRIPLEO_OVERCLOUD_HEAT_STACK}rc"
 
-CONTROLLER_IP_ADDRESS=$("$ROOT/manager/get-ipv4-address" openstack-controller eth1)
+CONTROLLER_IP_ADDRESS=$("$ROOT/manager/get-ipv4-address" openstack-controller br-public)
 
 if [ -z "$CONTROLLER_IP_ADDRESS" ]; then
-	m '[manager] Controller does not have an IP address on hypervisor control plane' "$RED"
+	m '[manager] Controller does not have an IP address on public network' "$RED"
 	exit 1
 fi
 
@@ -31,7 +29,7 @@ fi
 	RESET='\033[0m'
 	function m () { echo -e "\$CYAN\$1\$RESET"; }
 
-	m '[manager] Enabling IP route to External network'
+	m '[manager] Enabling IP route to External network via controller on public network'
 
 	# TODO make permanent
 	ip route del 10.0.0.0/24 || true
@@ -40,7 +38,7 @@ fi
 EOT
 )"
 
-. "$WORKSPACE_ROOT/${OVERCLOUD_HEAT_STACK}rc"
+. "$WORKSPACE_ROOT/${TRIPLEO_OVERCLOUD_HEAT_STACK}rc"
 
 # TODO extract IP and password
 

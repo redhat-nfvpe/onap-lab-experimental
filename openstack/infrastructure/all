@@ -2,10 +2,11 @@
 set -e
 
 HERE=$(dirname "$(readlink -f "$0")")
-ROOT=$(readlink -f "$HERE/..")
+ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
-. "$ROOT/utils/trap"
+. "$ROOT/utils/trap-with-fetch-results"
 
 "$HERE/prepare" "$1"
-"$HERE/tripleo/all"
+"$HERE/introspect"
+"$HERE/connect"

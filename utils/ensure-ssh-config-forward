@@ -13,15 +13,9 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
 
-CONFIG="$WORKSPACE_ROOT/ssh.config"
+"$HERE/delete-ssh-config" "$NAME"
 
-if [ -f "$CONFIG" ]; then
-	sed --in-place "/Host \"$NAME\"/,/^$/d" "$CONFIG"
-fi
-
-mkdir --parents "$SSH_CONTROL_ROOT/"
-
-cat >> "$CONFIG" <<- EOT
+cat >> "$WORKSPACE_ROOT/ssh.config" <<- EOT
 	Host "$NAME"
 	  HostName "$HOST"
 	  User "$USERNAME"
@@ -31,3 +25,5 @@ cat >> "$CONFIG" <<- EOT
 	  ControlPath "$SSH_CONTROL_ROOT/$NAME"
 
 EOT
+
+mkdir --parents "$SSH_CONTROL_ROOT/"

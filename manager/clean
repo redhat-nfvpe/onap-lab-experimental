@@ -9,6 +9,8 @@ ROOT=$(readlink -f "$HERE/..")
 
 C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE")
 
+"$ROOT/utils/delete-ssh-config" tripleo
+
 ssh -i "$KEYS_ROOT/root@manager" "root@$MANAGER_IP_ADDRESS" "$(cat <<- EOT
 
 	set -e
@@ -38,9 +40,23 @@ ssh -i "$KEYS_ROOT/root@manager" "root@$MANAGER_IP_ADDRESS" "$(cat <<- EOT
 	done
 
 	m '[manager-root] Ensuring no libvirt network bridges'
+
+	#cat > /etc/sysconfig/network-scripts/ifcfg-$C_MANAGER_OFFICE_INTERFACE <<- _EOT
+	#	DEVICE=$EQ_MANAGER_OFFICE_INTERFACE
+	#	TYPE=Ethernet
+	#	ONBOOT=yes
+	#	BOOTPROTO=dhclient
+	#_EOT
+
+	rm --force /etc/sysconfig/network-scripts/ifcfg-public
+	rm --force /etc/sysconfig/network-scripts/ifcfg-$C_MANAGER_OFFICE_INTERFACE
 	rm --force /etc/sysconfig/network-scripts/ifcfg-openstack
 	rm --force /etc/sysconfig/network-scripts/ifcfg-$C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE
-	systemctl restart network.service
+
+	systemctl restart network.service || true
+
+	dhclient -r $C_MANAGER_OFFICE_INTERFACE
+	dhclient $C_MANAGER_OFFICE_INTERFACE
 
 	# TODO: NetworkManager bridge does not work
 	#nmcli connection delete openstack || true

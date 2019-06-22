@@ -12,11 +12,7 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/configuration/environment"
 . "$ROOT/utils/functions"
 
-CONFIG="$WORKSPACE_ROOT/ssh.config"
-
-if [ -f "$CONFIG" ]; then
-	sed --in-place "/Host \"$NAME\"/,/^$/d" "$CONFIG"
-fi
+"$HERE/delete-ssh-config" "$NAME"
 
 # Since OpenSSH 7.3 ("-J"):
 #   ProxyJump "$PROXY"
@@ -25,7 +21,7 @@ fi
 # Oldest way (requires "nc" on proxy):
 #   ProxyCommand ssh -F "$CONFIG" "$PROXY" "nc %h %p"
 
-cat >> "$CONFIG" <<- EOT
+cat >> "$WORKSPACE_ROOT/ssh.config" <<- EOT
 	Host "$NAME"
 	  HostName "$HOST"
 	  User "$USERNAME"

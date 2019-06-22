@@ -8,5 +8,7 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/utils/trap-with-fetch-results"
 
 "$ROOT/manager/tripleo/openstack" \
-overcloud delete "$OVERCLOUD_HEAT_STACK" \
+overcloud delete "$TRIPLEO_OVERCLOUD_HEAT_STACK" \
 	--yes
+
+"$ROOT/utils/delete-ssh-config" openstack-dashboard

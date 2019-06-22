@@ -14,12 +14,12 @@ ROOT=$(readlink -f "$HERE/..")
 # For quality of life we will make sure that the "openstack" command (Cliff) will always limit its
 # output width to the width of our terminal ("CLIFF_FIT_WIDTH=1" doesn't seem to work)
 # "$ROOT/ssh" manager \
-# ". \"\$HOME/${OVERCLOUD_HEAT_STACK}rc\" 
+# ". \"\$HOME/${TRIPLEO_OVERCLOUD_HEAT_STACK}rc\" 
 # CLIFF_MAX_TERM_WIDTH=\"$(tput cols)\" \
 # \"\$HOME/.local/bin/openstack\" $(c "${@:5}")"
 
 "$ROOT/ssh" manager \
-". \"\$HOME/${OVERCLOUD_HEAT_STACK}rc\" 
+". \"\$HOME/${TRIPLEO_OVERCLOUD_HEAT_STACK}rc\" 
 CLIFF_MAX_TERM_WIDTH=\"$(tput cols)\" \
 OS_PROJECT_DOMAIN_NAME=$(c "$DOMAIN") \
 OS_PROJECT_NAME=$(c "$PROJECT") \

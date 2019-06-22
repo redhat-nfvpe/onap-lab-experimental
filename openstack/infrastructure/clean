@@ -7,6 +7,9 @@ ROOT=$(readlink -f "$HERE/../..")
 . "$ROOT/utils/functions"
 . "$ROOT/utils/trap-with-fetch-results"
 
+"$ROOT/utils/delete-ssh-config" lab-controller-0
+"$ROOT/utils/delete-ssh-config" lab-computehci-0
+
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
 	set -e

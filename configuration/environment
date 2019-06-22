@@ -13,16 +13,18 @@ SSH_CONTROL_ROOT="$WORKSPACE_ROOT/ssh-control"
 
 MANAGER_IP_ADDRESS=192.168.1.11
 MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=enp1s0
-MANAGER_HYPERVISOR_CONTROL_PLANE_INTERFACE=enp2s0
+MANAGER_OFFICE_INTERFACE=enp2s0
 
+# See: https://pypi.org/project/virtualbmc/
 VIRTUALBMC_VERSION=1.5.0
-VIRTUALBMC_USERNAME=admin
-VIRTUALBMC_PASSWORD=password
 
 # The host is on the hypervisor control plane
 VIRTUALBMC_HOST=192.168.122.1
 
-PYTHON_OPENSTACKCLIENT_VERSION=3.18.0
+# See: https://pypi.org/project/python-openstackclient/
+PYTHON_OPENSTACKCLIENT_VERSION=3.19.0
+
+# See: https://pypi.org/project/python-heatclient/
 PYTHON_HEATCLIENT_VERSION=1.17.0
 
 #
@@ -32,7 +34,8 @@ PYTHON_HEATCLIENT_VERSION=1.17.0
 # 
 
 # Default user for CentOS GenericCloud is "centos"
-CENTOS7_IMAGE=http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1905.qcow2
+CENTOS7_IMAGE_VERSION=1905
+CENTOS7_IMAGE="http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-$CENTOS7_IMAGE_VERSION.qcow2"
 
 NAMESERVER=1.0.0.1
 
@@ -42,13 +45,12 @@ TIMEZONE=America/Chicago
 # TripleO
 #
 
+TRIPLEO_VERBOSITY=-vv
+
+TRIPLEO_OVERCLOUD_HEAT_STACK=lab
+
 # OpenStack 14 is "stein" 
 TRIPLEO_VERSION=stein
-
-# Ceph 14 is "nautilus"
-# (You do not really have a choice here: you must use the Ceph version packaged for the TripleO
-# version)
-CEPH_VERSION=nautilus
 
 # The default container image tag is "current-tripleo-rdo", which can break our deployment because
 # 1) it is updated often and can introduce breaking changes to these scripts, and 2) it is not set
@@ -60,14 +62,20 @@ CEPH_VERSION=nautilus
 #
 # For an example tag, see: https://hub.docker.com/r/tripleostein/centos-binary-nova-api/tags
 TRIPLEO_CONTAINER_IMAGE_TAG=d45bbddf5063604b241bc8f14e39d90cae03de8b_24ce03e4
+#TRIPLEO_CONTAINER_IMAGE_TAG=current-tripleo-rdo
+
+#
+# Ceph
+#
+
+# Ceph 14 is "nautilus"
+# (You do not really have a choice here: you must use the Ceph version packaged for the TripleO
+# version)
+CEPH_VERSION=nautilus
 
 # See: https://hub.docker.com/r/ceph/daemon/tags
 # Or run: skopeo inspect docker://docker.io/ceph/daemon
 CEPH_CONTAINER_IMAGE_TAG="v4.0.0-stable-4.0-$CEPH_VERSION-centos-7-x86_64"
-
-TRIPLEO_VERBOSITY=-vv
-
-OVERCLOUD_HEAT_STACK=lab
 
 #
 # OpenStack
@@ -75,8 +83,9 @@ OVERCLOUD_HEAT_STACK=lab
 
 OPENSTACK_LOCAL_DASHBOARD_PORT=8080
 
+VIRTUALBMC_USERNAME=admin
+VIRTUALBMC_PASSWORD=password
+
+# Setting these will implicitly create virtual machines
 CONTROLLER_VIRTUALBMC_PORT=6230
 #COMPUTE_VIRTUALBMC_PORT=6231
-
-# This will be ignored if COMPUTE_VIRTUALBMC_PORT has been set 
-COMPUTE_MAC_ADDRESS=18:31:bf:ce:9d:5e

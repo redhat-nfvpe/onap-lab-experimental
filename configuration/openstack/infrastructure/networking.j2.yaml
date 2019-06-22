@@ -1,14 +1,22 @@
 # Heat Jinja2 template for configuring networking on a node by its role.
-
+#
 # Generates the "/etc/os-net-config/config.json" file for use by the "os-net-config" tool, see:
 #   https://opendev.org/openstack/os-net-config 
-
+#
 # Internally delegates to the bash script at:
 #   /usr/share/openstack-tripleo-heat-templates/network/scripts/run-os-net-config.sh
-
+#
+# In "environments/network-environment.j2.yaml" this template will be used as a resource named
+# "OS::TripleO::{{role.name}}::Net::SoftwareConfig" and it is instantiated in
+# "puppet/role.role.j2.yaml". 
+#
 # This file was modified from the default at:
 #   /usr/share/openstack-tripleo-heat-templates/network/config/single-nic-vlans/role.role.j2.yaml
-
+#
+# Our addition is the creation of the "br-public" bridge.
+#
+# See also: "infrastructure-networks.yaml" and "neutron.yaml"
+#
 # See: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/advanced_overcloud_customization/custom-network-interface-templates
 
 {#- Convert net map or net list to internal list of networks #}
@@ -168,7 +176,8 @@ resources:
                     get_attr: [MinViableMtu, value]
                   # force the MAC address of the bridge to this interface
                   primary: true
-{%- for network in networks if network.enabled|default(true) and network.name in _role_networks %}
+{#- LAB: don't include "Public" network in VLANs #}
+{%- for network in networks if network.enabled|default(true) and network.name in _role_networks and network.name != 'Public' %}
                 - type: vlan
                   mtu:
                     get_param: {{network.name}}Mtu
@@ -186,21 +195,43 @@ resources:
                             get_param: {{network.name}}InterfaceDefaultRoute
 {%-     endif %}
 {%- endfor %}
+{#- LAB: "Public" network is on its own bridge #}
+{%- if role.name.startswith('Controller') or role.name.startswith('Compute') %}
               # Public network
-              - type: ovs_bridge
+              - type: linux_bridge
                 name: br-public # associated with OVN's "public" flat network in our "neutron.yaml"
-                addresses:
-                - ip_netmask: 10.0.2.2/24
-                routes:
-                - default: true
-                  next_hop: 10.0.2.1 # gateway defined in our "../libvirt/networks/public.xml"
+                mtu: { get_param: PublicMtu }
+                use_dhcp: false
                 dns_servers: { get_param: DnsServers }
-                mtu: { get_attr: [ MinViableMtu, value ] }
+                addresses:
+                - ip_netmask: { get_param: PublicIpSubnet }
+{%- if role.name.startswith('Compute') %}
+                # "Compute" IP address on the office LAN
+                - ip_netmask: 192.168.1.12/24
+{%- endif %}
+                routes:
+                  list_concat_unique:
+                  - get_param: PublicInterfaceRoutes
+{%- if role.name.startswith('Controller') %}
+                  -
+                    # "Controller" default route is via the public network
+                    - default: true
+                      next_hop: { get_param: PublicInterfaceDefaultRoute }
+{%- endif %}
+{%- if role.name.startswith('Compute') %}
+                    # "Compute" public network is accessed via the public network
+                    - ip_netmask: 10.0.2.0/24
+                      next_hop: { get_param: PublicInterfaceDefaultRoute }
+                    # "Compute" default route is via the office router
+                    - default: true
+                      next_hop: 192.168.1.1
+{%- endif %}
                 members:
                 - type: interface
-                  name: nic3 # "public" network interface created by libvirt (=eth2)
+                  name: nic2 # expected to be on second NIC
+                  mtu: { get_param: PublicMtu }
                   primary: true # we want the bridge to use this NIC's MAC address
-                  mtu: { get_attr: [ MinViableMtu, value ] }
+{%- endif %}
 
 outputs:
   OS::stack_id:

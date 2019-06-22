@@ -21,7 +21,7 @@ for NAME in $("$ROOT/manager/tripleo/openstack" server list --format value --col
 	EQ_NAME=$(eq "$NAME")
 	IP_ADDRESS=$("$HERE/get-ipv4-address" "$NAME" ctlplane)
 	if [ -n "$IP_ADDRESS" ]; then
-		m "[tripleo] Enabling ssh access to infrastructure server \"$EQ_NAME\" via ctlplane: $IP_ADDRESS"
+		m "[tripleo] Enabling ssh access to infrastructure server \"$EQ_NAME\" on ctlplane: $IP_ADDRESS"
 		"$ROOT/utils/ensure-ssh-config-proxy" "$NAME" "$IP_ADDRESS" heat-admin tripleo tripleo
 	else
 		m "[tripleo] Infrastructure server \"$EQ_NAME\" does not have an IP address on ctlplane" "$RED"

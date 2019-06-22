@@ -1,0 +1,27 @@
+#!/bin/bash
+set -e
+
+HERE=$(dirname "$(readlink -f "$0")")
+ROOT=$(readlink -f "$HERE/../..")
+. "$ROOT/configuration/environment"
+. "$ROOT/utils/functions"
+. "$ROOT/utils/trap"
+
+# See: https://review.opendev.org/#/c/665324/
+#      https://bugzilla.redhat.com/show_bug.cgi?id=1602844
+
+STANDARD_PY=$(cat "$HERE/standard.py")
+
+"$ROOT/ssh" tripleo "$(cat <<- EOT
+
+	set -e
+	CYAN='\033[0;36m'
+	RESET='\033[0m'
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
+
+	MOUNT=\$(sudo podman mount ironic_inspector)
+	echo $(c "$STANDARD_PY") | sudo tee "\$MOUNT/usr/lib/python2.7/site-packages/ironic_inspector/plugins/standard.py"
+	sudo systemctl restart tripleo_ironic_inspector
+
+EOT
+)"
