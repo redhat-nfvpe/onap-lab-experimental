@@ -57,10 +57,7 @@ fi
 
 "$ROOT/ssh" manager-root "$(cat <<- EOT
 
-	set -e
-	CYAN='\033[0;36m'
-	RESET='\033[0m'
-	function m () { echo -e "\$CYAN\$1\$RESET"; }
+	$REMOTE_PREAMBLE
 
 	if virsh domstate $C_NAME 2> /dev/null; then
 		m "[manager-root] Virtual machine \"$EQ_NAME\" already exists"

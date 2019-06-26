@@ -11,16 +11,17 @@ if [ "$1" == '-c' ]; then
 	"$HERE/clean"
 fi
 
+"$HERE/patch"
+
 EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 EQ_CEPH_VERSION=$(eq "$CEPH_VERSION")
 
 # Using "-t" to improve wget display
 "$ROOT/ssh" -t tripleo "$(cat <<- EOT
 
-	set -e
-	CYAN='\033[0;36m'
-	RESET='\033[0m'
-	function m () { echo -e "\$CYAN\$1\$RESET"; }
+	$REMOTE_PREAMBLE
+
+	rm -rf "\$HOME/images"
 
 	if [ ! -f "\$HOME/images/centos7.qcow2" ]; then
 		m "[tripleo] Downloading base image: \"\$HOME/images/centos7.qcow2\""
@@ -31,15 +32,25 @@ EQ_CEPH_VERSION=$(eq "$CEPH_VERSION")
 	. "\$HOME/stackrc"
 
 	m '[tripleo] Ensuring infrastructure images are built (~ 5 minutes)'
+
+	# Default configs are in: /usr/share/openstack-tripleo-common/image-yaml/
+
 	DIB_YUM_REPO_CONF="/etc/yum.repos.d/delorean.repo /etc/yum.repos.d/delorean-$EQ_TRIPLEO_VERSION-testing.repo /etc/yum.repos.d/tripleo-centos-ceph-$EQ_CEPH_VERSION.repo" \
 	DIB_LOCAL_IMAGE="\$HOME/images/centos7.qcow2" \
+	DIB_INSTALLTYPE_ironic_agent=source \
+	DIB_REPOTYPE_ironic_agent=git \
+	DIB_REPOLOCATION_ironic_agent="\$HOME/source/ironic-python-agent" \
 	openstack \
 	overcloud image build \
+		--output-directory "\$HOME/images/" \
 		$(c "$TRIPLEO_VERBOSITY")
 
 	m '[tripleo] Ensuring infrastructure images are uploaded'
+
 	openstack \
 	overcloud image upload \
+		--image-path "\$HOME/images/" \
+		--update-existing \
 		$(c "$TRIPLEO_VERBOSITY")
 
 EOT

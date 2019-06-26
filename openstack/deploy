@@ -30,10 +30,7 @@ HEAT_ENVIRONMENTS_YAML=$(cat "$ROOT/configuration/openstack/heat-environments.ya
 
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
-	set -e
-	CYAN='\033[0;36m'
-	RESET='\033[0m'
-	function m () { echo -e "\$CYAN\$1\$RESET"; }
+	$REMOTE_PREAMBLE
 
 	. "\$HOME/stackrc"
 

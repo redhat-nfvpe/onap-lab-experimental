@@ -12,10 +12,7 @@ ROOT=$(readlink -f "$HERE/../..")
 
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
-	set -e
-	CYAN='\033[0;36m'
-	RESET='\033[0m'
-	function m () { echo -e "\$CYAN\$1\$RESET"; }
+	$REMOTE_PREAMBLE
 
 	. "\$HOME/stackrc"
 
@@ -32,15 +29,20 @@ ROOT=$(readlink -f "$HERE/../..")
 			$(c "$TRIPLEO_VERBOSITY")
 	done
 
+	m '[tripleo] Ensuring no infrastructure images'
+
+	for ID in \$(openstack image list --format value --column ID); do
+		m "[tripleo] Deleting infrastructure image \"\$ID\""
+		openstack \
+			image delete "\$ID"
+	done
+
 EOT
 )"
 
 "$ROOT/ssh" manager-root "$(cat <<- EOT
 
-	set -e
-	CYAN='\033[0;36m'
-	RESET='\033[0m'
-	function m () { echo -e "\$CYAN\$1\$RESET"; }
+	$REMOTE_PREAMBLE
 
 	m '[manager-root] Ensuring no virtual machines for infrastructure nodes'
 

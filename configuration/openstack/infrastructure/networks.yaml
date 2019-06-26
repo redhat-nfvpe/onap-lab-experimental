@@ -1,4 +1,4 @@
-# Networks.
+# Infrastructure networks.
 #
 # This is a custom format ingested by "network-environment.j2.yaml" and "network-isolation.j2.yaml"
 # to generate Heat template environments. 

@@ -1,4 +1,4 @@
-# Request infrastructure nodes per each OpenStack role.
+# Infrastructure node requests per each OpenStack role.
 #
 # This is a Heat template environment.
 #

@@ -43,6 +43,7 @@ function configuration () {
 		"$1:/var/lib/config-data/puppet-generated/" \
 		"$1:/var/lib/mistral" \
 		"$1:/usr/share/openstack-tripleo-heat-templates" \
+		"$1:/usr/share/openstack-tripleo-common" \
 		"$RESULTS/configuration/$1/"
 }
 

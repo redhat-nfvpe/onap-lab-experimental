@@ -9,6 +9,17 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 RESET='\033[0m'
 
+REMOTE_PREAMBLE="$(cat <<- EOT
+	set -e
+	RED='\033[0;31m'
+	GREEN='\033[0;32m'
+	BLUE='\033[0;34m'
+	CYAN='\033[0;36m'
+	RESET='\033[0m'
+	function m () { echo -e "\$CYAN\$1\$RESET"; }
+EOT
+)"
+
 # Colored messages (blue is the default)
 # Examples:
 #   m "hello world"

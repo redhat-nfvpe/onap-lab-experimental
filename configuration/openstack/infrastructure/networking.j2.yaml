@@ -1,4 +1,4 @@
-# Heat Jinja2 template for configuring networking on a node by its role.
+# Heat Jinja2 template for configuring networking on infrastructure nodes.
 #
 # Generates the "/etc/os-net-config/config.json" file for use by the "os-net-config" tool, see:
 #   https://opendev.org/openstack/os-net-config 
@@ -199,7 +199,7 @@ resources:
 {%- if role.name.startswith('Controller') or role.name.startswith('Compute') %}
               # Public network
               - type: linux_bridge
-                name: br-public # associated with OVN's "public" flat network in our "neutron.yaml"
+                name: br-public # associated with OVN's "public" flat network in "../neutron.yaml"
                 mtu: { get_param: PublicMtu }
                 use_dhcp: false
                 dns_servers: { get_param: DnsServers }
@@ -212,8 +212,8 @@ resources:
                 routes:
                   list_concat_unique:
                   - get_param: PublicInterfaceRoutes
-{%- if role.name.startswith('Controller') %}
                   -
+{%- if role.name.startswith('Controller') %}
                     # "Controller" default route is via the public network
                     - default: true
                       next_hop: { get_param: PublicInterfaceDefaultRoute }

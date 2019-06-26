@@ -27,10 +27,7 @@ INFRASTRUCTURE_NODES_YAML=$(cat "$ROOT/configuration/openstack/infrastructure/no
 
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
-	set -e
-	CYAN='\033[0;36m'
-	RESET='\033[0m'
-	function m () { echo -e "\$CYAN\$1\$RESET"; }
+	$REMOTE_PREAMBLE
 
 	. "\$HOME/stackrc"
 
@@ -42,7 +39,8 @@ INFRASTRUCTURE_NODES_YAML=$(cat "$ROOT/configuration/openstack/infrastructure/no
 	echo $(c "$INFRASTRUCTURE_NODES_YAML") \
 		> "\$INFRASTRUCTURE/nodes.yaml"
 
-	# Note: "import" will update existing nodes, but other nodes will *not* be deleted
+	# Note: "import" will update nodes if they already exist, but other nodes will *not* be deleted,
+	# so make sure to run "openstack/infrastructure/clean"
 
 	openstack \
 	overcloud node import "\$INFRASTRUCTURE/nodes.yaml" \
@@ -52,6 +50,13 @@ INFRASTRUCTURE_NODES_YAML=$(cat "$ROOT/configuration/openstack/infrastructure/no
 	openstack \
 	overcloud node introspect \
 		--all-manageable \
+		$(c "$TRIPLEO_VERBOSITY")
+
+	m '[tripleo] Cleaning infrastructure nodes (~ 15 minutes)'
+	# Not needed if clean_nodes=True in undercloud.conf
+	openstack \
+	overcloud node clean \
+		computehci \
 		$(c "$TRIPLEO_VERBOSITY")
 
 	mkdir --parents "\$INFRASTRUCTURE/introspection"

@@ -1,10 +1,11 @@
-# Specify your inventory of infrastructure nodes, which can include both physical and virtual
-# machines.
+# Inventory of infrastructure nodes, which can include both physical and virtual machines.
 #
 # Used by "openstack overcloud node import".
 #
+# Custom format. See:
+#   https://docs.openstack.org/tripleo-docs/latest/install/environments/baremetal.html#instackenv
+#
 # Note: This file is often named "instackenv" and is sometimes in JSON rather than YAML.
-# See: https://docs.openstack.org/tripleo-docs/latest/install/environments/baremetal.html#instackenv
 #
 # Profiles
 # --------
@@ -28,12 +29,18 @@
 # VirtualBMC on the Manager to provide IPMI on a single IP address. Each virtual machine gets
 # its own assigned port on that IP address.
 #
+# Ceph
+# ----
+#
+# For nodes intended for Ceph (ComputeHCI) see "../ceph.yaml" for disk arrangement and
+# configuration.
+#
 # Physical machines without IMPI
 # ------------------------------
 #
 # No IPMI? No problem! Use "pm_type: manual-management" and remove other "pm_" properties. You will
-# need to keep track of the node state (via # "watch openstack baremetal node list") and turn the
-# power on and off yourself.
+# need to keep track of the node state (via "watch openstack baremetal node list") and turn the
+# power on and off yourself when directed.
 #
 # UEFI
 # ----
@@ -45,10 +52,8 @@
 # would then fail to boot from disk. If this is your situation (UEFI with BIOS-only network boot)
 # then you should set your machine to use BIOS/CSM *only*.
 #
-# TODO
-# For UEFI machines make sure to add "boot_mode:uefi" to capabilities, otherwise they will fail
-# to boot after provisioned:
-# https://docs.openstack.org/tripleo-docs/latest/install/advanced_deployment/uefi_boot.html
+# See also:
+#   https://docs.openstack.org/tripleo-docs/latest/install/advanced_deployment/uefi_boot.html
 #
 # Overriding
 # ----------
@@ -56,9 +61,9 @@
 # By default the maximum resources reported by introspection will be available for provisioning.
 # It's possible to override these limits as well as other introspection data here, e.g.:
 #
-#  cpu: 6
-#  memory: 4096 # MiB
-#  disk: 100 # GiB
+#  cpu: 18
+#  memory: 244141 # MiB
+#  disk: 1000 # GiB
 #  arch: x86_64
 
 nodes:

@@ -13,10 +13,7 @@ C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=$(c "$MANAGER_OPENSTACK_CONTROL_PLAN
 
 ssh -i "$KEYS_ROOT/root@manager" "root@$MANAGER_IP_ADDRESS" "$(cat <<- EOT
 
-	set -e
-	CYAN='\033[0;36m'
-	RESET='\033[0m'
-	function m () { echo -e "\$CYAN\$1\$RESET"; }
+	$REMOTE_PREAMBLE
 
 	m '[manager-root] Ensuring no libvirt virtual machines'
 	for UUID in \$(virsh list --uuid); do
@@ -81,3 +78,6 @@ ssh -i "$KEYS_ROOT/root@manager" "root@$MANAGER_IP_ADDRESS" "$(cat <<- EOT
 
 EOT
 )"
+
+"$ROOT/utils/delete-ssh-config" manager
+"$ROOT/utils/delete-ssh-config" manager-root

@@ -14,13 +14,13 @@ STANDARD_PY=$(cat "$HERE/standard.py")
 
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
-	set -e
-	CYAN='\033[0;36m'
-	RESET='\033[0m'
-	function m () { echo -e "\$CYAN\$1\$RESET"; }
+	$REMOTE_PREAMBLE
 
+	m '[tripleo] Patching "ironic_inspector"'
 	MOUNT=\$(sudo podman mount ironic_inspector)
 	echo $(c "$STANDARD_PY") | sudo tee "\$MOUNT/usr/lib/python2.7/site-packages/ironic_inspector/plugins/standard.py"
+
+	m '[tripleo] Restarting "ironic_inspector"'
 	sudo systemctl restart tripleo_ironic_inspector
 
 EOT

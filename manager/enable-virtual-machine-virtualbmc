@@ -17,10 +17,7 @@ C_VIRTUALBMC_PASSWORD=$(c "$VIRTUALBMC_PASSWORD")
 
 "$ROOT/ssh" manager-root "$(cat <<- EOT
 
-	set -e
-	CYAN='\033[0;36m'
-	RESET='\033[0m'
-	function m () { echo -e "\$CYAN\$1\$RESET"; }
+	$REMOTE_PREAMBLE
 
 	m "[manager-root] Ensuring VirtualBMC configured for virtual machine \"$EQ_NAME\""
 

@@ -41,10 +41,7 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 
 "$ROOT/ssh" manager-root "$(cat <<- EOT
 
-	set -e
-	CYAN='\033[0;36m'
-	RESET='\033[0m'
-	function m () { echo -e "\$CYAN\$1\$RESET"; }
+	$REMOTE_PREAMBLE
 
 	m "[manager-root] Ensuring timezone is \"$(eq "$TIMEZONE")\""
 	timedatectl set-timezone $(c "$TIMEZONE")
@@ -136,7 +133,6 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 		TYPE=Bridge
 		IPADDR=10.0.2.1
 		NETMASK=255.255.255.0
-		#HWADDR=80:EE:73:E0:CB:90
 		ONBOOT=yes
 		BOOTPROTO=none
 		DELAY=0
@@ -168,7 +164,7 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 		DELAY=0
 	_EOT
 
-	systemctl restart network.service
+	systemctl restart network.service || true
 
 	# TODO: brctl works but won't survive reboots
 	#brctl addbr openstack || true
@@ -249,10 +245,7 @@ sshpass -p "$PASSWORD" ssh "manager@$MANAGER_IP_ADDRESS"
 
 "$ROOT/ssh" manager "$(cat <<- EOT
 
-	set -e
-	CYAN='\033[0;36m'
-	RESET='\033[0m'
-	function m () { echo -e "\$CYAN\$1\$RESET"; }
+	$REMOTE_PREAMBLE
 
 	m '[manager] Ensuring OpenStack client is installed'
 	pip3 install --user --upgrade \
