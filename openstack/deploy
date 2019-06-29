@@ -11,17 +11,19 @@ if [ "$1" == '-c' ]; then
 	"$HERE/clean"
 fi
 
-INFRASTRUCTURE_ROLES_YAML=$(cat "$ROOT/configuration/openstack/infrastructure/roles.yaml")
+NETWORKS_YAML=$(cat "$ROOT/configuration/openstack/networks.yaml")
 
-INFRASTRUCTURE_NETWORKS_YAML=$(cat "$ROOT/configuration/openstack/infrastructure/networks.yaml")
+NETWORKING_ENVIRONMENT_J2_YAML=$(cat "$ROOT/configuration/openstack/heat/environments/networking.j2.yaml")
 
-INFRASTRUCTURE_NETWORKING_J2_YAML=$(cat "$ROOT/configuration/openstack/infrastructure/networking.j2.yaml")
+NETWORKING_TEMPLATE_J2_YAML=$(cat "$ROOT/configuration/openstack/heat/templates/networking.j2.yaml")
 
-NOVA_YAML=$(cat "$ROOT/configuration/openstack/nova.yaml")
+ROLES_ENVIRONMENT_YAML=$(cat "$ROOT/configuration/openstack/heat/environments/roles.yaml")
 
-NEUTRON_YAML=$(cat "$ROOT/configuration/openstack/neutron.yaml")
+NOVA_ENVIRONMENT_YAML=$(cat "$ROOT/configuration/openstack/heat/environments/nova.yaml")
 
-CEPH_YAML=$(cat "$ROOT/configuration/openstack/ceph.yaml")
+NEUTRON_ENVIRONMENT_YAML=$(cat "$ROOT/configuration/openstack/heat/environments/neutron.yaml")
+
+CEPH_ENVIRONMENT_YAML=$(cat "$ROOT/configuration/openstack/heat/environments/ceph.yaml")
 
 HEAT_ENVIRONMENTS_YAML=$(cat "$ROOT/configuration/openstack/heat-environments.yaml" |
 	HOME=/home/tripleo \
@@ -30,7 +32,7 @@ HEAT_ENVIRONMENTS_YAML=$(cat "$ROOT/configuration/openstack/heat-environments.ya
 
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
-	$REMOTE_PREAMBLE
+	$SCRIPT_PREAMBLE
 
 	. "\$HOME/stackrc"
 
@@ -60,29 +62,40 @@ HEAT_ENVIRONMENTS_YAML=$(cat "$ROOT/configuration/openstack/heat-environments.ya
 
 		for r in y:
 		  if r["name"] in ("Controller", "ComputeHCI"):
+		  	# Add "Public" network
 		    r["networks"]["Public"] = {"subnet": "public_subnet"}
-		    if "default_route_networks" not in r:
-		      r["default_route_networks"] = []
-		    r["default_route_networks"].append("Public")
+
+		    # Mark "Public" network as the *only* default route network
+		    # Controller default = ["External"]
+		    # ComputeHCI default = undefined
+		    # Note: undefined (rather than empty!) functions equivalently to ["ControlPlane"]
+		    # (See our "networking.j2.yaml")
+		    r["default_route_networks"] = ["Public"]
+
+		    #if "default_route_networks" not in r:
+		    #  r["default_route_networks"] = []
+		    #r["default_route_networks"].append("Public")
 
 		with open("\$INFRASTRUCTURE/roles.yaml", "w") as f:
 		  yaml.dump(y, f, default_flow_style=False)
 	_EOT
 
-	m '[tripleo] Updating infrastructure networks configuration'
-	echo $(c "$INFRASTRUCTURE_NETWORKS_YAML") \
+	m '[tripleo] Updating networks configuration'
+	echo $(c "$NETWORKS_YAML") \
 		> "\$INFRASTRUCTURE/networks.yaml"
 
-	m '[tripleo] Overriding Heat Jinja2 template for infrastructure networking'
+	m '[tripleo] Updating Heat Jinja2 environments and templates for networking'
 
 	rsync --recursive \
 		/usr/share/openstack-tripleo-heat-templates/* \
 		"\$TEMPLATES_J2/"
 
-	# Note: the default "environments/network-environment.yaml" imports configs (harcoded) from
-	# "single-nic-vlan", so to avoid updating that file we will override "single-nic-vlan"
-	echo $(c "$INFRASTRUCTURE_NETWORKING_J2_YAML") \
-		> "\$TEMPLATES_J2/network/config/single-nic-vlans/role.role.j2.yaml"
+	echo $(c "$NETWORKING_ENVIRONMENT_J2_YAML") \
+		> "\$TEMPLATES_J2/environments/networking.j2.yaml"
+
+	mkdir --parents "\$TEMPLATES_J2/network/config/lab/"
+ 	echo $(c "$NETWORKING_TEMPLATE_J2_YAML") \
+ 		> "\$TEMPLATES_J2/network/config/lab/role.role.j2.yaml"
 
 	m '[tripleo] Rendering Heat templates and environments from Jinja2'
 
@@ -112,20 +125,20 @@ HEAT_ENVIRONMENTS_YAML=$(cat "$ROOT/configuration/openstack/heat-environments.ya
 		  yaml.dump(y, f, default_flow_style=False)
 	_EOT
 
-	m '[tripleo] Updating Heat environment for infrastructure roles'
-	echo $(c "$INFRASTRUCTURE_ROLES_YAML") \
-		> "\$TEMPLATES/environments/infrastructure-roles.yaml"
+	m '[tripleo] Updating Heat environment for roles'
+	echo $(c "$ROLES_ENVIRONMENT_YAML") \
+		> "\$TEMPLATES/environments/roles.yaml"
 
 	m '[tripleo] Updating Heat environment for Nova'
-	echo $(c "$NOVA_YAML") \
+	echo $(c "$NOVA_ENVIRONMENT_YAML") \
 		> "\$TEMPLATES/environments/nova.yaml"
 
 	m '[tripleo] Updating Heat environment for Neutron'
-	echo $(c "$NEUTRON_YAML") \
+	echo $(c "$NEUTRON_ENVIRONMENT_YAML") \
 		> "\$TEMPLATES/environments/neutron.yaml"
 
 	m '[tripleo] Updating Heat environment for Ceph'
-	echo $(c "$CEPH_YAML") \
+	echo $(c "$CEPH_ENVIRONMENT_YAML") \
 		> "\$TEMPLATES/environments/ceph.yaml"
 
 	m '[tripleo] Updating Heat environment selection'

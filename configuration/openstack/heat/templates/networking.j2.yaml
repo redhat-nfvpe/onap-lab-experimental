@@ -6,16 +6,14 @@
 # Internally delegates to the bash script at:
 #   /usr/share/openstack-tripleo-heat-templates/network/scripts/run-os-net-config.sh
 #
-# In "environments/network-environment.j2.yaml" this template will be used as a resource named
-# "OS::TripleO::{{role.name}}::Net::SoftwareConfig" and it is instantiated in
+# In "../environments/networking.j2.yaml" this template will be wrapped in a resource named
+# "OS::TripleO::{{role.name}}::Net::SoftwareConfig", which is instantiated in
 # "puppet/role.role.j2.yaml". 
 #
 # This file was modified from the default at:
 #   /usr/share/openstack-tripleo-heat-templates/network/config/single-nic-vlans/role.role.j2.yaml
 #
 # Our addition is the creation of the "br-public" bridge.
-#
-# See also: "infrastructure-networks.yaml" and "neutron.yaml"
 #
 # See: https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/advanced_overcloud_customization/custom-network-interface-templates
 
@@ -176,7 +174,7 @@ resources:
                     get_attr: [MinViableMtu, value]
                   # force the MAC address of the bridge to this interface
                   primary: true
-{#- LAB: don't include "Public" network in VLANs #}
+{#- LAB: Exclude "Public" network from control plane bridge #}
 {%- for network in networks if network.enabled|default(true) and network.name in _role_networks and network.name != 'Public' %}
                 - type: vlan
                   mtu:
@@ -197,9 +195,9 @@ resources:
 {%- endfor %}
 {#- LAB: "Public" network is on its own bridge #}
 {%- if role.name.startswith('Controller') or role.name.startswith('Compute') %}
-              # Public network
+              # Public network bridge
               - type: linux_bridge
-                name: br-public # associated with OVN's "public" flat network in "../neutron.yaml"
+                name: br-public # Associated with OVN's "public" flat network in "../neutron.yaml"
                 mtu: { get_param: PublicMtu }
                 use_dhcp: false
                 dns_servers: { get_param: DnsServers }
@@ -219,12 +217,12 @@ resources:
                       next_hop: { get_param: PublicInterfaceDefaultRoute }
 {%- endif %}
 {%- if role.name.startswith('Compute') %}
+                    # "Compute" default route is via the office network
+                    - default: true
+                      next_hop: 192.168.1.1
                     # "Compute" public network is accessed via the public network
                     - ip_netmask: 10.0.2.0/24
                       next_hop: { get_param: PublicInterfaceDefaultRoute }
-                    # "Compute" default route is via the office router
-                    - default: true
-                      next_hop: 192.168.1.1
 {%- endif %}
                 members:
                 - type: interface

@@ -11,7 +11,7 @@ RESULTS="$WORKSPACE_ROOT/results"
 echo "Fetching results to $(q "$RESULTS")"
 
 if [ "$1" == '-c' ]; then
-	rm --recursive --force "$RESULTS" 
+	rm --recursive --force "$RESULTS/" 
 fi
 
 mkdir --parents \

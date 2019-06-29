@@ -33,15 +33,122 @@ NETWORK_PUBLIC_XML=$(cat "$ROOT/configuration/libvirt/networks/public.xml" |
 
 m '[manager-root] Ensuring keypair authorization for user "root" (you will be prompted for password if not)'
 "$ROOT/utils/ensure-ssh-key-authorized" root@manager \
-ssh -i "$KEYS_ROOT/root@manager" "root@$MANAGER_IP_ADDRESS"
+ssh -i "$KEYS_ROOT/root@manager" "root@$MANAGER_OFFICE_IP_ADDRESS"
 
-"$ROOT/utils/ensure-ssh-config" manager-root "$MANAGER_IP_ADDRESS" root root@manager
+"$ROOT/utils/ensure-ssh-config" manager-root "$MANAGER_OFFICE_IP_ADDRESS" root root@manager
 
 PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 
 "$ROOT/ssh" manager-root "$(cat <<- EOT
 
-	$REMOTE_PREAMBLE
+	$SCRIPT_PREAMBLE
+
+	m '[manager-root] Ensuring network bridges are configured (~ 15 seconds)'
+
+	systemctl stop network.service 
+
+	cat > /etc/sysconfig/network-scripts/ifcfg-public <<- _EOT
+		# "public" bridge
+		# For office and world access
+		# Contains the office network interface $MANAGER_OFFICE_INTERFACE
+		# Has a secondary IP address, see "ifcfg-public:0"
+		DEVICE=public
+		ONBOOT=yes
+		NM_CONTROLLED=no
+
+		TYPE=Bridge
+		STP=on
+		# Minimum delay is 2 for STP
+		DELAY=2
+
+		# Will receive IP address from office router
+		BOOTPROTO=dhcp
+	_EOT
+	rm --force /etc/sysconfig/network-scripts/ifcfg-public.bak
+
+	cat > /etc/sysconfig/network-scripts/ifcfg-public:0 <<- _EOT
+		# Extra IP address for the "public" bridge
+		# Serves as the gateway for "public" flat network for OpenStack and OVN
+		DEVICE=public:0
+		ONBOOT=yes
+		NM_CONTROLLED=no
+
+		TYPE=Ethernet
+		DELAY=0
+
+		BOOTPROTO=none
+		IPADDR=10.0.2.1
+		NETMASK=255.255.255.0
+	_EOT
+	rm --force /etc/sysconfig/network-scripts/ifcfg-public:0.bak
+
+	cat > /etc/sysconfig/network-scripts/ifcfg-$C_MANAGER_OFFICE_INTERFACE <<- _EOT
+		# Office network interface
+		# Contained in the "public" bridge
+		DEVICE=$EQ_MANAGER_OFFICE_INTERFACE
+		ONBOOT=yes
+		NM_CONTROLLED=no
+
+		TYPE=Ethernet
+		BRIDGE=public
+		DELAY=0
+
+		BOOTPROTO=none
+	_EOT
+	rm --force /etc/sysconfig/network-scripts/ifcfg-$C_MANAGER_OFFICE_INTERFACE.bak
+
+	cat > /etc/sysconfig/network-scripts/ifcfg-openstack <<- _EOT
+		# "openstack" bridge
+		# For the OpenStack control plane
+		# Contains the OpenStack control plane interface $MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE
+		DEVICE=openstack
+		ONBOOT=yes
+		NM_CONTROLLED=no
+
+		TYPE=Bridge
+		STP=on
+		# Minimum delay is 2 for STP
+		DELAY=2
+
+		BOOTPROTO=none
+	_EOT
+	rm --force /etc/sysconfig/network-scripts/ifcfg-openstack.bak
+
+	cat > /etc/sysconfig/network-scripts/ifcfg-$C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE <<- _EOT
+		# OpenStack control plane interface
+		# Contained in the "openstack" bridge
+		DEVICE=$EQ_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE
+		ONBOOT=yes
+		NM_CONTROLLED=no
+
+		TYPE=Ethernet
+		BRIDGE=openstack
+		DELAY=0
+
+		BOOTPROTO=none
+	_EOT
+	rm --force /etc/sysconfig/network-scripts/ifcfg-$C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE.bak
+
+	systemctl start network.service
+
+	# OLD: brctl works but won't survive reboots
+	#brctl addbr openstack || true
+	#brctl addif openstack $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE || true
+	#brctl stp openstack on
+	#ip link set openstack up
+
+	# OLD: NetworkManager bridge does not work
+	#nmcli connection delete openstack || true
+	#nmcli connection delete $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE || true
+	#nmcli connection add \
+	#	con-name openstack \
+	#	type bridge \
+	#	ifname openstack
+	#nmcli connection add \
+	#	con-name $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE \
+	#	type ethernet \
+	#	ifname $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE \
+	#	master openstack
 
 	m "[manager-root] Ensuring timezone is \"$(eq "$TIMEZONE")\""
 	timedatectl set-timezone $(c "$TIMEZONE")
@@ -64,6 +171,43 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 
 	systemctl enable libvirtd.service
 	systemctl start libvirtd.service
+
+	m '[manager-root] Ensuring libvirt networks are configured'
+
+	function qemu_enable_bridge () {
+		# Allow the bridge to be used by qemu
+		if ! grep --quiet --line-regexp "allow \$1" /etc/qemu-kvm/bridge.conf; then
+			echo "allow \$1" >> /etc/qemu-kvm/bridge.conf
+		fi
+	}
+
+	function virsh_enable_network () {
+		if ! virsh net-uuid "\$1" > /dev/null 2>&1; then
+			virsh net-define "\$HOME/libvirt/networks/\$1.xml"
+		fi
+		virsh net-autostart "\$1"
+		virsh net-start "\$1" || true
+	}
+
+	mkdir --parents "\$HOME/libvirt/networks/"
+
+	echo $(c "$NETWORK_HYPERVISOR_CONTROL_PLANE_XML") \
+		> "\$HOME/libvirt/networks/hypervisor-control-plane.xml"
+
+	echo $(c "$NETWORK_OPENSTACK_CONTROL_PLANE_XML") \
+		> "\$HOME/libvirt/networks/openstack-control-plane.xml"
+
+	echo $(c "$NETWORK_PUBLIC_XML") \
+		> "\$HOME/libvirt/networks/public.xml"
+
+	qemu_enable_bridge hypervisor
+	virsh_enable_network hypervisor-control-plane
+
+	qemu_enable_bridge openstack
+	virsh_enable_network openstack-control-plane
+
+	qemu_enable_bridge public
+	virsh_enable_network public
 
 	m '[manager-root] Ensuring VirtualBMC service is installed and configured'
 
@@ -126,100 +270,6 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 	 	systemctl enable vbmcd
 	 fi
 
-	m '[manager-root] Ensuring libvirt networks and bridges are configured'
-
-	cat > /etc/sysconfig/network-scripts/ifcfg-public <<- _EOT
-		DEVICE=public
-		TYPE=Bridge
-		IPADDR=10.0.2.1
-		NETMASK=255.255.255.0
-		ONBOOT=yes
-		BOOTPROTO=none
-		DELAY=0
-	_EOT
-
-	cat > /etc/sysconfig/network-scripts/ifcfg-$C_MANAGER_OFFICE_INTERFACE <<- _EOT
-		DEVICE=$EQ_MANAGER_OFFICE_INTERFACE
-		TYPE=Ethernet
-		BRIDGE=public
-		ONBOOT=yes
-		BOOTPROTO=dhcp
-		DELAY=0
-	_EOT
-
-	cat > /etc/sysconfig/network-scripts/ifcfg-openstack <<- _EOT
-		DEVICE=openstack
-		TYPE=Bridge
-		ONBOOT=yes
-		BOOTPROTO=none
-		DELAY=0
-	_EOT
-
-	cat > /etc/sysconfig/network-scripts/ifcfg-$C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE <<- _EOT
-		DEVICE=$EQ_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE
-		TYPE=Ethernet
-		BRIDGE=openstack
-		ONBOOT=yes
-		BOOTPROTO=none
-		DELAY=0
-	_EOT
-
-	systemctl restart network.service || true
-
-	# TODO: brctl works but won't survive reboots
-	#brctl addbr openstack || true
-	#brctl addif openstack $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE || true
-	#brctl stp openstack on
-	#ip link set openstack up
-
-	# TODO: NetworkManager bridge does not work
-	#nmcli connection delete openstack || true
-	#nmcli connection delete $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE || true
-	#nmcli connection add \
-	#	con-name openstack \
-	#	type bridge \
-	#	ifname openstack
-	#nmcli connection add \
-	#	con-name $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE \
-	#	type ethernet \
-	#	ifname $C_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE \
-	#	master openstack
-
-	function qemu_enable_bridge () {
-		# Allow the bridge to be used by qemu
-		if ! grep --quiet --line-regexp "allow \$1" /etc/qemu-kvm/bridge.conf; then
-			echo "allow \$1" >> /etc/qemu-kvm/bridge.conf
-		fi
-	}
-
-	function virsh_enable_network () {
-		if ! virsh net-uuid "\$1" > /dev/null 2>&1; then
-			virsh net-define "\$HOME/libvirt/networks/\$1.xml"
-		fi
-		virsh net-autostart "\$1"
-		virsh net-start "\$1" || true
-	}
-
-	mkdir --parents "\$HOME/libvirt/networks/"
-
-	echo $(c "$NETWORK_HYPERVISOR_CONTROL_PLANE_XML") \
-		> "\$HOME/libvirt/networks/hypervisor-control-plane.xml"
-
-	echo $(c "$NETWORK_OPENSTACK_CONTROL_PLANE_XML") \
-		> "\$HOME/libvirt/networks/openstack-control-plane.xml"
-
-	echo $(c "$NETWORK_PUBLIC_XML") \
-		> "\$HOME/libvirt/networks/public.xml"
-
-	qemu_enable_bridge hypervisor
-	virsh_enable_network hypervisor-control-plane
-
-	qemu_enable_bridge openstack
-	virsh_enable_network openstack-control-plane
-
-	qemu_enable_bridge public
-	virsh_enable_network public
-
 	m "[manager-root] Ensuring user \"manager\" exists and is configured"
 
 	if ! id --user manager > /dev/null; then
@@ -239,13 +289,13 @@ EOT
 m "[manager] Ensuring keypair authorization for user \"manager\""
 
 "$ROOT/utils/ensure-ssh-key-authorized" manager@manager \
-sshpass -p "$PASSWORD" ssh "manager@$MANAGER_IP_ADDRESS"
+sshpass -p "$PASSWORD" ssh "manager@$MANAGER_OFFICE_IP_ADDRESS"
 
-"$ROOT/utils/ensure-ssh-config" manager "$MANAGER_IP_ADDRESS" manager manager@manager
+"$ROOT/utils/ensure-ssh-config" manager "$MANAGER_OFFICE_IP_ADDRESS" manager manager@manager
 
 "$ROOT/ssh" manager "$(cat <<- EOT
 
-	$REMOTE_PREAMBLE
+	$SCRIPT_PREAMBLE
 
 	m '[manager] Ensuring OpenStack client is installed'
 	pip3 install --user --upgrade \

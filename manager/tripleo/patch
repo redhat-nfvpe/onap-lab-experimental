@@ -14,7 +14,7 @@ STANDARD_PY=$(cat "$HERE/standard.py")
 
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
-	$REMOTE_PREAMBLE
+	$SCRIPT_PREAMBLE
 
 	m '[tripleo] Patching "ironic_inspector"'
 	MOUNT=\$(sudo podman mount ironic_inspector)

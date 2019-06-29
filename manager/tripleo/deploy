@@ -15,7 +15,7 @@ UNDERCLOUD_CONF=$(cat "$ROOT/configuration/tripleo/undercloud.conf" |
 
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
-	$REMOTE_PREAMBLE
+	$SCRIPT_PREAMBLE
 
 	m "[tripleo] Updating \"\$HOME/undercloud.conf\""
 	echo $(c "$UNDERCLOUD_CONF") > "\$HOME/undercloud.conf"

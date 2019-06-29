@@ -19,9 +19,7 @@ EQ_CEPH_VERSION=$(eq "$CEPH_VERSION")
 # Using "-t" to improve wget display
 "$ROOT/ssh" -t tripleo "$(cat <<- EOT
 
-	$REMOTE_PREAMBLE
-
-	rm -rf "\$HOME/images"
+	$SCRIPT_PREAMBLE
 
 	if [ ! -f "\$HOME/images/centos7.qcow2" ]; then
 		m "[tripleo] Downloading base image: \"\$HOME/images/centos7.qcow2\""

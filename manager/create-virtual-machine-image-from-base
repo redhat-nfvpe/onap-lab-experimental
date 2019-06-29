@@ -18,7 +18,7 @@ BASE_IMAGE_NAME=/home/manager/libvirt/images/centos7.qcow2
 
 "$ROOT/ssh" manager-root -tt "$(cat <<- EOT
 
-	$REMOTE_PREAMBLE
+	$SCRIPT_PREAMBLE
 
 	if [ -f $C_IMAGE_NAME ]; then
 		m "[manager-root] Virtual machine disk image already exists: \"$EQ_IMAGE_NAME\""

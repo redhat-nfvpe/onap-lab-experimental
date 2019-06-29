@@ -17,7 +17,7 @@ C_VIRTUALBMC_PASSWORD=$(c "$VIRTUALBMC_PASSWORD")
 
 "$ROOT/ssh" manager-root "$(cat <<- EOT
 
-	$REMOTE_PREAMBLE
+	$SCRIPT_PREAMBLE
 
 	m "[manager-root] Ensuring VirtualBMC configured for virtual machine \"$EQ_NAME\""
 

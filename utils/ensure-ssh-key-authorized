@@ -17,7 +17,7 @@ C_KEY=$(c "$(< "$KEYS_ROOT/$KEY.pub")")
 
 "${@:2}" "$(cat <<- EOT
 
-	$REMOTE_PREAMBLE
+	$SCRIPT_PREAMBLE
 
 	echo $C_KEY | while read -r KTYPE KEY COMMENT; do
 		if ! (grep --no-messages --fixed-strings --word-regexp "\$KTYPE \$KEY" ~/.ssh/authorized_keys | grep --quiet --invert-match --fixed-strings '^#'); then

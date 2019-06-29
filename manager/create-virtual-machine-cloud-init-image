@@ -31,7 +31,7 @@ CLOUD_CONFIG=$(cat "$ROOT/configuration/libvirt/domains/$NAME/cloud-config.yaml"
 
 "$ROOT/ssh" manager-root "$(cat <<- EOT
 
-	$REMOTE_PREAMBLE
+	$SCRIPT_PREAMBLE
 
 	if [ -f $C_IMAGE_NAME ]; then
 		m "[manager-root] Cloud-init configuration disk image already exists: \"$EQ_IMAGE_NAME\""

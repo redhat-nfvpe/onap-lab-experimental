@@ -33,7 +33,7 @@ custom network bridges as well as setting up the virtual machines themselves.
 Step 2: Prepare the Manager
 ---------------------------
 
-Edit [`configuration/environment`](../configuration/environment) and set `MANAGER_IP_ADDRESS` to
+Edit [`configuration/environment`](../configuration/environment) and set `MANAGER_OFFICE_IP_ADDRESS` to
 point to our Manager. We can use a host name. Then run:
 
     manager/prepare

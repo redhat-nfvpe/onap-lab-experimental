@@ -24,7 +24,7 @@ fi
 
 "$ROOT/ssh" manager-root "$(cat <<- EOT
 
-	$REMOTE_PREAMBLE
+	$SCRIPT_PREAMBLE
 
 	m '[manager] Enabling IP route to External network via controller on public network'
 
@@ -43,4 +43,4 @@ echo "$OS_AUTH_URL"
 
 m "[manager] Enabling dashboard port $OPENSTACK_LOCAL_DASHBOARD_PORT forwarded via ssh \"openstack-dashboard\""
 
-"$ROOT/utils/ensure-ssh-config-forward" openstack-dashboard "$MANAGER_IP_ADDRESS" manager manager@manager "$OPENSTACK_LOCAL_DASHBOARD_PORT" 10.0.0.70:80
+"$ROOT/utils/ensure-ssh-config-forward" openstack-dashboard "$MANAGER_OFFICE_IP_ADDRESS" manager manager@manager "$OPENSTACK_LOCAL_DASHBOARD_PORT" 10.0.0.70:80

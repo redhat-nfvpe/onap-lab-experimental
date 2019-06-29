@@ -12,7 +12,7 @@ ROOT=$(readlink -f "$HERE/../..")
 
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
-	$REMOTE_PREAMBLE
+	$SCRIPT_PREAMBLE
 
 	. "\$HOME/stackrc"
 
@@ -29,7 +29,7 @@ ROOT=$(readlink -f "$HERE/../..")
 			$(c "$TRIPLEO_VERBOSITY")
 	done
 
-	m '[tripleo] Ensuring no infrastructure images'
+	m '[tripleo] Ensuring no infrastructure images uploaded'
 
 	for ID in \$(openstack image list --format value --column ID); do
 		m "[tripleo] Deleting infrastructure image \"\$ID\""
@@ -37,12 +37,15 @@ ROOT=$(readlink -f "$HERE/../..")
 			image delete "\$ID"
 	done
 
+	#m '[tripleo] Ensuring no infrastructure images'
+	#rm --recursive --force "\$HOME/images/"
+
 EOT
 )"
 
 "$ROOT/ssh" manager-root "$(cat <<- EOT
 
-	$REMOTE_PREAMBLE
+	$SCRIPT_PREAMBLE
 
 	m '[manager-root] Ensuring no virtual machines for infrastructure nodes'
 

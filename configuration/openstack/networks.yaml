@@ -15,8 +15,6 @@
 #    accessed by the outside world. To achieve this the Neutron ML2 plugin must be configured
 #    to map a "flat" OVN network name to a bridge.
 #
-# See also: "infrastructure-networking.j2.yaml" and "neutron.yaml"
-#
 # See: https://docs.openstack.org/tripleo-docs/latest/install/advanced_deployment/custom_networks.html
 
 - name: Storage

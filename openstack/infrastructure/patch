@@ -14,10 +14,11 @@ HARDWARE_PY=$(cat "$HERE/hardware.py")
 
 "$ROOT/ssh" -t tripleo "$(cat <<- EOT
 
-	$REMOTE_PREAMBLE
+	$SCRIPT_PREAMBLE
 
 	m '[tripleo] Cloning git repository for "ironic-python-agent" and committing our patch'
-	rm --force --recursive "\$HOME/source/"
+
+	rm --force --recursive "\$HOME/source/ironic-python-agent/"
 	mkdir --parents "\$HOME/source/"
 	cd "\$HOME/source/"
 	git clone https://opendev.org/openstack/ironic-python-agent.git
@@ -29,9 +30,12 @@ HARDWARE_PY=$(cat "$HERE/hardware.py")
 	git commit --message="Patch for #1723107"
 
 	m '[tripleo] Fixing default images configuration to install virtualenv'
-	# The original line is: '- override-pip-and-virtualenv'
+
+	# The original line #54 is: '- override-pip-and-virtualenv'
 	# See: https://docs.openstack.org/diskimage-builder/latest/elements/pip-and-virtualenv/README.html
-	sudo sed --in-place '54s/override-//' /usr/share/openstack-tripleo-common/image-yaml/overcloud-images.yaml
+	sudo sed --in-place \
+		'54s/override-//' \
+		/usr/share/openstack-tripleo-common/image-yaml/overcloud-images.yaml
 
 EOT
 )"

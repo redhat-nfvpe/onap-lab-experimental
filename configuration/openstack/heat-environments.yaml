@@ -4,16 +4,14 @@
 
 environments:
 
-# Defines from where to fetch service container images
+# Define from where to fetch service container images
 - "$ENVIRONMENTS/container-images.yaml"
 
-# Request infrastructure nodes per each node role 
-- "$ENVIRONMENTS/infrastructure-roles.yaml"
+# Map node roles to our "heat/templates/networking.j2.yaml"
+# And import our "networks.yaml"
+- "$ENVIRONMENTS/networking.yaml"
 
-# Creates networks per our "networks.yaml" and maps node roles to our "node-networking.j2.yaml"
-- "$ENVIRONMENTS/network-environment.yaml"
-
-# Creates ports for each service of each node role on the networks defined above
+# Create ports for each service of each node role on the networks defined above
 - "$ENVIRONMENTS/network-isolation.yaml"
 
 # Ceph-Ansible (used by ComputeHCI role)
@@ -24,11 +22,14 @@ environments:
 # Improve throughput performance for hyperconverged ComputeHCI scenario
 - "$ENVIRONMENTS/tuned-ceph-filestore-hci.yaml"
 
-# Our Nova configuration
+# Request infrastructure nodes per each node role
+- "$ENVIRONMENTS/roles.yaml"
+
+# Configure Nova
 - "$ENVIRONMENTS/nova.yaml"
 
-# Our Neutron configuration
+# Configure Neutron
 - "$ENVIRONMENTS/neutron.yaml"
 
-# Our Ceph configuration
+# Configure Ceph
 - "$ENVIRONMENTS/ceph.yaml"

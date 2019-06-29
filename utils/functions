@@ -9,40 +9,53 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 RESET='\033[0m'
 
-REMOTE_PREAMBLE="$(cat <<- EOT
-	set -e
-	RED='\033[0;31m'
-	GREEN='\033[0;32m'
-	BLUE='\033[0;34m'
-	CYAN='\033[0;36m'
-	RESET='\033[0m'
-	function m () { echo -e "\$CYAN\$1\$RESET"; }
-EOT
-)"
-
 # Colored messages (blue is the default)
 # Examples:
 #   m "hello world"
-#   m "hello world" $GREEN
+#   m "hello world" "$GREEN"
 function m () {
 	local COLOR=${2:-$BLUE}
 	echo -e "$COLOR$1$RESET"
 }
 
+SCRIPT_PREAMBLE="$(cat <<- EOT
+	set -e
+
+	RED='\033[0;31m'
+	GREEN='\033[0;32m'
+	BLUE='\033[0;34m'
+	CYAN='\033[0;36m'
+	RESET='\033[0m'
+
+	function m () {
+	  local COLOR=\${2:-\$BLUE}
+	  echo -e "\$COLOR\$1\$RESET"
+	}
+EOT
+)"
+
 # Converts the arguments to a command line segment of space-delimited arguments.
 # This is done by backslash-escaping special shell characters within each argument, such as:
-# spaces, single and double quotes, commas, "$", "*", and "?". Empty arguments become ''.  
+# spaces, single and double quotes, commas, "$", "*", and "?". Empty arguments become ''.
+# Examples:
+#   c 'hello world' 'with "quotes"'
+#   > hello\ world with\ \"quotes\"
 function c () {
 	local Q=$(printf ' %q' "$@")
 	echo "${Q:1}"
 }
 
 # Backslash-escapes double quotes in the argument
+# Examples:
+#   eq 'with "quotes"'
+#   > with \"quotes\"
 function eq () {
 	echo "$1" | sed 's/"/\\"/g'
 }
 
 # Wraps the argument in double-quotes and blackslash-escapes double-quotes 
+#   q 'with "quotes"'
+#   > "with \"quotes\""
 function q () {
 	echo "\"$(eq "$1")\""
 }

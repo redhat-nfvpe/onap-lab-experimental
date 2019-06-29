@@ -14,7 +14,7 @@ EQ_TRIPLEO_VERSION=$(eq "$TRIPLEO_VERSION")
 
 "$ROOT/ssh" tripleo "$(cat <<- EOT
 
-	$REMOTE_PREAMBLE
+	$SCRIPT_PREAMBLE
 
 	m '[tripleo] Ensuring utility packages are installed'
 
@@ -81,3 +81,6 @@ EOT
 
 m '[manager-root] Rebooting virtual machine "tripleo"'
 "$ROOT/manager/virsh" reboot tripleo
+
+m 'Waiting 10 seconds to ensure that virtual machine "tripleo" has rebooted...'
+sleep 10

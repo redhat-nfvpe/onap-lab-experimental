@@ -11,4 +11,13 @@ ROOT=$(readlink -f "$HERE/..")
 overcloud delete "$TRIPLEO_OVERCLOUD_HEAT_STACK" \
 	--yes
 
+"$ROOT/manager/tripleo/openstack" \
+baremetal node manage computehci
+
+"$ROOT/manager/tripleo/openstack" \
+overcloud node clean computehci
+
+"$ROOT/manager/tripleo/openstack" \
+overcloud node provide computehci
+
 "$ROOT/utils/delete-ssh-config" openstack-dashboard

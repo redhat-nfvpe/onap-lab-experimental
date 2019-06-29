@@ -2,8 +2,6 @@
 #
 # This is a Heat template environment.
 #
-# See also: "infrastructure-networking.j2.yaml" and "infrastructure-networks.yaml"
-#
 # See: https://docs.openstack.org/heat/stein/template_guide/environment.html
 
 parameter_defaults:
@@ -16,9 +14,12 @@ parameter_defaults:
   NeutronFlatNetworks: datacentre,public
 
   # OVN "vlan" network names
-  # Note that "datacentre" can also be used a flat network (VLAN=1)
-  #NeutronNetworkVLANRanges: datacentre:1:1000
+  # Note that "datacentre" can also be used a flat network, as defined above (untagged, or VLAN=1)
+  NeutronNetworkVLANRanges: datacentre:1:1000
 
   # Maps OVN network names to bridges (via "ovn::controller::ovn_bridge_mappings")
   # See: "sudo ovs-vsctl get open . external_ids:ovn-bridge-mappings"
   NeutronBridgeMappings: datacentre:br-ex,public:br-public
+
+  # List of network types (will be used in order)
+  NeutronNetworkType: vlan
