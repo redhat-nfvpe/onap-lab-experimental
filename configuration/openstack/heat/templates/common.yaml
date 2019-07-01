@@ -100,9 +100,12 @@ resources:
       network: { get_resource: public-net }
       enable_dhcp: false
       ip_version: 4
-      # See: "configuration/libvirt/networks/public.xml"
       cidr: 10.0.2.0/24
+      # The gateway is the Manager's IP address on the "public" bridge
       gateway_ip: 10.0.2.1
+      # Be careful not to overlap allocations!
+      # We've already reserved the range 10.0.2.2-10.0.2.99 for OpenStack servers (undercloud)
+      # See: "configuration/openstack/networks.yaml"
       allocation_pools:
       - start: 10.0.2.100
         end: 10.0.2.254
@@ -132,7 +135,7 @@ resources:
       cidr: 10.0.0.0/24
       gateway_ip: 10.0.0.1
       # Be careful not to overlap allocations!
-      # We've already reserved the range 10.0.0.4-10.0.0.250 for OpenStack servers
+      # We've already reserved the range 10.0.0.4-10.0.0.250 for OpenStack servers (undercloud)
       # See: "configuration/openstack/networks.yaml"
       allocation_pools:
       - start: 10.0.0.251

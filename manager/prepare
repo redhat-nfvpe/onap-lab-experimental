@@ -31,6 +31,8 @@ NETWORK_PUBLIC_XML=$(cat "$ROOT/configuration/libvirt/networks/public.xml" |
 	MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE=$EQ_MANAGER_OPENSTACK_CONTROL_PLANE_INTERFACE \
 	envsubst)
 
+LIBVIRT_NETWORK_HOOK=$(cat "$ROOT/configuration/libvirt/network-hook")
+
 m '[manager-root] Ensuring keypair authorization for user "root" (you will be prompted for password if not)'
 "$ROOT/utils/ensure-ssh-key-authorized" root@manager \
 ssh -i "$KEYS_ROOT/root@manager" "root@$MANAGER_OFFICE_IP_ADDRESS"
@@ -208,6 +210,10 @@ PASSWORD=$("$ROOT/utils/get-password" manager@manager)
 
 	qemu_enable_bridge public
 	virsh_enable_network public
+
+	mkdir --parents /etc/libvirt/hooks/
+	echo $(c "$LIBVIRT_NETWORK_HOOK") > /etc/libvirt/hooks/network
+	chmod +x /etc/libvirt/hooks/network
 
 	m '[manager-root] Ensuring VirtualBMC service is installed and configured'
 

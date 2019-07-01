@@ -10,14 +10,6 @@ parameter_defaults:
 
   CephAnsiblePlaybookVerbosity: 1 # the default is 0
 
-  # Hyperconvergence
-  # ----------------
-
-  # See note here under "ceph-ansible 3.2 and newer":
-  # https://docs.openstack.org/tripleo-docs/latest/install/advanced_deployment/ceph_config.html
-  CephAnsibleExtraConfig:
-    is_hci: true
-
   # Pool
   # ----
 
@@ -39,3 +31,11 @@ parameter_defaults:
     devices:
     - /dev/sdb
     #osd_scenario: collocated # to collocate on a single drive
+
+  # Hyperconvergence
+  # ----------------
+
+  # See note here under "ceph-ansible 3.2 and newer":
+  # https://docs.openstack.org/tripleo-docs/latest/install/advanced_deployment/ceph_config.html
+  CephAnsibleExtraConfig:
+    is_hci: true

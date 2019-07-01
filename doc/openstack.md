@@ -263,6 +263,7 @@ sudo ip addr add 10.0.2.2 dev br-public
 
 
 
+sudo tcpdump -i br-ex -nn -e vlan | grep "vlan 50"
 
 
 

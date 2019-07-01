@@ -19,11 +19,13 @@ function nat () {
 	# See also Karl Rupp's tutorial:
 	#   https://www.karlrupp.net/en/computer/nat_tutorial
 
-	# mangle
+	# Table: mangle
+
 	# DHCP packets sent to VMs have no checksum (due to a longstanding bug).
 	iptables --table mangle "$ACTION" POSTROUTING --out-interface "$NETWORK" --protocol udp --match udp --dport 68 --jump CHECKSUM --checksum-fill
 
-	# nat	
+	# Table: nat	
+
 	# Do not masquerade to these reserved address blocks.
 	iptables --table nat "$ACTION" POSTROUTING --source "$IP" --destination 224.0.0.0/24 --jump RETURN
 	iptables --table nat "$ACTION" POSTROUTING --source "$IP" --destination 255.255.255.255/32 --jump RETURN
@@ -32,7 +34,8 @@ function nat () {
 	iptables --table nat "$ACTION" POSTROUTING --source "$IP" ! --destination "$IP" --protocol udp --jump MASQUERADE --to-ports 1024-65535
 	iptables --table nat "$ACTION" POSTROUTING --source "$IP" ! --destination "$IP" --jump MASQUERADE
 
-	# filter
+	# Table: filter
+
 	# Accept DNS (port 53) and DHCP (port 67) packets from VMs.
 	iptables --table filter "$ACTION" INPUT --in-interface "$NETWORK" --protocol udp --match udp --match multiport --dports 53,67 --jump ACCEPT
 	iptables --table filter "$ACTION" INPUT --in-interface "$NETWORK" --protocol tcp --match tcp --match multiport --dports 53,67 --jump ACCEPT

@@ -15,7 +15,7 @@ if [ -n "$COMPUTE_VIRTUALBMC_PORT" ]; then
 	COMPUTE_MAC_ADDRESS=$("$ROOT/manager/get-mac-address" openstack-compute openstack)
 fi
 
-INFRASTRUCTURE_NODES_YAML=$(cat "$ROOT/configuration/openstack/infrastructure/nodes.yaml" |
+NODES_YAML=$(cat "$ROOT/configuration/openstack/nodes.yaml" |
 	CONTROLLER_MAC_ADDRESS=$(eq "$CONTROLLER_MAC_ADDRESS") \
 	CONTROLLER_VIRTUALBMC_PORT=$(eq "$CONTROLLER_VIRTUALBMC_PORT") \
 	COMPUTE_MAC_ADDRESS=$(eq "$COMPUTE_MAC_ADDRESS") \
@@ -36,7 +36,7 @@ INFRASTRUCTURE_NODES_YAML=$(cat "$ROOT/configuration/openstack/infrastructure/no
 
 	m '[tripleo] Updating inventory of infrastructure nodes'
 
-	echo $(c "$INFRASTRUCTURE_NODES_YAML") \
+	echo $(c "$NODES_YAML") \
 		> "\$INFRASTRUCTURE/nodes.yaml"
 
 	# Note: "import" will update nodes if they already exist, but other nodes will *not* be deleted,

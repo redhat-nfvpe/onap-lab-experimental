@@ -13,7 +13,7 @@ fi
 
 "$ROOT/rsync" \
 	--rsync-path='mkdir --parents /home/manager/workloads/ && rsync' \
-	"$HERE/"*.yaml \
+	"$ROOT/configuration/openstack/heat/templates/common.yaml" \
 	manager:/home/manager/workloads/
 
 m '[openstack] Creating common'

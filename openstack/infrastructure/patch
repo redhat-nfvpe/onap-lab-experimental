@@ -10,7 +10,7 @@ ROOT=$(readlink -f "$HERE/../..")
 # See: https://bugzilla.redhat.com/show_bug.cgi?id=1723107
 #      https://opendev.org/openstack/ironic-python-agent/src/branch/master/ironic_python_agent/hardware.py#L933
 
-HARDWARE_PY=$(cat "$HERE/hardware.py")
+HARDWARE_PY=$(cat "$ROOT/patches/ironic-python-agent/hardware.py")
 
 "$ROOT/ssh" -t tripleo "$(cat <<- EOT
 
@@ -31,10 +31,10 @@ HARDWARE_PY=$(cat "$HERE/hardware.py")
 
 	m '[tripleo] Fixing default images configuration to install virtualenv'
 
-	# The original line #54 is: '- override-pip-and-virtualenv'
+	# To install "ironic-python-agent" from source requires virtualenv 
 	# See: https://docs.openstack.org/diskimage-builder/latest/elements/pip-and-virtualenv/README.html
 	sudo sed --in-place \
-		'54s/override-//' \
+		's/override-pip-and-virtualenv/pip-and-virtualenv/g' \
 		/usr/share/openstack-tripleo-common/image-yaml/overcloud-images.yaml
 
 EOT

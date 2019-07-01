@@ -89,6 +89,19 @@
   gateway_ipv6: 2001:db8:fd00:1000::1
   mtu: 1500
 
+- name: Public
+  vip: false
+  name_lower: public
+  ip_subnet: 10.0.2.0/24
+  allocation_pools:
+  # The range defined here is for the undercloud -- we must make sure it doesn't overlap with the
+  # overcloud range, see: "heat/templates/common.yaml"
+  - start: 10.0.2.2
+    end: 10.0.2.99
+  # The gateway is the Manager's IP address on the "public" bridge
+  gateway_ip: 10.0.2.1
+  mtu: 1500
+
 # - name: Management
 #   # Management network is enabled by default for backwards-compatibility, but
 #   # is not included in any roles by default. Add to role definitions to use.
@@ -107,16 +120,3 @@
 #     end: fd00:fd00:fd00:6000:ffff:ffff:ffff:fffe
 #   gateway_ipv6: fd00:fd00:fd00:6000::1
 #   mtu: 1500
-
-- name: Public
-  vip: false
-  name_lower: public
-  # See "../libvirt/networks/public.xml"
-  ip_subnet: 10.0.2.0/24
-  allocation_pools:
-  # The range defined here is for the undercloud -- we must make sure it doesn't overlap with the
-  # overcloud range, see: "../../openstack/common/common.yaml"
-  - start: 10.0.2.2
-    end: 10.0.2.99
-  gateway_ip: 10.0.2.1
-  mtu: 1500

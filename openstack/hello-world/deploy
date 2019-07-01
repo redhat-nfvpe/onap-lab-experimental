@@ -13,7 +13,8 @@ fi
 
 "$ROOT/rsync" \
 	--rsync-path='mkdir --parents /home/manager/workloads/ && rsync' \
-	"$HERE/"*.yaml \
+	"$ROOT/configuration/openstack/heat/templates/hello-world-tenant.yaml" \
+	"$ROOT/configuration/openstack/heat/templates/hello-world.yaml" \
 	manager:/home/manager/workloads/
 
 m '[openstack] Creating hello-world-tenant'

@@ -7,6 +7,8 @@ ROOT=$(readlink -f "$HERE/..")
 . "$ROOT/utils/functions"
 . "$ROOT/utils/trap"
 
+"$HERE/infrastructure/connect"
+
 "$ROOT/rsync" \
 	tripleo:/home/tripleo/labrc \
 	"$WORKSPACE_ROOT/${TRIPLEO_OVERCLOUD_HEAT_STACK}rc"

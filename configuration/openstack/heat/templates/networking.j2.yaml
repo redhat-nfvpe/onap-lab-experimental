@@ -8,7 +8,7 @@
 #
 # In "../environments/networking.j2.yaml" this template will be wrapped in a resource named
 # "OS::TripleO::{{role.name}}::Net::SoftwareConfig", which is instantiated in
-# "puppet/role.role.j2.yaml". 
+# "puppet/role.role.j2.yaml".
 #
 # This file was modified from the default at:
 #   /usr/share/openstack-tripleo-heat-templates/network/config/single-nic-vlans/role.role.j2.yaml
@@ -212,7 +212,7 @@ resources:
                   - get_param: PublicInterfaceRoutes
                   -
 {%- if role.name.startswith('Controller') %}
-                    # "Controller" default route is via the public network
+                    # "Controller" default route is via the public network gateway
                     - default: true
                       next_hop: { get_param: PublicInterfaceDefaultRoute }
 {%- endif %}
@@ -220,7 +220,7 @@ resources:
                     # "Compute" default route is via the office network
                     - default: true
                       next_hop: 192.168.1.1
-                    # "Compute" public network is accessed via the public network
+                    # "Compute" public network is accessed via the public network gateway
                     - ip_netmask: 10.0.2.0/24
                       next_hop: { get_param: PublicInterfaceDefaultRoute }
 {%- endif %}

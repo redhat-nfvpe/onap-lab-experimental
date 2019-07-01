@@ -9,4 +9,3 @@ ROOT=$(readlink -f "$HERE/../..")
 
 "$HERE/prepare" "$1"
 "$HERE/introspect"
-"$HERE/connect"
