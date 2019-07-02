@@ -43,7 +43,7 @@ runcmd:
 # Note: TripleO needs the OpenStack control plane interface defined *but unused*,
 # so *don't* do this:
 #- dhclient eth1
-# We don't need cloud-config anymore:
+# We don't need cloud-init anymore:
 - systemctl disable cloud-config.service
 - systemctl disable cloud-final.service
 - systemctl disable cloud-init-local.service
