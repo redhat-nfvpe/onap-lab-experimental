@@ -10,7 +10,7 @@ parameters:
   public-network:
     type: string
     label: Public network name
-    default: public
+    default: external # see "common.yaml"
 
 resources:
 
@@ -20,6 +20,7 @@ resources:
     type: OS::Neutron::Net
     properties:
       name: private
+      port_security_enabled: false
 
   private-subnet:
     type: OS::Neutron::Subnet
@@ -30,7 +31,7 @@ resources:
       cidr: 192.0.1.0/24
       gateway_ip: 192.0.1.1 # this is the default: the first address
       allocation_pools:
-      - start: 192.0.1.100
+      - start: 192.0.1.2
         end: 192.0.1.254
 
   public-router:
@@ -39,7 +40,7 @@ resources:
       name: public
       external_gateway_info:
         network: { get_param: public-network }
-        enable_snat: true
+        #enable_snat: true
 
   public-router-interface:
     type: OS::Neutron::RouterInterface
@@ -52,6 +53,8 @@ resources:
     properties:
       name: control-plane
       rules:
+      - remote_ip_prefix: 0.0.0.0/0 #
+        direction: egress #
       - remote_ip_prefix: 0.0.0.0/0
         direction: ingress
         protocol: icmp
@@ -69,8 +72,8 @@ resources:
       network: { get_resource: private-net }
       fixed_ips: # required if we want to bind a floating IP to this port
       - subnet: { get_resource: private-subnet }
-      security_groups:
-      - { get_resource: security-group }
+      #security_groups:
+      #- { get_resource: security-group }
 
   # Exposed as output "public-ip"
   public-ip:

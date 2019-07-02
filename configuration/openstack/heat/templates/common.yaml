@@ -85,13 +85,13 @@ resources:
       name: public
       router_external: true
       port_security_enabled: false
-      physical_network: public
-      # For type "flat" the "physical_network" must be specified in
+      physical_network: public # "br-public" bridge on NIC 2
+      network_type: flat
+      # For "network_type" "flat" the "physical_network" must be specified in
       # "flat_networks" for the Neutron ML2 plugin on the controller
       # See: "/var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/ml2_conf.ini"
       # OVN then maps this name to a bridge
       # See: "sudo ovs-vsctl get open . external_ids:ovn-bridge-mappings"
-      network_type: flat
 
   public-subnet:
     type: OS::Neutron::Subnet
@@ -116,14 +116,15 @@ resources:
     properties:
       name: external
       router_external: true
-      # For type "vlan" the "physical_network" must be specified in
+      port_security_enabled: false
+      physical_network: datacentre # "br-ex" bridge on NIC 1
+      network_type: vlan
+      segmentation_id: '10' # VLAN tag 10 = external
+      # For "network_type" "vlan" the "physical_network" must be specified in
       # "network_vlan_ranges" for the Neutron ML2 plugin on the controller
       # See: "/var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/ml2_conf.ini"
       # OVN then maps this name to a bridge
       # See: "sudo ovs-vsctl get open . external_ids:ovn-bridge-mappings"
-      network_type: vlan
-      physical_network: datacentre # control plane
-      segmentation_id: '10' # VLAN tag 10 = external
 
   external-subnet:
     type: OS::Neutron::Subnet

@@ -24,14 +24,14 @@ stack create hello-world-tenant \
 	--wait -v
 
 m '[openstack] Creating hello-world'
-"$ROOT/openstack/openstack-tenant" hello-world hello-world hello-world-admin password \
+"$HERE/openstack" \
 stack create hello-world \
 	--template /home/manager/workloads/hello-world.yaml \
 	--wait -v
 
 m '[openstack] Fetching hello-world private key'
 
-"$ROOT/openstack/openstack-tenant" hello-world hello-world hello-world-admin password \
+"$HERE/openstack" \
 stack output show hello-world private-key --format value --column output_value \
 	> "$KEYS_ROOT/centos@hello-world"
 
@@ -41,7 +41,7 @@ chmod 600 "$KEYS_ROOT/centos@hello-world"
 	"$KEYS_ROOT/centos@hello-world" \
 	lab-controller-0:
 
-IP_ADDRESS=$("$ROOT/openstack/openstack-tenant" hello-world hello-world hello-world-admin password \
+IP_ADDRESS=$("$HERE/openstack" \
 stack output show hello-world public-ip --format value --column output_value)
 
 m "[openstack] Server's public IP address: $IP_ADDRESS"
