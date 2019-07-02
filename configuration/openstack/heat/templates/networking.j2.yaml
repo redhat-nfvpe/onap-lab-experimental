@@ -196,7 +196,7 @@ resources:
 {#- LAB: "Public" network is on its own bridge #}
 {%- if role.name.startswith('Controller') or role.name.startswith('Compute') %}
               # Public network bridge
-              - type: linux_bridge
+              - type: ovs_bridge
                 name: br-public # Associated with OVN's "public" flat network in "../neutron.yaml"
                 mtu: { get_param: PublicMtu }
                 use_dhcp: false

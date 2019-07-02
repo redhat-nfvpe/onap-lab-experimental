@@ -75,7 +75,14 @@ resources:
       container_format: bare
       disk_format: qcow2
 
-  # Networks
+  # Provider networks
+
+  # We are using Nuetron's ML2 plugin with OVN, so all "physical_network" names must be mapped
+  # to OVS bridges by OVN. To see the local mappings:
+  #
+  #   sudo ovs-vsctl get open . external_ids:ovn-bridge-mappings
+  #
+  # For configuration see "configuration/openstack/environments/neutron.yaml"
 
   # The "public" network allows access to the outside world
   # Useful for floating IPs
@@ -84,14 +91,8 @@ resources:
     properties:
       name: public
       router_external: true
-      port_security_enabled: false
-      physical_network: public # "br-public" bridge on NIC 2
+      physical_network: public # OVN maps to "br-public" OVS bridge on NIC 2
       network_type: flat
-      # For "network_type" "flat" the "physical_network" must be specified in
-      # "flat_networks" for the Neutron ML2 plugin on the controller
-      # See: "/var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/ml2_conf.ini"
-      # OVN then maps this name to a bridge
-      # See: "sudo ovs-vsctl get open . external_ids:ovn-bridge-mappings"
 
   public-subnet:
     type: OS::Neutron::Subnet
@@ -101,8 +102,7 @@ resources:
       enable_dhcp: false
       ip_version: 4
       cidr: 10.0.2.0/24
-      # The gateway is the Manager's IP address on the "public" bridge
-      gateway_ip: 10.0.2.1
+      gateway_ip: 10.0.2.1 # the Manager's IP address on the "public" bridge
       # Be careful not to overlap allocations!
       # We've already reserved the range 10.0.2.2-10.0.2.99 for OpenStack servers (undercloud)
       # See: "configuration/openstack/networks.yaml"
@@ -116,15 +116,9 @@ resources:
     properties:
       name: external
       router_external: true
-      port_security_enabled: false
-      physical_network: datacentre # "br-ex" bridge on NIC 1
+      physical_network: datacentre # OVN maps to "br-ex" OVS bridge on NIC 1
       network_type: vlan
       segmentation_id: '10' # VLAN tag 10 = external
-      # For "network_type" "vlan" the "physical_network" must be specified in
-      # "network_vlan_ranges" for the Neutron ML2 plugin on the controller
-      # See: "/var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/ml2_conf.ini"
-      # OVN then maps this name to a bridge
-      # See: "sudo ovs-vsctl get open . external_ids:ovn-bridge-mappings"
 
   external-subnet:
     type: OS::Neutron::Subnet
